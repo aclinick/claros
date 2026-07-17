@@ -21,41 +21,24 @@ for (var i = 0; i < voices.Count; i++)
 }
 
 var pick = voices[0];
-Console.WriteLine($"Loading acoustic model for: {pick.DisplayName}");
-using var engine = NaturalVoiceEngine.Load(pick);
-using var vocoder = Vocoder.Load(pick);
-Console.WriteLine($"Phoneme table: {engine.Phonemes.Count} entries, bos={engine.Phonemes.Bos}, eos={engine.Phonemes.Eos}");
-Console.WriteLine($"Vocoder: rewrote {vocoder.RewrittenNodes} streaming nodes to stock ONNX ops\n");
+Console.WriteLine($"Loading: {pick.DisplayName}");
+using var speaker = NaturalVoiceSpeaker.Load(pick);
+Console.WriteLine($"SAPI preprocessor: {speaker.Phonemizer.VoiceName}");
+Console.WriteLine($"Vocoder: rewrote {speaker.Vocoder.RewrittenNodes} streaming nodes to stock ONNX ops\n");
 
-// "The quick brown fox, jumps over the lazy dog." via the SAPI text preprocessor.
-// Requires "Microsoft Zira Desktop" (default Windows en-US SAPI voice).
 var text = args.Length > 0 ? string.Join(' ', args) : "The quick brown fox, jumps over the lazy dog.";
 Console.WriteLine($"Text: {text}");
+Console.WriteLine("Speaking...");
 
-using var phonemizer = SapiPhonemizer.Create("Microsoft Zira Desktop");
-Console.WriteLine($"SAPI preprocessor: {phonemizer.VoiceName}");
-
-var ids = phonemizer.Phonemize(text, engine.Phonemes, locale: pick.Locale);
-Console.WriteLine($"Phoneme IDs ({ids.Count}): [{string.Join(", ", ids)}]");
-Console.WriteLine("Running synthesis...");
-
-var result = await engine.SynthesizeAsync(ids);
-
-Console.WriteLine($"\nSynthesized {result.Steps} decoder steps.");
-Console.WriteLine($"Stopped by gate: {result.StoppedByGate}");
-Console.WriteLine($"20 Hz codec tokens: {result.C20Hz.Length} ({result.C20Hz.Length / 2} pairs)");
-Console.WriteLine($"40 Hz codec tokens: {result.C40Hz.Length} ({result.C40Hz.Length / 2} pairs)");
-
-Console.WriteLine("\nRunning vocoder...");
-var waveform = vocoder.Synthesize(result);
+var waveform = await speaker.SpeakAsync(text);
 Console.WriteLine($"Waveform: {waveform.Samples.Length} samples at {waveform.SampleRate} Hz ({waveform.Samples.Length / (double)waveform.SampleRate:F2}s)");
 
 var outPath = Path.Combine(Environment.CurrentDirectory, "hello.wav");
 WaveFile.WriteMono16(outPath, waveform.Samples, waveform.SampleRate);
 Console.WriteLine($"Wrote native {waveform.SampleRate} Hz WAV: {outPath}");
 
-// Also emit a rewrapped 24000 Hz variant. Same samples, different header,
-// plays back roughly 8 percent slower and lower pitched. Closer to Azure.
+// Rewrapping the same samples with a 24000 Hz header slows and lowers pitch
+// by roughly 8 percent and matches the Azure Ava reference more closely.
 var reWrappedPath = Path.Combine(Environment.CurrentDirectory, "hello_24000.wav");
 WaveFile.WriteMono16(reWrappedPath, waveform.Samples, 24000);
 Console.WriteLine($"Wrote 24000 Hz rewrap:            {reWrappedPath}");

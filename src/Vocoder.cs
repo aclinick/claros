@@ -6,7 +6,7 @@ namespace WindowsNaturalVoices;
 
 /// <summary>
 /// Waveform samples returned by <see cref="Vocoder.Synthesize"/> and
-/// <see cref="NaturalVoiceEngine.SpeakAsync"/>.
+/// <see cref="NaturalVoiceSpeaker.SpeakAsync"/>.
 /// </summary>
 /// <param name="Samples">
 /// Mono PCM samples in the range roughly <c>[-1, 1]</c>. Callers that need

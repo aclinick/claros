@@ -16,25 +16,11 @@ There is no cryptographic protection on the model files. Each `*.bin` in a voice
 using WindowsNaturalVoices;
 
 using var catalog = new VoiceCatalog();
-catalog.VoicesChanged += (_, _) => Console.WriteLine("Installed voices changed.");
-
 var voices = await catalog.ListVoicesAsync();
-foreach (var v in voices)
-{
-    Console.WriteLine($"{v.DisplayName}  ({v.Locale}, {v.Gender})");
-}
 
-using var engine = NaturalVoiceEngine.Load(voices[0]);
-using var vocoder = Vocoder.Load(voices[0]);
-using var phonemizer = SapiPhonemizer.Create("Microsoft Zira Desktop");
+using var speaker = NaturalVoiceSpeaker.Load(voices[0]);
+var waveform = await speaker.SpeakAsync("The quick brown fox, jumps over the lazy dog.");
 
-var ids = phonemizer.Phonemize(
-    "The quick brown fox, jumps over the lazy dog.",
-    engine.Phonemes,
-    locale: voices[0].Locale);
-
-var tokens = await engine.SynthesizeAsync(ids);
-var waveform = vocoder.Synthesize(tokens);
 WaveFile.WriteMono16("hello.wav", waveform.Samples, waveform.SampleRate);
 ```
 
