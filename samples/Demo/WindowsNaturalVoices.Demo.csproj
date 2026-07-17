@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\WindowsNaturalVoices\WindowsNaturalVoices.csproj" />
+    <ProjectReference Include="..\..\src\WindowsNaturalVoices.csproj" />
   </ItemGroup>
 
 </Project>
