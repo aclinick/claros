@@ -25,16 +25,14 @@ foreach (var v in voices)
 }
 
 using var engine = NaturalVoiceEngine.Load(voices[0]);
+using var phonemizer = SapiPhonemizer.Create("Microsoft Zira Desktop");
 
-var phonemes = new List<int> { engine.Phonemes.Bos };
-foreach (var arpabet in new[] { "h", "eh1", "l", "ow1" })
-{
-    engine.Phonemes.TryGetArpabet("en-us", arpabet, out var id);
-    phonemes.Add(id);
-}
-phonemes.Add(engine.Phonemes.Eos);
+var ids = phonemizer.Phonemize(
+    "The quick brown fox, jumps over the lazy dog.",
+    engine.Phonemes,
+    locale: voices[0].Locale);
 
-var tokens = await engine.SynthesizeAsync(phonemes);
+var tokens = await engine.SynthesizeAsync(ids);
 Console.WriteLine($"{tokens.Steps} decoder steps, {tokens.C20Hz.Length + tokens.C40Hz.Length} codec tokens.");
 ```
 
@@ -45,6 +43,7 @@ Console.WriteLine($"{tokens.Steps} decoder steps, {tokens.C20Hz.Length + tokens.
 - Phoneme table loaded from the package's `hd_phones.txt`.
 - Acoustic model loaded via `NaturalVoiceEngine.Load(voice)`. Extracts encoder and decoder ONNX by skipping the plaintext header, then constructs `InferenceSession` for each.
 - Autoregressive decoder loop with attention state, LSTM state, and stop gate. Returns discrete codec tokens.
+- Text-to-phoneme conversion via `SapiPhonemizer`, which drives the shipped Windows SAPI text preprocessor (`MSTTSLoc_OneCore.dll`) through `System.Speech.Synthesis.SpeechSynthesizer.PhonemeReached`. The same frontend powers Azure Speech and the on-device Natural Voices, and it runs entirely offline.
 
 ## What is missing
 
@@ -55,7 +54,7 @@ Waveform playback. The decoder emits discrete codec tokens; the vocoder that tur
 
 ## Grapheme to phoneme
 
-This library does not ship a G2P engine. Callers supply ARPABET-style phoneme identifiers using `PhonemeTable.TryGetArpabet` or full keys via `TryGet`. Piper, espeak-ng, and Kokoro's `misaki` are three permissive open source G2P options that fit.
+`SapiPhonemizer` handles English (and other SAPI-supported locales) by driving the shipped Windows text preprocessor and mapping its IPA output to the acoustic model's ARPABET table. For locales where SAPI has no voice, callers can still supply phoneme ids directly via `PhonemeTable.TryGetArpabet` or `TryGet`. Piper, espeak-ng, and Kokoro's `misaki` are three permissive open source G2P options that fit.
 
 ## Building
 

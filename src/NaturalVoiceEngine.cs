@@ -126,6 +126,10 @@ public sealed class NaturalVoiceEngine : IDisposable
         var attentionContext = new float[384];
         var attentionWeights = new float[seqLen];
         var attentionWeightsCum = new float[seqLen];
+        // Seed a one-hot attention at position 0 so the decoder starts on the
+        // BOS phone. Matches the reference Python pipeline.
+        attentionWeights[0] = 1f;
+        attentionWeightsCum[0] = 1f;
 
         var c20 = new List<long>(options.MaxDecoderSteps * 2);
         var c40 = new List<long>(options.MaxDecoderSteps * 2);
@@ -175,7 +179,10 @@ public sealed class NaturalVoiceEngine : IDisposable
             attentionWeightsCum = results.First(r => r.Name == "attention_weights_cum_new").AsTensor<float>().ToArray();
 
             var gate = results.First(r => r.Name == "gate_prob").AsTensor<float>().ToArray()[0];
-            if (Sigmoid(gate) > options.StopThreshold)
+            // Match the reference Python pipeline: compare the raw gate scalar
+            // (this model already emits a sigmoid-shaped output, not a logit)
+            // and apply a warmup guard so early steps cannot trigger stop.
+            if (step > options.WarmupSteps && gate > options.StopThreshold)
             {
                 stoppedByGate = true;
                 break;
@@ -199,8 +206,6 @@ public sealed class NaturalVoiceEngine : IDisposable
         return (h, c);
     }
 
-    private static float Sigmoid(float x) => 1f / (1f + MathF.Exp(-x));
-
     public void Dispose()
     {
         _encoder.Dispose();
@@ -219,9 +224,15 @@ public sealed record SynthesisOptions
     public int MaxDecoderSteps { get; init; } = 800;
 
     /// <summary>
-    /// Probability threshold at which the decoder's stop gate ends
-    /// generation. Model emits raw logits; the engine applies sigmoid
-    /// before comparing.
+    /// Threshold applied to the decoder's raw stop gate output. The model
+    /// emits a scalar in the 0-1 range directly, so 0.5 matches the
+    /// reference Python pipeline.
     /// </summary>
-    public float StopThreshold { get; init; } = 0.9f;
+    public float StopThreshold { get; init; } = 0.5f;
+
+    /// <summary>
+    /// Number of decoder steps that must elapse before the stop gate can end
+    /// generation. Prevents very short phrases from stopping prematurely.
+    /// </summary>
+    public int WarmupSteps { get; init; } = 20;
 }

@@ -25,23 +25,16 @@ Console.WriteLine($"Loading acoustic model for: {pick.DisplayName}");
 using var engine = NaturalVoiceEngine.Load(pick);
 Console.WriteLine($"Phoneme table: {engine.Phonemes.Count} entries, bos={engine.Phonemes.Bos}, eos={engine.Phonemes.Eos}\n");
 
-// "Hello world" as en-US ARPABET: HH EH1 L OW1 . W ER1 L D
-var phrase = new[] { "h", "eh1", "l", "ow1", "w", "er1", "l", "d" };
-var ids = new List<int> { engine.Phonemes.Bos };
-foreach (var arpa in phrase)
-{
-    if (engine.Phonemes.TryGetArpabet("en-us", arpa, out var id))
-    {
-        ids.Add(id);
-    }
-    else
-    {
-        Console.WriteLine($"  (phoneme en-us_{arpa} not found in table)");
-    }
-}
-ids.Add(engine.Phonemes.Eos);
+// "The quick brown fox, jumps over the lazy dog." via the SAPI text preprocessor.
+// Requires "Microsoft Zira Desktop" (default Windows en-US SAPI voice).
+var text = args.Length > 0 ? string.Join(' ', args) : "The quick brown fox, jumps over the lazy dog.";
+Console.WriteLine($"Text: {text}");
 
-Console.WriteLine($"Phoneme IDs: [{string.Join(", ", ids)}]");
+using var phonemizer = SapiPhonemizer.Create("Microsoft Zira Desktop");
+Console.WriteLine($"SAPI preprocessor: {phonemizer.VoiceName}");
+
+var ids = phonemizer.Phonemize(text, engine.Phonemes, locale: pick.Locale);
+Console.WriteLine($"Phoneme IDs ({ids.Count}): [{string.Join(", ", ids)}]");
 Console.WriteLine("Running synthesis...");
 
 var result = await engine.SynthesizeAsync(ids);
