@@ -23,7 +23,9 @@ for (var i = 0; i < voices.Count; i++)
 var pick = voices[0];
 Console.WriteLine($"Loading acoustic model for: {pick.DisplayName}");
 using var engine = NaturalVoiceEngine.Load(pick);
-Console.WriteLine($"Phoneme table: {engine.Phonemes.Count} entries, bos={engine.Phonemes.Bos}, eos={engine.Phonemes.Eos}\n");
+using var vocoder = Vocoder.Load(pick);
+Console.WriteLine($"Phoneme table: {engine.Phonemes.Count} entries, bos={engine.Phonemes.Bos}, eos={engine.Phonemes.Eos}");
+Console.WriteLine($"Vocoder: rewrote {vocoder.RewrittenNodes} streaming nodes to stock ONNX ops\n");
 
 // "The quick brown fox, jumps over the lazy dog." via the SAPI text preprocessor.
 // Requires "Microsoft Zira Desktop" (default Windows en-US SAPI voice).
@@ -43,11 +45,19 @@ Console.WriteLine($"\nSynthesized {result.Steps} decoder steps.");
 Console.WriteLine($"Stopped by gate: {result.StoppedByGate}");
 Console.WriteLine($"20 Hz codec tokens: {result.C20Hz.Length} ({result.C20Hz.Length / 2} pairs)");
 Console.WriteLine($"40 Hz codec tokens: {result.C40Hz.Length} ({result.C40Hz.Length / 2} pairs)");
-Console.WriteLine($"First few 20 Hz tokens: [{string.Join(", ", result.C20Hz.Take(10))}]");
-Console.WriteLine($"First few 40 Hz tokens: [{string.Join(", ", result.C40Hz.Take(10))}]");
 
-Console.WriteLine("\nNote: turning these codec tokens into a waveform requires the vocoder,");
-Console.WriteLine("which uses an undocumented StreamingConv custom op that Microsoft ships");
-Console.WriteLine("in the OS but has not exposed to third parties.");
+Console.WriteLine("\nRunning vocoder...");
+var waveform = vocoder.Synthesize(result);
+Console.WriteLine($"Waveform: {waveform.Samples.Length} samples at {waveform.SampleRate} Hz ({waveform.Samples.Length / (double)waveform.SampleRate:F2}s)");
+
+var outPath = Path.Combine(Environment.CurrentDirectory, "hello.wav");
+WaveFile.WriteMono16(outPath, waveform.Samples, waveform.SampleRate);
+Console.WriteLine($"Wrote native {waveform.SampleRate} Hz WAV: {outPath}");
+
+// Also emit a rewrapped 24000 Hz variant. Same samples, different header,
+// plays back roughly 8 percent slower and lower pitched. Closer to Azure.
+var reWrappedPath = Path.Combine(Environment.CurrentDirectory, "hello_24000.wav");
+WaveFile.WriteMono16(reWrappedPath, waveform.Samples, 24000);
+Console.WriteLine($"Wrote 24000 Hz rewrap:            {reWrappedPath}");
 
 return 0;

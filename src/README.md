@@ -25,6 +25,7 @@ foreach (var v in voices)
 }
 
 using var engine = NaturalVoiceEngine.Load(voices[0]);
+using var vocoder = Vocoder.Load(voices[0]);
 using var phonemizer = SapiPhonemizer.Create("Microsoft Zira Desktop");
 
 var ids = phonemizer.Phonemize(
@@ -33,7 +34,8 @@ var ids = phonemizer.Phonemize(
     locale: voices[0].Locale);
 
 var tokens = await engine.SynthesizeAsync(ids);
-Console.WriteLine($"{tokens.Steps} decoder steps, {tokens.C20Hz.Length + tokens.C40Hz.Length} codec tokens.");
+var waveform = vocoder.Synthesize(tokens);
+WaveFile.WriteMono16("hello.wav", waveform.Samples, waveform.SampleRate);
 ```
 
 ## What works today
@@ -44,13 +46,13 @@ Console.WriteLine($"{tokens.Steps} decoder steps, {tokens.C20Hz.Length + tokens.
 - Acoustic model loaded via `NaturalVoiceEngine.Load(voice)`. Extracts encoder and decoder ONNX by skipping the plaintext header, then constructs `InferenceSession` for each.
 - Autoregressive decoder loop with attention state, LSTM state, and stop gate. Returns discrete codec tokens.
 - Text-to-phoneme conversion via `SapiPhonemizer`, which drives the shipped Windows SAPI text preprocessor (`MSTTSLoc_OneCore.dll`) through `System.Speech.Synthesis.SpeechSynthesizer.PhonemeReached`. The same frontend powers Azure Speech and the on-device Natural Voices, and it runs entirely offline.
+- Vocoder execution via `Vocoder`, which rewrites the shipped `Streaming*` custom operators back to their standard ONNX equivalents so stock ONNX Runtime can load and run the graph. Produces mono PCM samples at 26 kHz.
 
 ## What is missing
 
-Waveform playback. The decoder emits discrete codec tokens; the vocoder that turns those tokens into audio uses a custom op named `StreamingConv` in the ONNX domain `test.customop`. Microsoft's `SpeechRuntime.exe` implements that op but has not published it. Two forward paths exist:
+Nothing structural for basic offline TTS. The two remaining gaps are quality tuning and platform coverage, not blocking bugs. Quality tuning includes prosody: SAPI's `Emphasis` field stays at zero for Zira, so stressed content words currently get the same weight as function words. The vocoder emits at 26 kHz natively; rewrapping the samples with a 24 kHz header trades a small amount of pitch for slower delivery that matches Azure Ava more closely.
 
-1. Implement `StreamingConv` as a custom ORT op. It has the same interface as a 1D convolution with a streaming state buffer.
-2. Swap in a permissive vocoder such as HiFi-GAN or Vocos and train a small adapter that maps the Microsoft codec tokens to the vocoder's expected mel input.
+The vocoder rewrite loses streaming state, so this library synthesizes each phrase as one non-streaming inference. Real-time streaming would require reimplementing the `Streaming*` operator family with its per-chunk state buffer or bringing in a permissive streaming vocoder such as HiFi-GAN.
 
 ## Grapheme to phoneme
 
