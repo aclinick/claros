@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build & test
+    # Windows-only: the projects target net10.0-windows10.0.26100.0 and use WinRT
+    # (AppExtensionCatalog) and System.Speech, so they need a Windows runner with
+    # the Windows 10.0.26100 SDK.
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET (from global.json)
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore WindowsNaturalVoices.slnx
+
+      - name: Build
+        run: dotnet build WindowsNaturalVoices.slnx --configuration Release --no-restore
+
+      # The synthesis pipeline needs an installed Natural Voice, which the runner
+      # does not have, so only the pure-logic unit tests run here.
+      - name: Test
+        run: dotnet test WindowsNaturalVoices.slnx --configuration Release --no-build --verbosity normal
