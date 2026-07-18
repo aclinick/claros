@@ -20,6 +20,7 @@ public sealed class NaturalVoiceSpeaker : IDisposable
     private readonly Vocoder _vocoder;
     private readonly SapiPhonemizer _phonemizer;
     private readonly string _locale;
+    private bool _disposed;
 
     /// <summary>The Natural Voice this speaker is bound to.</summary>
     public VoiceInfo Voice { get; }
@@ -107,8 +108,22 @@ public sealed class NaturalVoiceSpeaker : IDisposable
 
     public void Dispose()
     {
-        _phonemizer.Dispose();
-        _vocoder.Dispose();
-        _engine.Dispose();
+        if (_disposed) return;
+        _disposed = true;
+        try
+        {
+            _phonemizer.Dispose();
+        }
+        finally
+        {
+            try
+            {
+                _vocoder.Dispose();
+            }
+            finally
+            {
+                _engine.Dispose();
+            }
+        }
     }
 }

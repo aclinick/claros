@@ -16,6 +16,9 @@ namespace WindowsNaturalVoices.Internal;
 /// </summary>
 internal static class StreamingOpRewriter
 {
+    /// <summary>The custom operator domain the Natural Voice vocoder ships.</summary>
+    private const string CustomDomain = "test.customop";
+
     private static readonly IReadOnlyDictionary<string, string> Renames = new Dictionary<string, string>
     {
         ["StreamingConv"] = "Conv",
@@ -48,9 +51,20 @@ internal static class StreamingOpRewriter
         var count = 0;
         foreach (var node in model.Graph.Node)
         {
-            if (!Renames.TryGetValue(node.OpType, out var renamed))
+            // Only touch operators in the vocoder's custom domain. A standard
+            // ONNX op that happens to share a name (for example a real "Add")
+            // lives in the default domain and must be left alone.
+            if (node.Domain != CustomDomain)
             {
                 continue;
+            }
+
+            if (!Renames.TryGetValue(node.OpType, out var renamed))
+            {
+                // A custom-domain operator the library does not know how to
+                // rewrite would silently break inference; fail loudly instead.
+                throw new VoicePackageFormatException(
+                    $"Vocoder uses unsupported custom operator '{node.OpType}' in domain '{CustomDomain}'.");
             }
 
             node.OpType = renamed;
@@ -91,11 +105,12 @@ internal static class StreamingOpRewriter
             }
         }
 
-        // Strip custom opset imports so ORT does not look for the missing domain.
+        // Strip only the custom opset import so ORT does not look for the
+        // missing domain. Any other non-standard domains are left in place
+        // for the runtime to resolve or reject on its own.
         for (var i = model.OpsetImport.Count - 1; i >= 0; i--)
         {
-            var domain = model.OpsetImport[i].Domain;
-            if (domain != string.Empty && domain != "ai.onnx")
+            if (model.OpsetImport[i].Domain == CustomDomain)
             {
                 model.OpsetImport.RemoveAt(i);
             }

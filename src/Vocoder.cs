@@ -36,6 +36,7 @@ public sealed class Vocoder : IDisposable
     public const int NativeSampleRate = 26000;
 
     private readonly InferenceSession _session;
+    private bool _disposed;
 
     /// <summary>Number of streaming operator nodes rewritten at load time.</summary>
     public int RewrittenNodes { get; }
@@ -53,24 +54,47 @@ public sealed class Vocoder : IDisposable
     /// </summary>
     public static Vocoder Load(VoiceInfo voice, NaturalVoiceEngineOptions? options = null)
     {
+        ArgumentNullException.ThrowIfNull(voice);
         options ??= new NaturalVoiceEngineOptions();
         var vocoderBin = Path.Combine(voice.InstalledPath, "hd_device_vocoder_v6_streaming.bin");
         if (!File.Exists(vocoderBin))
         {
-            throw new FileNotFoundException(
-                $"Voice package at {voice.InstalledPath} does not contain the HD vocoder binary.");
+            throw new NaturalVoiceUnavailableException(
+                $"Voice '{voice.DisplayName}' package at {voice.InstalledPath} is missing required file 'hd_device_vocoder_v6_streaming.bin'.");
         }
 
-        var rawOnnx = ModelExtractor.ExtractOnnx(vocoderBin);
-        var rewritten = StreamingOpRewriter.Rewrite(rawOnnx, out var count);
+        byte[] rewritten;
+        int count;
+        try
+        {
+            var rawOnnx = ModelExtractor.ExtractOnnx(vocoderBin);
+            rewritten = StreamingOpRewriter.Rewrite(rawOnnx, out count);
+        }
+        catch (Exception ex) when (ex is not NaturalVoiceException)
+        {
+            throw new VoicePackageFormatException(
+                $"Could not prepare the vocoder for voice '{voice.DisplayName}' from {voice.InstalledPath}.", ex);
+        }
 
-        var sessionOptions = new SessionOptions
+        using var sessionOptions = new SessionOptions
         {
             LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING,
             GraphOptimizationLevel = options.GraphOptimizationLevel,
         };
-        var session = new InferenceSession(rewritten, sessionOptions);
-        return new Vocoder(session, count);
+
+        InferenceSession? session = null;
+        try
+        {
+            session = new InferenceSession(rewritten, sessionOptions);
+            return new Vocoder(session, count);
+        }
+        catch (Exception ex)
+        {
+            session?.Dispose();
+            if (ex is NaturalVoiceException) throw;
+            throw new VoicePackageFormatException(
+                $"Could not load the vocoder for voice '{voice.DisplayName}'.", ex);
+        }
     }
 
     /// <summary>
@@ -81,29 +105,37 @@ public sealed class Vocoder : IDisposable
     public WaveformResult Synthesize(CodecTokens tokens)
     {
         ArgumentNullException.ThrowIfNull(tokens);
+        ObjectDisposedException.ThrowIf(_disposed, this);
         if (tokens.C20Hz.Length == 0)
         {
             return new WaveformResult(Array.Empty<float>(), NativeSampleRate);
         }
 
-        // Codec tokens come out of the decoder interleaved by step
-        // (step0_ch0, step0_ch1, step1_ch0, step1_ch1, ...). The vocoder
-        // expects a channel-major layout of shape [1, 2, steps]. Rearrange.
-        var token1 = ToChannelMajor(tokens.C20Hz);
-        var steps1 = tokens.C20Hz.Length / 2;
-
-        var t1 = new DenseTensor<long>(token1, new[] { 1, 2, steps1 });
-        var t2 = new DenseTensor<long>(tokens.C40Hz, new[] { 1, 1, tokens.C40Hz.Length });
-
-        using var results = _session.Run(new[]
+        try
         {
-            NamedOnnxValue.CreateFromTensor("token1", t1),
-            NamedOnnxValue.CreateFromTensor("token2", t2),
-        });
+            // Codec tokens come out of the decoder interleaved by step
+            // (step0_ch0, step0_ch1, step1_ch0, step1_ch1, ...). The vocoder
+            // expects a channel-major layout of shape [1, 2, steps]. Rearrange.
+            var token1 = ToChannelMajor(tokens.C20Hz);
+            var steps1 = tokens.C20Hz.Length / 2;
 
-        var wave = results.First().AsTensor<float>().ToArray();
-        Normalize(wave, 0.9f);
-        return new WaveformResult(wave, NativeSampleRate);
+            var t1 = new DenseTensor<long>(token1, new[] { 1, 2, steps1 });
+            var t2 = new DenseTensor<long>(tokens.C40Hz, new[] { 1, 1, tokens.C40Hz.Length });
+
+            using var results = _session.Run(new[]
+            {
+                NamedOnnxValue.CreateFromTensor("token1", t1),
+                NamedOnnxValue.CreateFromTensor("token2", t2),
+            });
+
+            var wave = results.First().AsTensor<float>().ToArray();
+            Normalize(wave, 0.9f);
+            return new WaveformResult(wave, NativeSampleRate);
+        }
+        catch (Exception ex) when (ex is not NaturalVoiceException)
+        {
+            throw new SpeechSynthesisException("Vocoder inference failed.", ex);
+        }
     }
 
     internal static long[] ToChannelMajor(long[] interleaved)
@@ -134,5 +166,10 @@ public sealed class Vocoder : IDisposable
         }
     }
 
-    public void Dispose() => _session.Dispose();
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _session.Dispose();
+    }
 }

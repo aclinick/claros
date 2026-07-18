@@ -17,6 +17,7 @@ public sealed class NaturalVoiceEngine : IDisposable
 {
     private readonly InferenceSession _encoder;
     private readonly InferenceSession _decoder;
+    private bool _disposed;
 
     public VoiceInfo Voice { get; }
     public PhonemeTable Phonemes { get; }
@@ -40,32 +41,64 @@ public sealed class NaturalVoiceEngine : IDisposable
     /// </summary>
     public static NaturalVoiceEngine Load(VoiceInfo voice, NaturalVoiceEngineOptions? options = null)
     {
+        ArgumentNullException.ThrowIfNull(voice);
         options ??= new NaturalVoiceEngineOptions();
 
         var encoderBin = Path.Combine(voice.InstalledPath, "hd_am_v5_encoder.bin");
         var decoderBin = Path.Combine(voice.InstalledPath, "hd_am_v5_decoder.bin");
         var phonesPath = Path.Combine(voice.InstalledPath, "hd_phones.txt");
 
-        if (!File.Exists(encoderBin) || !File.Exists(decoderBin) || !File.Exists(phonesPath))
+        RequireFile(voice, encoderBin);
+        RequireFile(voice, decoderBin);
+        RequireFile(voice, phonesPath);
+
+        byte[] encoderOnnx, decoderOnnx;
+        try
         {
-            throw new FileNotFoundException(
-                $"Voice package at {voice.InstalledPath} does not contain the expected HD acoustic model files.");
+            encoderOnnx = ModelExtractor.ExtractOnnx(encoderBin);
+            decoderOnnx = ModelExtractor.ExtractOnnx(decoderBin);
+        }
+        catch (Exception ex) when (ex is not NaturalVoiceException)
+        {
+            throw new VoicePackageFormatException(
+                $"Could not extract the ONNX acoustic model for voice '{voice.DisplayName}' from {voice.InstalledPath}.",
+                ex);
         }
 
-        var encoderOnnx = ModelExtractor.ExtractOnnx(encoderBin);
-        var decoderOnnx = ModelExtractor.ExtractOnnx(decoderBin);
-
-        var sessionOptions = new SessionOptions
+        using var sessionOptions = new SessionOptions
         {
             LogSeverityLevel = OrtLoggingLevel.ORT_LOGGING_LEVEL_WARNING,
             GraphOptimizationLevel = options.GraphOptimizationLevel,
         };
 
-        var encoder = new InferenceSession(encoderOnnx, sessionOptions);
-        var decoder = new InferenceSession(decoderOnnx, sessionOptions);
-        var phonemes = PhonemeTable.Load(phonesPath);
+        InferenceSession? encoder = null;
+        InferenceSession? decoder = null;
+        try
+        {
+            encoder = new InferenceSession(encoderOnnx, sessionOptions);
+            decoder = new InferenceSession(decoderOnnx, sessionOptions);
+            var phonemes = PhonemeTable.Load(phonesPath);
+            return new NaturalVoiceEngine(voice, encoder, decoder, phonemes);
+        }
+        catch (Exception ex)
+        {
+            // Release whatever sessions were created before the failure so a
+            // half-initialized load never leaks native ORT handles.
+            decoder?.Dispose();
+            encoder?.Dispose();
+            if (ex is NaturalVoiceException) throw;
+            throw new VoicePackageFormatException(
+                $"Could not load the acoustic model for voice '{voice.DisplayName}'.", ex);
+        }
+    }
 
-        return new NaturalVoiceEngine(voice, encoder, decoder, phonemes);
+    private static void RequireFile(VoiceInfo voice, string path)
+    {
+        if (!File.Exists(path))
+        {
+            throw new NaturalVoiceUnavailableException(
+                $"Voice '{voice.DisplayName}' package at {voice.InstalledPath} is missing required file '{Path.GetFileName(path)}'.");
+        }
     }
 
     /// <summary>
@@ -81,6 +114,7 @@ public sealed class NaturalVoiceEngine : IDisposable
         CancellationToken cancellationToken = default)
     {
         options ??= new SynthesisOptions();
+        ObjectDisposedException.ThrowIf(_disposed, this);
         return Task.Run(() => SynthesizeCore(phonemeIds, options, cancellationToken), cancellationToken);
     }
 
@@ -94,6 +128,25 @@ public sealed class NaturalVoiceEngine : IDisposable
             throw new ArgumentException("Phoneme sequence must contain at least one token.", nameof(phonemeIds));
         }
 
+        try
+        {
+            return RunInference(phonemeIds, options, cancellationToken);
+        }
+        catch (Exception ex) when (
+            ex is not OperationCanceledException and
+            not NaturalVoiceException and
+            not ArgumentException)
+        {
+            throw new SpeechSynthesisException(
+                $"Synthesis failed for voice '{Voice.DisplayName}'.", ex);
+        }
+    }
+
+    private CodecTokens RunInference(
+        IReadOnlyList<int> phonemeIds,
+        SynthesisOptions options,
+        CancellationToken cancellationToken)
+    {
         var tokens = phonemeIds.ToArray();
         var encoderInput = new DenseTensor<int>(tokens, new[] { 1, tokens.Length });
 
@@ -208,8 +261,16 @@ public sealed class NaturalVoiceEngine : IDisposable
 
     public void Dispose()
     {
-        _encoder.Dispose();
-        _decoder.Dispose();
+        if (_disposed) return;
+        _disposed = true;
+        try
+        {
+            _decoder.Dispose();
+        }
+        finally
+        {
+            _encoder.Dispose();
+        }
     }
 }
 
