@@ -106,7 +106,7 @@ public sealed class Vocoder : IDisposable
         return new WaveformResult(wave, NativeSampleRate);
     }
 
-    private static long[] ToChannelMajor(long[] interleaved)
+    internal static long[] ToChannelMajor(long[] interleaved)
     {
         var steps = interleaved.Length / 2;
         var result = new long[interleaved.Length];
@@ -118,7 +118,7 @@ public sealed class Vocoder : IDisposable
         return result;
     }
 
-    private static void Normalize(float[] samples, float peak)
+    internal static void Normalize(float[] samples, float peak)
     {
         var max = 0f;
         for (var i = 0; i < samples.Length; i++)
