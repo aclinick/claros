@@ -8,10 +8,17 @@ namespace WindowsNaturalVoices;
 /// Runs the Windows SAPI text preprocessor over a string and returns a phoneme
 /// id sequence ready for <see cref="NaturalVoiceEngine.SynthesizeAsync"/>.
 ///
-/// Windows Natural Voices and Azure Speech share the same
-/// <c>MSTTSLoc_OneCore.dll</c> frontend. SAPI's <c>PhonemeReached</c> event
-/// exposes that frontend's IPA output for free and entirely offline, so no
-/// separate grapheme-to-phoneme engine is required for supported locales.
+/// This is a best-effort <em>approximation</em> of the neural voices' real text
+/// frontend, not the frontend itself. The Natural voices are driven on-device by
+/// the Azure Embedded Speech runtime shipped in Windows; the highest-fidelity
+/// path is to reuse that frontend directly (see the front-end plan in
+/// <c>docs/ROADMAP.md</c>). The Natural voices appear to be driven on-device by
+/// the Azure Embedded Speech runtime shipped in Windows (a community-observed
+/// finding, not officially documented). Until that seam exists, this class scrapes the SAPI
+/// frontend's IPA output from <c>PhonemeReached</c> and maps it to the acoustic
+/// model's ARPABET keys — usable for supported locales, but lossy: symbols the
+/// map does not recognize are dropped, and lexical stress is re-derived
+/// heuristically.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class SapiPhonemizer : IDisposable

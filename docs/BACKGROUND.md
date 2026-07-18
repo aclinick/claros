@@ -20,11 +20,14 @@ Aria, Jenny, and friends), running fully locally on the CPU.
 
 ## They sound like the cloud
 
-Because the on-device models share lineage — and the same
-`MSTTSLoc_OneCore.dll` text frontend — with Azure Speech, the local output is
-perceptually very close to the cloud neural voices. You get near-cloud quality
-with **no network round trip, no per-character billing, and no data leaving the
-device**.
+Because the on-device models share lineage with Azure Speech — the same voice
+families (Ava, Aria, Jenny, and friends), and on-device they are hosted by the
+**Azure Embedded Speech runtime**, the offline-capable sibling of the same
+Cognitive Services Speech technology — the local output is perceptually very
+close to the cloud neural voices. (That the on-device host is Embedded Speech is
+a community-observed finding, not officially documented.) You get near-cloud
+quality with **no network round trip, no per-character billing, and no data
+leaving the device**.
 
 ## But there is no API to reach them
 
@@ -65,9 +68,11 @@ The whole surface a supported API needs is already implied by this repo:
 - **Loading + inference** — an official entry point that returns the acoustic
   model and vocoder without needing to skip a plaintext header or rewrite custom
   ops (see `NaturalVoiceEngine` / `Vocoder`).
-- **A reusable text frontend** — the `MSTTSLoc_OneCore.dll` G2P surfaced
-  directly instead of scraped through SAPI's `PhonemeReached` event (see
-  `SapiPhonemizer`).
+- **A reusable text frontend** — the on-device neural G2P frontend (hosted by
+  the Azure Embedded Speech runtime that already ships in Windows) surfaced
+  directly, returning the exact phone-id sequence and prosody it computes,
+  instead of scraped through SAPI's `PhonemeReached` event (see `SapiPhonemizer`
+  and the front-end plan in `docs/ROADMAP.md`).
 
 Everything above is done here with public NuGet packages and no reverse
 engineering of protected content. A first-party version would simply not require

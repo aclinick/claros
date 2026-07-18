@@ -18,16 +18,70 @@ packaging improvements — and, above all, the case for a first-party API.
 
 ## Next (quality and ergonomics)
 
-- **Prosody / stress.** SAPI's `Emphasis` field stays at zero for Zira, so
-  stressed content words currently get the same weight as function words.
-  Recover stress from the frontend or a lexicon so emphasis lands correctly.
+- **A pluggable text front end (`ITextFrontend`).** The single highest-leverage
+  change. Today's `SapiPhonemizer` is hard-wired into the pipeline; extracting an
+  `ITextFrontend` seam lets the real Microsoft frontend (see below) drop in as the
+  flagship implementation, keeps SAPI as a fallback, and preserves a
+  bring-your-own-phonemes path. Everything below hangs off this seam.
+- **Fail loud, never drop silently.** The current path silently discards IPA it
+  cannot map and table keys it cannot resolve, so valid text can become garbled
+  or near-empty audio while synthesis still "succeeds." Return a structured
+  phonemization result (ids, unknown symbols, unresolved keys, coverage %), make
+  the default policy strict, and offer an explicit warn-and-continue mode.
+- **Real stress instead of a heuristic.** `PhonemeReachedEventArgs.Emphasis`
+  already carries the frontend's `SPVFEATURE_STRESSED` bit; use it instead of the
+  `atWordStart` guess (which stresses only a word-initial vowel and never fires
+  for consonant-initial words).
+- **Locale-correct frontend selection.** `NaturalVoiceSpeaker` currently drives
+  en-US Zira regardless of the target voice's locale, then relabels its phones —
+  wrong pronunciation for non-English voices. Select a SAPI voice whose culture
+  matches, and fail loudly when none exists.
 - **Sample-rate handling.** Make the 26 kHz→24 kHz re-pitch an explicit,
-  documented option (e.g. proper resampling) instead of a header rewrap.
-- **Locale coverage.** Verify the IPA→ARPABET map beyond en-US and add mappings
-  for additional SAPI locales; document the direct-phoneme-id path for locales
-  SAPI cannot handle.
-- **Error surfaces.** Clear, typed exceptions when a voice package is missing
-  expected files or when no voices are installed.
+  documented option (proper resampling) instead of a header rewrap.
+
+## The front end — reuse Microsoft's, don't reinvent it
+
+Research (2026-07) found strong evidence that the on-device Windows Natural
+voices are hosted by the **Azure Embedded Speech runtime that already ships in
+Windows** (`Microsoft.CognitiveServices.Speech.extension.embedded.tts.dll` under
+`SystemApps`), and that the installed `MicrosoftWindows.Voice.*` package can be
+driven **offline** via `EmbeddedSpeechConfig.FromPath` — demonstrated by the
+community `NaturalVoiceSAPIAdapter` project (a community-observed finding, not
+official Microsoft documentation). If so, Microsoft's exact text frontend
+(lexicon, neural letter-to-sound, polyphony tagger, phone converter, prosody) is
+already on the machine; our hand-built IPA→ARPABET map is a lossy
+re-implementation of something we already have.
+
+The target end state, best → most pragmatic:
+
+1. **Gold — capture the real frontend's exact phone stream.** Host the installed
+   voice through Embedded Speech and capture the exact phone-id sequence it feeds
+   the acoustic model: either the frontend metadata (`VoiceSetting.TtsPhonemeEvents`
+   / the `"phones":[{"id","pron"}]` payload) or by hooking the integer tensor
+   entering `hd_am_v5_encoder`, reversing it through `hd_phones.txt`. This is
+   **bit-exact by construction**, needs no IPA round trip, no stress guessing, no
+   coverage gaps, and generalizes to every locale. It relies on undocumented
+   interfaces — acceptable here because this is an internal reference POC — and is
+   the strongest possible argument for a first-party API. Needs a real installed
+   voice + native interop, so it lands behind the `ITextFrontend` seam as a
+   research spike.
+2. **Clean fallback — native SAPI phone ids.** Drive `ISpVoice` with a custom
+   `ISpTTSEngineSite` and read raw `SPEI_PHONEME` events (`SPPHONEID` + duration +
+   `SPVFEATURE_STRESSED`) before `System.Speech` converts them to IPA. en-US phone
+   ids 10–49 map almost 1:1 to our ARPABET keys. Fully documented SAPI COM.
+3. **Reference data.** Replace the ad-hoc IPA map with Microsoft's own tables —
+   the MIT-licensed `System.Speech` `AlphabetConverter`/UPS resources and Azure's
+   published SAPI/IPA/UPS phonetic sets — as an authoritative, offline map.
+4. **PLS lexicons.** Ship/point to W3C PLS lexicons (`AddLexicon`) to fix names,
+   abbreviations, and known OOV words offline.
+
+`Windows.Media.SpeechSynthesis` (WinRT) is **not** a candidate: it exposes only
+word/sentence boundaries, no sub-word phoneme metadata.
+
+To track progress, build a **front-end quality harness**: phoneme coverage per
+installed voice, phoneme/stress error rate against a reference lexicon, and a
+per-locale table-resolution matrix, gating a locale from the convenience facade
+until it clears a threshold.
 
 ## Later (bigger bets)
 
@@ -35,8 +89,10 @@ packaging improvements — and, above all, the case for a first-party API.
   synthesis is one-shot per phrase. Reimplement the `Streaming*` operator family
   with its state buffer, or integrate a permissive streaming vocoder
   (e.g. HiFi-GAN), to enable low-latency streaming output.
-- **Non-SAPI G2P option.** Offer a pluggable G2P (piper, espeak-ng, misaki) for
-  environments without the SAPI frontend or for full control over phonemization.
+- **Non-Microsoft G2P fallback.** For environments without any usable Windows
+  frontend, offer a pluggable open G2P (piper, espeak-ng, misaki) behind the same
+  `ITextFrontend` seam. Lower fidelity than Microsoft's own frontend, so this is a
+  portability escape hatch, not the primary path.
 - **Platform coverage.** Explore whether the same models can be driven outside
   the packaged-app WinRT constraints, and on Windows on ARM.
 - **NuGet packaging.** Ship `0.1.0` once the API stabilizes (currently consumed
@@ -45,16 +101,18 @@ packaging improvements — and, above all, the case for a first-party API.
 ## The north star — a first-party API
 
 The primary goal of this project is to **show Microsoft how they should ship
-this**. Everything here is done with public NuGet packages and no reverse
-engineering of protected content; the header-skipping and op-rewriting shims
-exist only because there is no supported entry point. A first-party API would:
+this**. The pipeline is built on public NuGet packages; the header-skipping and
+op-rewriting shims exist only because there is no supported entry point, and the
+best possible text front end (see above) would drive Microsoft's own on-device
+Embedded Speech frontend directly. A first-party API would:
 
 - project the `com.microsoft.voice.model.1` catalog with change notifications,
 - expose voice metadata as a supported type,
 - provide an official load + inference entry point (no header skipping, no op
   rewriting), and
-- surface the `MSTTSLoc_OneCore.dll` text frontend directly rather than through
-  SAPI's `PhonemeReached` event.
+- expose the on-device neural text frontend directly — the exact phone-id
+  sequence and prosody it already computes — instead of forcing callers to scrape
+  SAPI's `PhonemeReached` event or reverse-engineer the Embedded Speech runtime.
 
 If Windows ships that surface, most of this library becomes unnecessary — which
 is exactly the point.
