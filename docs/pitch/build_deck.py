@@ -156,8 +156,9 @@ para(tb.text_frame, "Local AI on Windows:", 44, WHITE, bold=True, font=FONT_SB,
 para(tb.text_frame, "the advantage that's locked away", 44, TEAL, bold=True,
      font=FONT_SB, space_after=14)
 para(tb.text_frame,
-     "Mac shipped on-device intelligence to developers years ago. Windows has the "
-     "hardware and the on-device HD voices, but no public API. Here's the proof, "
+     "Local AI unlocks a new class of experiences: offline, private, instant, and "
+     "free. Windows already ships the on-device HD voices and the hardware to run "
+     "them. The one thing missing is the public API to build on. Here's the proof, "
      "and the ask.",
      20, SKY, font=FONT_L, space_after=0)
 tb2 = box(s, Inches(0.8), Inches(4.95), Inches(11.9), Inches(1.4))
@@ -173,27 +174,28 @@ divider(prs, "Why",
         "Local AI models unlock scenarios cloud can't: offline, private, free, "
         "instant. The capability already ships on Windows. Access does not.")
 
-# ================================================================ 3 - WHY: Mac has it
+# ================================================================ 3 - WHY: Mac proves it, Windows can go further
 s = blank(prs)
 rect(s, 0, 0, SW, SH, LIGHT)
-title_block(s, "Why \u00b7 the gap", "Mac has shipped this to developers for years", TEAL)
+title_block(s, "Why \u00b7 the opportunity", "Mac proves the model; Windows can take it further", TEAL)
 two_cards(
     s,
-    ("APPLE \u00b7 today", TEAL, [
-        "On-device speech (SpeechAnalyzer) and on-device neural TTS.",
-        "Apple Foundation Models run on the ANE, exposed to third-party apps.",
-        "Local-first AI apps ship on Mac & iPhone right now.",
+    ("APPLE \u00b7 proven, but capped", TEAL, [
+        "On-device speech and neural TTS already ship to third-party apps.",
+        "It proves local-first AI is real, shipped, and wanted by developers.",
+        "But there is no cloud to graduate to: Apple cannot scale you past the device.",
     ]),
-    ("WINDOWS \u00b7 today", GREY, [
-        "On-device Natural (HD) voices + local models already on the machine.",
-        "They run on the CPU (no special NPU), so nearly every modern PC qualifies.",
-        "But no public API exists, so the capability is locked to first-party features.",
+    ("WINDOWS + AZURE \u00b7 the bigger story", BLUE, [
+        "The same on-device HD voices are already on the machine, free and offline.",
+        "One API can scale from local to Azure with your credentials, no rewrite.",
+        "First-party reach (Edge, Office, Teams, PowerPoint, Clipchamp) no rival matches.",
     ]),
 )
 tb = box(s, Inches(0.72), Inches(6.0), Inches(11.9), Inches(0.7))
 para(tb.text_frame,
-     "Comparable on-device capability, running on ordinary hardware. The difference "
-     "is access, and access is what innovation is built on.",
+     "Mac already has almost the equivalent on-device. Only Microsoft can pair it "
+     "with Azure and its own product suite, turning a proven idea into a platform "
+     "advantage.",
      16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 3)
 

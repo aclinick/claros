@@ -1,8 +1,9 @@
 # Local AI on Windows: the advantage that's locked away
 
-**Mac shipped on-device intelligence to developers years ago. Windows has the
-hardware and the on-device HD voices, but no public API to build on them. This
-is the proof, and the ask.**
+**Local AI unlocks a new class of experiences: offline, private, instant, and
+free. Windows already ships the on-device HD voices and the hardware to run them.
+The one thing missing is the public API to build on. This is the proof, and the
+ask.**
 
 > A working reference implementation on top of Windows' on-device Natural (HD)
 > voices, built to show Microsoft the public API it should ship. One API,
@@ -19,18 +20,24 @@ Local AI models unlock scenarios the cloud can't: **offline, private, free,
 instant.** On Windows the capability already ships on the box. The *access* does
 not.
 
-### Mac has shipped this to developers for years
+### Mac proves the model; Windows can take it further
 
-- **Apple** exposes on-device speech (SpeechAnalyzer), on-device neural TTS, and
-  Apple Foundation Models running on the ANE, to third-party apps. Local-first
-  AI apps ship on Mac and iPhone today.
-- **Windows** already carries on-device Natural (HD) voices and local models,
-  and the voices run on the **CPU of virtually any modern PC** (no special NPU
-  required). But there's **no public API**, so the capability is locked to
-  first-party features.
+Apple has shipped on-device intelligence to developers for years, so local-first
+AI is proven, real, and wanted. Windows already has almost the equivalent on the
+box. The opportunity is to go further than Mac can.
 
-Comparable on-device capability, running on **ordinary hardware** (no NPU needed).
-**The difference is access, and access is what innovation is built on.**
+- **Apple (proven, but capped):** exposes on-device speech (SpeechAnalyzer),
+  on-device neural TTS, and Apple Foundation Models running on the ANE to
+  third-party apps. It proves the model, but there's no cloud to graduate to, so
+  Apple can't scale you past the device.
+- **Windows + Azure (the bigger story):** the same on-device Natural (HD) voices
+  are already on the machine, free and offline, and they run on the **CPU of
+  virtually any modern PC** (no special NPU required). One API can then scale from
+  local to Azure with your credentials, no rewrite. First-party reach across Edge,
+  Office, Teams, PowerPoint, and Clipchamp is something no rival can match.
+
+Mac already has almost the equivalent on-device. Only Microsoft can pair it with
+Azure and its own product suite, turning a proven idea into a platform advantage.
 
 ### The voice is already on the device
 
