@@ -6,3 +6,9 @@ artifacts/
 *.nupkg
 *.snupkg
 hello*.wav
+*.wav
+
+# Session throwaway spike and forced-HD voice package copies
+spike-embedded/
+voicepkg-*/
+

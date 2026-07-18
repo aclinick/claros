@@ -12,6 +12,11 @@ packaging improvements — and, above all, the case for a first-party API.
 - Acoustic model load + autoregressive decode → codec tokens.
 - Vocoder load via streaming-op rewrite → mono PCM at 26 kHz.
 - Offline G2P through the shipped SAPI frontend for supported locales.
+- **Flagship `EmbeddedVoiceSpeaker`** — drives the installed voice through
+  Microsoft's own on-device Azure Embedded Speech runtime, fully offline, with
+  the high-fidelity HD acoustic model forced on for every utterance (see the
+  front-end section). This is Microsoft's exact frontend + engine, so cadence,
+  punctuation, and pronunciation match the OS itself.
 - One-call `NaturalVoiceSpeaker` facade and a runnable Demo.
 - Unit-tested pure-logic core (extraction, op-rewrite, phoneme table, IPA map,
   Tokens.xml, WAV, vocoder helpers).
@@ -41,18 +46,37 @@ packaging improvements — and, above all, the case for a first-party API.
 
 ## The front end — reuse Microsoft's, don't reinvent it
 
-Research (2026-07) found strong evidence that the on-device Windows Natural
-voices are hosted by the **Azure Embedded Speech runtime that already ships in
-Windows** (`Microsoft.CognitiveServices.Speech.extension.embedded.tts.dll` under
-`SystemApps`), and that the installed `MicrosoftWindows.Voice.*` package can be
-driven **offline** via `EmbeddedSpeechConfig.FromPath` — demonstrated by the
-community `NaturalVoiceSAPIAdapter` project (a community-observed finding, not
-official Microsoft documentation). If so, Microsoft's exact text frontend
-(lexicon, neural letter-to-sound, polyphony tagger, phone converter, prosody) is
-already on the machine; our hand-built IPA→ARPABET map is a lossy
-re-implementation of something we already have.
+**Confirmed and shipped (2026-07):** the on-device Windows Natural voices are
+hosted by the **Azure Embedded Speech runtime that ships in Windows**
+(`Microsoft.CognitiveServices.Speech.extension.embedded.tts.dll` under
+`SystemApps`), and the installed `MicrosoftWindows.Voice.*` package runs
+**fully offline** via `EmbeddedSpeechConfig.FromPath`. `EmbeddedVoiceSpeaker`
+does exactly this end-to-end, so Microsoft's exact text frontend (lexicon,
+neural letter-to-sound, polyphony tagger, phone converter, prosody) and acoustic
+engine produce the audio — no lossy IPA→ARPABET re-implementation required.
 
-The target end state, best → most pragmatic:
+**The HD-gating trap (the headline finding).** Each HD voice package ships two
+acoustic tiers and gates them from a legacy `1033.INI`
+(`[Pipeline] HDVoiceThreshold`, default 10). Short utterances render through a
+tiny low-fidelity **device vocoder** (~2.5 MB) that sounds like a caricature;
+only long inputs (empirically ~17–26 words and up) cross the threshold and use
+the ~127 MB HD model. So for the short phrases users hear most — UI prompts,
+Narrator snippets, chat replies — the shipped default *never* engages the HD
+model the user downloaded. There is **no public runtime override**: the config
+property bag accepts `Pipeline.HDVoiceThreshold` and round-trips it, but the
+engine only reads the value from the package INI at `FromPath` time and ignores
+the property. `EmbeddedVoiceSpeaker` therefore forces HD by materializing a
+writable **overlay** of the package (symlinks for the multi-hundred-megabyte
+models, plus a patched INI with `HDVoiceThreshold=0`), falling back to a copy
+when symlink privilege is unavailable. Two hack-free alternatives were validated
+but sound worse or need native interop: **pad-and-trim** (pad past the threshold,
+then trim the padding audio via word-boundary timestamps — zero disk, but the
+padding's prosody bleeds in) and an **in-memory INI read hook**. That this
+requires an overlay at all is itself the argument: a first-party API should
+simply expose an HD/quality switch.
+
+The remaining target end state for the *transparent, license-free* path
+(raw ONNX + a text frontend), best → most pragmatic:
 
 1. **Gold — capture the real frontend's exact phone stream.** Host the installed
    voice through Embedded Speech and capture the exact phone-id sequence it feeds
@@ -112,7 +136,11 @@ Embedded Speech frontend directly. A first-party API would:
   rewriting), and
 - expose the on-device neural text frontend directly — the exact phone-id
   sequence and prosody it already computes — instead of forcing callers to scrape
-  SAPI's `PhonemeReached` event or reverse-engineer the Embedded Speech runtime.
+  SAPI's `PhonemeReached` event or reverse-engineer the Embedded Speech runtime,
+  and
+- expose a supported **quality/HD switch** so callers can opt every utterance
+  into the HD acoustic model, instead of the current length-gated `1033.INI`
+  threshold that can only be changed by overlaying a patched package.
 
 If Windows ships that surface, most of this library becomes unnecessary — which
 is exactly the point.
