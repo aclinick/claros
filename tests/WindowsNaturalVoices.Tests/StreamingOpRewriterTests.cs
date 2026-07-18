@@ -119,4 +119,42 @@ public class StreamingOpRewriterTests
         Assert.Equal(0, count);
         Assert.Equal("Relu", result.Graph.Node[0].OpType);
     }
+
+    [Fact]
+    public void Rewrite_ThrowsForUnsupportedCustomOperator()
+    {
+        var model = new ModelProto { IrVersion = 7 };
+        model.OpsetImport.Add(new OperatorSetIdProto { Domain = "test.customop", Version = 1 });
+        var graph = new GraphProto { Name = "g" };
+        var mystery = new NodeProto { OpType = "StreamingMystery", Domain = "test.customop" };
+        mystery.Input.Add("x");
+        mystery.Output.Add("y");
+        graph.Node.Add(mystery);
+        model.Graph = graph;
+        var bytes = model.ToByteArray();
+
+        Assert.Throws<VoicePackageFormatException>(() => StreamingOpRewriter.Rewrite(bytes, out _));
+    }
+
+    [Fact]
+    public void Rewrite_LeavesStandardOpSharingACustomNameUntouched()
+    {
+        // A real "Add" in the default domain must not be rewritten or counted
+        // just because "StreamingAdd" maps to "Add".
+        var model = new ModelProto { IrVersion = 7 };
+        model.OpsetImport.Add(new OperatorSetIdProto { Domain = string.Empty, Version = 13 });
+        var graph = new GraphProto { Name = "g" };
+        var add = new NodeProto { OpType = "Add", Domain = string.Empty };
+        add.Input.Add("a");
+        add.Input.Add("b");
+        add.Output.Add("c");
+        graph.Node.Add(add);
+        model.Graph = graph;
+
+        var result = RewriteRoundTrip(model, out var count);
+
+        Assert.Equal(0, count);
+        Assert.Equal("Add", result.Graph.Node[0].OpType);
+        Assert.Equal(new[] { "a", "b" }, result.Graph.Node[0].Input);
+    }
 }

@@ -77,5 +77,39 @@ public class ModelExtractorTests
         using var dst = TempFile.Create(".onnx");
 
         Assert.Throws<InvalidDataException>(() => ModelExtractor.ExtractOnnxToFile(src.Path, dst.Path));
+        Assert.False(File.Exists(dst.Path), "No partial ONNX file should be left behind on failure.");
+    }
+
+    [Fact]
+    public void ExtractOnnx_SkipsFalsePositivePattern_AndReturnsRealModel()
+    {
+        // A byte run that trips the 0x08 <ir> 0x12 heuristic but is not a
+        // parseable ModelProto (its field-2 length claims far more bytes than
+        // exist). The scanner must reject it and keep looking.
+        var header = Encoding.ASCII.GetBytes(new string('L', 32));
+        var falsePositive = new byte[] { 0x08, 0x02, 0x12, 0xFF, 0xFF, 0xFF, 0xFF, 0x0F, 0xFF, 0xFF };
+        var realOnnx = new byte[] { 0x08, 0x07, 0x12, 0x02, 0x67, 0x00 };
+
+        var all = new byte[header.Length + falsePositive.Length + realOnnx.Length];
+        Buffer.BlockCopy(header, 0, all, 0, header.Length);
+        Buffer.BlockCopy(falsePositive, 0, all, header.Length, falsePositive.Length);
+        Buffer.BlockCopy(realOnnx, 0, all, header.Length + falsePositive.Length, realOnnx.Length);
+
+        using var file = TempFile.WithBytes(all, ".bin");
+
+        var extracted = ModelExtractor.ExtractOnnx(file.Path);
+
+        Assert.Equal(realOnnx, extracted);
+    }
+
+    [Fact]
+    public void ExtractOnnx_ThrowsWhenOnlyUnparseableCandidatesExist()
+    {
+        var header = Enumerable.Repeat((byte)0x4C, 32).ToArray();
+        var falsePositive = new byte[] { 0x08, 0x02, 0x12, 0xFF, 0xFF, 0xFF, 0xFF, 0x0F, 0xFF, 0xFF };
+        var all = header.Concat(falsePositive).ToArray();
+        using var file = TempFile.WithBytes(all, ".bin");
+
+        Assert.Throws<InvalidDataException>(() => ModelExtractor.ExtractOnnx(file.Path));
     }
 }

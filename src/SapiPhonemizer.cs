@@ -17,6 +17,7 @@ namespace WindowsNaturalVoices;
 public sealed class SapiPhonemizer : IDisposable
 {
     private readonly SpeechSynthesizer _synth;
+    private bool _disposed;
 
     /// <summary>The SAPI voice used to drive the preprocessor.</summary>
     public string VoiceName { get; }
@@ -104,5 +105,10 @@ public sealed class SapiPhonemizer : IDisposable
         return ids;
     }
 
-    public void Dispose() => _synth.Dispose();
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _synth.Dispose();
+    }
 }
