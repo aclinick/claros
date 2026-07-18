@@ -450,8 +450,9 @@ rect(s, Inches(0.72), Inches(5.35), Inches(11.9), Inches(1.05), CARD)
 tb = box(s, Inches(1.02), Inches(5.55), Inches(11.3), Inches(0.75))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
-     "Local is the free on-ramp; Azure is the upsell. Apple has no cloud to graduate to; "
-     "Windows + Azure is a funnel only Microsoft can offer.",
+     "Local is the free on-ramp; Azure is the paid upsell. Apple stops at the "
+     "device, with no cloud to graduate to. Windows plus Azure plus Microsoft's "
+     "own apps is a funnel no competitor can match.",
      16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 14)
 

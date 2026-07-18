@@ -173,8 +173,9 @@ from shipping on the capability. That's what a public API removes.
 | Runs on the installed Natural HD voice | Batch, streaming, cross-device workloads |
 | No key, no bill, nothing leaves the device | Same code path; credentials switch the backend |
 
-**Local is the free on-ramp; Azure is the upsell.** Apple has no cloud to
-graduate to; Windows + Azure is a funnel only Microsoft can offer.
+**Local is the free on-ramp; Azure is the paid upsell.** Apple stops at the
+device, with no cloud to graduate to. Windows plus Azure plus Microsoft's own
+apps is a funnel no competitor can match.
 
 ### The ask to Microsoft
 
