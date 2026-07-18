@@ -7,7 +7,7 @@ aligned to the subtitle timings**, using the flagship, fully-offline
 Because the narration follows the cue timestamps, you can drive the talkover for
 a video entirely from its subtitles: **edit the subtitle text or timings, re-run,
 and drop the WAV back onto the video** as an audio track. Reword a line, nudge a
-timestamp, regenerate — no re-recording.
+timestamp, regenerate - no re-recording.
 
 ## Language-aware voices
 
@@ -16,8 +16,8 @@ Windows on-device Natural voices are **locale-specific** (each voice has a singl
 French subtitle narrates in an installed French voice. The target locale is
 resolved in priority order:
 
-1. `--voice <name>` — an explicit voice display-name substring (wins over locale).
-2. `--lang <locale>` — e.g. `fr-FR` or `fr`.
+1. `--voice <name>` - an explicit voice display-name substring (wins over locale).
+2. `--lang <locale>` - e.g. `fr-FR` or `fr`.
 3. The file name, using the `name.<lang>.ext` convention (`movie.fr-FR.srt`).
 4. Otherwise the first installed voice.
 
@@ -47,7 +47,7 @@ to override it.
 
 | Flag | Meaning | Default |
 | --- | --- | --- |
-| `<file>` | Subtitle file, `.srt` or `.vtt` (required). | — |
+| `<file>` | Subtitle file, `.srt` or `.vtt` (required). | - |
 | `--out` | Output WAV path. | input name with `.wav` |
 | `--lang` | Target locale (`fr-FR` or `fr`); overrides file-name inference. | inferred |
 | `--voice` | Substring of the Natural voice display name; overrides `--lang`. | by locale |
@@ -61,6 +61,6 @@ sample rate (24 kHz). This keeps speech aligned to the video.
 
 A synthesized line can be longer than its cue window; when that happens the tool
 prints an `overruns next cue` note and the overlapping audio is mixed together.
-To fix an overrun, shorten the line or widen the gap in the subtitle file — the
+To fix an overrun, shorten the line or widen the gap in the subtitle file - the
 same edit-and-regenerate loop. This sample does not time-stretch audio to force a
 line into its exact window.
