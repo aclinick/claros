@@ -39,7 +39,8 @@ var waveform = await speaker.SpeakAsync("The quick brown fox, jumps over the laz
 WaveFile.WriteMono16("hello.wav", waveform.Samples, waveform.SampleRate);
 ```
 
-See [`samples/Demo`](samples/Demo) for a runnable end-to-end example.
+See [`samples/`](samples) for runnable end-to-end examples (quick-start Demo,
+voice discovery, batch synthesis, and a low-level pipeline walkthrough).
 
 ## Build
 
