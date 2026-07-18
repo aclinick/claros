@@ -40,19 +40,23 @@ public sealed class EmbeddedVoiceSpeaker : IDisposable
     /// <summary>
     /// Load <paramref name="voice"/> for synthesis through the Embedded Speech
     /// runtime. <paramref name="license"/> is the Microsoft-issued license
-    /// string for the on-device models. When
-    /// <see cref="EmbeddedVoiceOptions.ForceHd"/> is set, a threshold-patched
-    /// overlay of the voice package is materialized so every utterance uses the
-    /// HD model.
+    /// string for the on-device models; when it is <c>null</c> or empty the
+    /// license notice embedded in the installed voice package is used
+    /// automatically. When <see cref="EmbeddedVoiceOptions.ForceHd"/> is set, a
+    /// threshold-patched overlay of the voice package is materialized so every
+    /// utterance uses the HD model.
     /// </summary>
     public static EmbeddedVoiceSpeaker Load(
         VoiceInfo voice,
-        string license,
+        string? license = null,
         EmbeddedVoiceOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(voice);
-        ArgumentException.ThrowIfNullOrEmpty(license);
         options ??= new EmbeddedVoiceOptions();
+
+        license = string.IsNullOrEmpty(license)
+            ? EmbeddedSpeechLicense.ResolveFromPackage(voice.InstalledPath)
+            : license;
 
         if (options.StageNativeRuntime)
         {

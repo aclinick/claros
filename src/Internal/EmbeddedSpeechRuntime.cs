@@ -70,31 +70,103 @@ internal static class EmbeddedSpeechRuntime
         return null;
     }
 
+    /// <summary>The publisher family of the UWP Visual C++ runtime framework.</summary>
+    private const string VcLibsFamilyName = "Microsoft.VCLibs.140.00_8wekyb3d8bbwe";
+
     /// <summary>
     /// Return the architecture-appropriate <c>Microsoft.VCLibs</c> directory that
     /// holds the UWP VC++ runtimes, or <c>null</c> when it cannot be found.
     /// Defaults <paramref name="architecture"/> to the current process
     /// architecture, since a mismatched runtime fails to load.
+    ///
+    /// The VCLibs framework lives under <c>WindowsApps</c>, whose contents a
+    /// standard (non-elevated) user is not permitted to enumerate. This method
+    /// therefore scans the directory when it can, and otherwise resolves the
+    /// install path through the package graph, which needs no directory listing.
     /// </summary>
     public static string? FindAppRuntimeDirectory(
         string? windowsAppsRoot = null,
         Architecture? architecture = null)
     {
-        var root = windowsAppsRoot ?? DefaultWindowsAppsRoot;
+        var arch = architecture ?? RuntimeInformation.ProcessArchitecture;
+        var archMoniker = ArchitectureMoniker(arch);
+
+        var fromDisk = ScanForVcLibs(windowsAppsRoot ?? DefaultWindowsAppsRoot, archMoniker);
+        if (fromDisk is not null) return fromDisk;
+
+        // Only fall back to the package graph for the real system location; an
+        // injected test root should stay purely filesystem based.
+        return windowsAppsRoot is null ? FindVcLibsViaPackageGraph(arch) : null;
+    }
+
+    private static string? ScanForVcLibs(string root, string archMoniker)
+    {
         if (!Directory.Exists(root)) return null;
-
-        var archMoniker = ArchitectureMoniker(architecture ?? RuntimeInformation.ProcessArchitecture);
         var pattern = $"Microsoft.VCLibs.140.00_*_{archMoniker}__*";
-
-        foreach (var dir in Directory.EnumerateDirectories(root, pattern))
+        try
         {
-            if (File.Exists(Path.Combine(dir, AppRuntimeDllNames[0])))
+            foreach (var dir in Directory.EnumerateDirectories(root, pattern))
             {
-                return dir;
+                if (File.Exists(Path.Combine(dir, AppRuntimeDllNames[0])))
+                {
+                    return dir;
+                }
             }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // WindowsApps is not listable for standard users; caller falls back.
         }
         return null;
     }
+
+    private static string? FindVcLibsViaPackageGraph(Architecture architecture)
+    {
+        var wanted = ToProcessorArchitecture(architecture);
+        try
+        {
+            var manager = new Windows.Management.Deployment.PackageManager();
+            string? best = null;
+            Version? bestVersion = null;
+            foreach (var package in manager.FindPackagesForUser(string.Empty, VcLibsFamilyName))
+            {
+                if (package.Id.Architecture != wanted) continue;
+
+                string path;
+                try { path = package.InstalledPath; }
+                catch { continue; }
+
+                if (string.IsNullOrEmpty(path) ||
+                    !File.Exists(Path.Combine(path, AppRuntimeDllNames[0])))
+                {
+                    continue;
+                }
+
+                var id = package.Id.Version;
+                var version = new Version(id.Major, id.Minor, id.Build, id.Revision);
+                if (bestVersion is null || version > bestVersion)
+                {
+                    best = path;
+                    bestVersion = version;
+                }
+            }
+            return best;
+        }
+        catch (Exception ex) when (ex is not NaturalVoiceException)
+        {
+            // The package graph is unavailable (e.g. no WinRT); treat as not found.
+            return null;
+        }
+    }
+
+    private static Windows.System.ProcessorArchitecture ToProcessorArchitecture(Architecture architecture) =>
+        architecture switch
+        {
+            Architecture.X64 => Windows.System.ProcessorArchitecture.X64,
+            Architecture.X86 => Windows.System.ProcessorArchitecture.X86,
+            Architecture.Arm64 => Windows.System.ProcessorArchitecture.Arm64,
+            _ => Windows.System.ProcessorArchitecture.Unknown,
+        };
 
     /// <summary>
     /// Copy every gated extension DLL and UWP VC++ runtime into
