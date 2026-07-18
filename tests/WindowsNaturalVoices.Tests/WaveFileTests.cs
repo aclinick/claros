@@ -85,4 +85,98 @@ public class WaveFileTests
         using var file = TempFile.Create(".wav");
         Assert.Throws<ArgumentNullException>(() => WaveFile.WriteMono16(file.Path, null!, 24000));
     }
+
+    [Fact]
+    public void ReadMono16_RoundTripsWrittenSamples()
+    {
+        using var file = TempFile.Create(".wav");
+        var original = new[] { 0f, 0.5f, -0.5f, 0.25f };
+        WaveFile.WriteMono16(file.Path, original, 24000);
+
+        var (samples, sampleRate) = WaveFile.ReadMono16(File.ReadAllBytes(file.Path));
+
+        Assert.Equal(24000, sampleRate);
+        Assert.Equal(original.Length, samples.Length);
+        for (var i = 0; i < original.Length; i++)
+        {
+            Assert.True(Math.Abs(original[i] - samples[i]) < 0.001f);
+        }
+    }
+
+    [Fact]
+    public void ReadMono16_WalksExtraChunksBeforeData()
+    {
+        // The Embedded Speech runtime emits a LIST chunk before the data chunk;
+        // the reader must walk chunks rather than assume a fixed offset.
+        var wav = BuildWavWithListChunk(24000, new short[] { 100, -100, 200 });
+
+        var (samples, sampleRate) = WaveFile.ReadMono16(wav);
+
+        Assert.Equal(24000, sampleRate);
+        Assert.Equal(3, samples.Length);
+        Assert.True(Math.Abs(100 / 32768f - samples[0]) < 0.001f);
+    }
+
+    [Fact]
+    public void ReadMono16_ThrowsOnNonRiff()
+    {
+        Assert.Throws<ArgumentException>(() => WaveFile.ReadMono16(new byte[] { 1, 2, 3, 4 }));
+    }
+
+    [Fact]
+    public void ReadMono16_ThrowsOnNonPcmFormat()
+    {
+        // IEEE float (format tag 3) is 16-bit mono but must not be read as PCM.
+        var wav = BuildWav(24000, formatTag: 3, new short[] { 1, 2, 3 });
+
+        Assert.Throws<ArgumentException>(() => WaveFile.ReadMono16(wav));
+    }
+
+    [Fact]
+    public void ReadMono16_ThrowsOnNull()
+    {
+        Assert.Throws<ArgumentNullException>(() => WaveFile.ReadMono16(null!));
+    }
+
+    private static byte[] BuildWav(int sampleRate, short formatTag, short[] samples)
+    {
+        using var ms = new MemoryStream();
+        using var w = new BinaryWriter(ms);
+        var dataBytes = samples.Length * sizeof(short);
+
+        w.Write("RIFF"u8);
+        w.Write(4 + (8 + 16) + (8 + dataBytes));
+        w.Write("WAVE"u8);
+        w.Write("fmt "u8);
+        w.Write(16);
+        w.Write(formatTag); w.Write((short)1);
+        w.Write(sampleRate); w.Write(sampleRate * 2);
+        w.Write((short)2); w.Write((short)16);
+        w.Write("data"u8); w.Write(dataBytes);
+        foreach (var s in samples) w.Write(s);
+        w.Flush();
+        return ms.ToArray();
+    }
+
+    private static byte[] BuildWavWithListChunk(int sampleRate, short[] samples)
+    {
+        using var ms = new MemoryStream();
+        using var w = new BinaryWriter(ms);
+        var dataBytes = samples.Length * sizeof(short);
+        var listBytes = 8; // arbitrary padded content
+
+        w.Write("RIFF"u8);
+        w.Write(4 + (8 + 16) + (8 + listBytes) + (8 + dataBytes));
+        w.Write("WAVE"u8);
+        w.Write("fmt "u8);
+        w.Write(16);
+        w.Write((short)1); w.Write((short)1);
+        w.Write(sampleRate); w.Write(sampleRate * 2);
+        w.Write((short)2); w.Write((short)16);
+        w.Write("LIST"u8); w.Write(listBytes); w.Write(new byte[listBytes]);
+        w.Write("data"u8); w.Write(dataBytes);
+        foreach (var s in samples) w.Write(s);
+        w.Flush();
+        return ms.ToArray();
+    }
 }

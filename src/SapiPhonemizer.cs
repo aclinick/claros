@@ -9,16 +9,15 @@ namespace WindowsNaturalVoices;
 /// id sequence ready for <see cref="NaturalVoiceEngine.SynthesizeAsync"/>.
 ///
 /// This is a best-effort <em>approximation</em> of the neural voices' real text
-/// frontend, not the frontend itself. The Natural voices are driven on-device by
-/// the Azure Embedded Speech runtime shipped in Windows; the highest-fidelity
-/// path is to reuse that frontend directly (see the front-end plan in
-/// <c>docs/ROADMAP.md</c>). The Natural voices appear to be driven on-device by
-/// the Azure Embedded Speech runtime shipped in Windows (a community-observed
-/// finding, not officially documented). Until that seam exists, this class scrapes the SAPI
-/// frontend's IPA output from <c>PhonemeReached</c> and maps it to the acoustic
-/// model's ARPABET keys — usable for supported locales, but lossy: symbols the
-/// map does not recognize are dropped, and lexical stress is re-derived
-/// heuristically.
+/// frontend, not the frontend itself. The Natural voices appear to be driven
+/// on-device by the Azure Embedded Speech runtime shipped in Windows (a
+/// community-observed finding, not officially documented). The flagship
+/// <see cref="EmbeddedVoiceSpeaker"/> reuses that runtime directly for the
+/// highest fidelity; this class is the transparent, license-free fallback that
+/// scrapes the SAPI frontend's IPA output from <c>PhonemeReached</c> and maps
+/// it to the acoustic model's ARPABET keys — usable for supported locales, but
+/// lossy: symbols the map does not recognize are dropped, and lexical stress is
+/// re-derived heuristically.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class SapiPhonemizer : IDisposable
