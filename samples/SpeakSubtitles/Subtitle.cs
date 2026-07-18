@@ -7,6 +7,71 @@ namespace WindowsNaturalVoices.SpeakSubtitles;
 internal sealed record Cue(int Index, TimeSpan Start, TimeSpan End, string Text);
 
 /// <summary>
+/// A run of consecutive cues that together form one sentence. Synthesizing a
+/// whole sentence as a single utterance keeps intonation continuous, instead of
+/// the flat, clipped delivery you get when each cue fragment is spoken (and
+/// ended) on its own.
+/// </summary>
+internal sealed record CueGroup(int FirstIndex, int LastIndex, TimeSpan Start, TimeSpan End, string Text);
+
+/// <summary>
+/// Merges consecutive cues into sentence-sized utterances. A group closes when
+/// the accumulated text ends a sentence (<c>. ! ? …</c>) or when a long silent
+/// gap to the next cue implies a deliberate pause, so the narration flows as
+/// whole sentences anchored at the first cue's start time.
+/// </summary>
+internal static class SentenceGrouper
+{
+    public static IReadOnlyList<CueGroup> Group(IReadOnlyList<Cue> cues, TimeSpan maxGap)
+    {
+        var groups = new List<CueGroup>();
+        int? firstIndex = null;
+        var lastIndex = 0;
+        TimeSpan start = default;
+        var text = new System.Text.StringBuilder();
+
+        for (var i = 0; i < cues.Count; i++)
+        {
+            var cue = cues[i];
+            if (firstIndex is null)
+            {
+                firstIndex = cue.Index;
+                start = cue.Start;
+                text.Clear();
+                text.Append(cue.Text);
+            }
+            else
+            {
+                text.Append(' ').Append(cue.Text);
+            }
+            lastIndex = cue.Index;
+
+            var closesSentence = EndsSentence(text);
+            var gapBreak = i + 1 < cues.Count && cues[i + 1].Start - cue.End > maxGap;
+            if (closesSentence || gapBreak || i == cues.Count - 1)
+            {
+                groups.Add(new CueGroup(firstIndex.Value, lastIndex, start, cue.End, text.ToString()));
+                firstIndex = null;
+            }
+        }
+
+        return groups;
+    }
+
+    // Look past trailing quotes/brackets/whitespace for sentence-ending punctuation.
+    private static bool EndsSentence(System.Text.StringBuilder sb)
+    {
+        for (var i = sb.Length - 1; i >= 0; i--)
+        {
+            var c = sb[i];
+            if (c is '"' or '\'' or ')' or ']' or '”' or '’' or '»' or ' ') continue;
+            return c is '.' or '!' or '?' or '…';
+        }
+        return false;
+    }
+}
+
+/// <summary>
 /// Minimal parser for SubRip (<c>.srt</c>) and WebVTT (<c>.vtt</c>) subtitle
 /// files. Both formats are blank-line-separated blocks whose timing line carries
 /// a <c>--&gt;</c> arrow; SRT uses a comma before the milliseconds and WebVTT a

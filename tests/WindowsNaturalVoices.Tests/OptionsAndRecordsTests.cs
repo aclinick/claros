@@ -80,4 +80,25 @@ public class OptionsAndRecordsTests
     {
         Assert.Equal(26000, Vocoder.NativeSampleRate);
     }
+
+    [Fact]
+    public void SpokenWord_StoresTextOffsetAndDuration()
+    {
+        var word = new SpokenWord("hello", TimeSpan.FromSeconds(1.5), TimeSpan.FromMilliseconds(400));
+
+        Assert.Equal("hello", word.Text);
+        Assert.Equal(TimeSpan.FromSeconds(1.5), word.Offset);
+        Assert.Equal(TimeSpan.FromMilliseconds(400), word.Duration);
+    }
+
+    [Fact]
+    public void SpokenWord_RecordEqualityComparesByValue()
+    {
+        var a = new SpokenWord("world", TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(250));
+        var b = new SpokenWord("world", TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(250));
+        var different = a with { Text = "word" };
+
+        Assert.Equal(a, b);
+        Assert.NotEqual(a, different);
+    }
 }

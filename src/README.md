@@ -3,7 +3,7 @@
 A small .NET library that enables offline text-to-speech on Windows using the
 neural voice models already built into the operating system. It enumerates the
 installed Windows Natural Voices and runs their on-device acoustic model and
-vocoder via stock ONNX Runtime — no cloud service, no bundled models, and no
+vocoder via stock ONNX Runtime: no cloud service, no bundled models, and no
 separate grapheme-to-phoneme engine.
 
 ## Why this library exists

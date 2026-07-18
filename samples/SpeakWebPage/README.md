@@ -1,7 +1,7 @@
 # SpeakWebPage
 
 Fetch a web page, extract its readable text, and narrate it to a WAV file using
-the flagship, fully-offline **`EmbeddedVoiceSpeaker`** (forced HD) — Microsoft's
+the flagship, fully-offline **`EmbeddedVoiceSpeaker`** (forced HD): Microsoft's
 own on-device neural voice, no cloud call.
 
 ## Run
@@ -24,7 +24,7 @@ override the license read from the package.
 
 | Flag | Meaning | Default |
 | --- | --- | --- |
-| `<url>` | Absolute http/https page to read (required). | — |
+| `<url>` | Absolute http/https page to read (required). | None |
 | `--out` | Output WAV path. | `page.wav` |
 | `--voice` | Substring of the installed Natural voice display name. | first installed |
 | `--max` | Max characters to narrate; `0` reads the whole page. | `1200` |

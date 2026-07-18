@@ -18,6 +18,9 @@
   <Folder Name="/samples/SpeakWebPage/">
     <Project Path="samples/SpeakWebPage/WindowsNaturalVoices.SpeakWebPage.csproj" />
   </Folder>
+  <Folder Name="/samples/VideoVoiceover/">
+    <Project Path="samples/WindowsNaturalVoices.VideoVoiceover/WindowsNaturalVoices.VideoVoiceover.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/WindowsNaturalVoices.csproj" />
   </Folder>

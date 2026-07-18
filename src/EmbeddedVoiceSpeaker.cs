@@ -25,15 +25,17 @@ namespace WindowsNaturalVoices;
 [SupportedOSPlatform("windows")]
 public sealed class EmbeddedVoiceSpeaker : IDisposable
 {
+    private readonly EmbeddedSpeechConfig _config;
     private readonly SpeechSynthesizer _synth;
     private bool _disposed;
 
     /// <summary>The Natural Voice this speaker is bound to.</summary>
     public VoiceInfo Voice { get; }
 
-    private EmbeddedVoiceSpeaker(VoiceInfo voice, SpeechSynthesizer synth)
+    private EmbeddedVoiceSpeaker(VoiceInfo voice, EmbeddedSpeechConfig config, SpeechSynthesizer synth)
     {
         Voice = voice;
+        _config = config;
         _synth = synth;
     }
 
@@ -79,7 +81,7 @@ public sealed class EmbeddedVoiceSpeaker : IDisposable
             config.SetSpeechSynthesisOutputFormat(format);
             config.SetSpeechSynthesisVoice(voice.DisplayName, license);
             synth = new SpeechSynthesizer(config, (AudioConfig?)null);
-            return new EmbeddedVoiceSpeaker(voice, synth);
+            return new EmbeddedVoiceSpeaker(voice, config, synth);
         }
         catch (Exception ex) when (ex is not NaturalVoiceException)
         {
@@ -121,6 +123,63 @@ public sealed class EmbeddedVoiceSpeaker : IDisposable
 
         var (samples, sampleRate) = WaveFile.ReadMono16(result.AudioData);
         return new WaveformResult(samples, sampleRate);
+    }
+
+    /// <summary>
+    /// Synthesize <paramref name="text"/> and play it live through the default
+    /// audio output as it is produced, so narration begins immediately and
+    /// streams in real time rather than being buffered to a file first. When
+    /// <paramref name="onWord"/> is supplied it is raised for each word as the
+    /// audio for that word is synthesized; because synthesis can run ahead of
+    /// playback, treat these as synthesis-time boundaries (see
+    /// <see cref="SpokenWord.Offset"/>) rather than exact playback cues.
+    /// Cancellation stops playback in flight.
+    /// </summary>
+    public async Task SpeakToDefaultOutputAsync(
+        string text,
+        Action<SpokenWord>? onWord = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        using var audio = AudioConfig.FromDefaultSpeakerOutput();
+        using var synth = new SpeechSynthesizer(_config, audio);
+
+        void OnWord(object? sender, SpeechSynthesisWordBoundaryEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.Text)) return;
+            onWord!(new SpokenWord(
+                e.Text,
+                TimeSpan.FromTicks((long)e.AudioOffset),
+                e.Duration));
+        }
+
+        if (onWord is not null) synth.WordBoundary += OnWord;
+
+        using var registration = cancellationToken.CanBeCanceled
+            ? cancellationToken.Register(static s => ((SpeechSynthesizer)s!).StopSpeakingAsync(), synth)
+            : default;
+
+        try
+        {
+            using var result = await synth.SpeakTextAsync(text).ConfigureAwait(false);
+
+            if (result.Reason == ResultReason.Canceled)
+            {
+                var details = SpeechSynthesisCancellationDetails.FromResult(result);
+                cancellationToken.ThrowIfCancellationRequested();
+                throw new SpeechSynthesisException(
+                    $"Embedded synthesis was canceled ({details.ErrorCode}): {details.ErrorDetails}");
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        finally
+        {
+            if (onWord is not null) synth.WordBoundary -= OnWord;
+        }
     }
 
     private static string BuildOverlay(VoiceInfo voice, EmbeddedVoiceOptions options)
