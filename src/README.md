@@ -1,6 +1,10 @@
 # WindowsNaturalVoices
 
-A small .NET library that enumerates installed Windows Natural Voices and runs their on-device acoustic models via stock ONNX Runtime.
+A small .NET library that enables offline text-to-speech on Windows using the
+neural voice models already built into the operating system. It enumerates the
+installed Windows Natural Voices and runs their on-device acoustic model and
+vocoder via stock ONNX Runtime — no cloud service, no bundled models, and no
+separate grapheme-to-phoneme engine.
 
 ## Why this library exists
 
@@ -47,11 +51,13 @@ The vocoder rewrite loses streaming state, so this library synthesizes each phra
 ## Building
 
 ```
-dotnet build src\WindowsNaturalVoices\WindowsNaturalVoices.csproj
-dotnet run --project samples\WindowsNaturalVoices.Demo
+dotnet build WindowsNaturalVoices.slnx
+dotnet run --project samples\Demo\WindowsNaturalVoices.Demo.csproj
 ```
 
-Requires the Windows App SDK target framework `net10.0-windows10.0.26100.0` (or later) for the WinRT `AppExtensionCatalog` projection. ONNX Runtime 1.22 handles inference.
+Requires the .NET 10 SDK and the Windows App SDK target framework
+`net10.0-windows10.0.26100.0` (or later) for the WinRT `AppExtensionCatalog`
+projection. ONNX Runtime 1.22 handles inference.
 
 ## License and legal notes
 
