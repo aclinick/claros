@@ -4,10 +4,11 @@ namespace WindowsNaturalVoices.Internal;
 /// Maps IPA symbols (as emitted by <c>System.Speech.Synthesis.SpeechSynthesizer.PhonemeReached</c>)
 /// to the ARPABET keys used by the Natural Voice phoneme table.
 ///
-/// The Windows SAPI text preprocessor uses the same <c>MSTTSLoc_OneCore.dll</c>
-/// frontend that Microsoft's neural voices and Azure Speech share. Feeding SAPI's
-/// output through this map produces a phoneme sequence the HD acoustic model
-/// was trained on, so no separate G2P engine is required.
+/// This is a hand-built, deliberately incomplete bridge used by
+/// <see cref="SapiPhonemizer"/> as an approximation of the neural voices' real
+/// text frontend. It is lossy: unmapped symbols are dropped and stress is only
+/// approximate. The intended replacement is to reuse Microsoft's own on-device
+/// frontend directly (see the front-end plan in <c>docs/ROADMAP.md</c>).
 /// </summary>
 internal static class IpaPhonemeMap
 {

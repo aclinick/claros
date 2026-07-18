@@ -31,14 +31,33 @@ installed path used to locate the model binaries.
 
 ### SapiPhonemizer — grapheme to phoneme
 
-Drives the shipped Windows text preprocessor (`MSTTSLoc_OneCore.dll`, the same
-frontend Azure Speech uses) through
+Drives the shipped Windows text preprocessor (`MSTTSLoc_OneCore.dll`, believed to
+be closely related to the frontend Azure Speech uses, though this shared-frontend
+link is an inference, not documented) through
 `System.Speech.Synthesis.SpeechSynthesizer.PhonemeReached`, with audio output
 set to null. It captures the frontend's IPA output, maps it to the acoustic
 model's ARPABET keys with `IpaPhonemeMap`, looks the keys up in the voice's
 `PhonemeTable`, and returns a phoneme-id list bracketed by `Bos`/`Eos`. No
 separate G2P engine is needed for SAPI-supported locales; callers can supply
 phoneme ids directly for locales SAPI cannot handle.
+
+> **Known limitation — this is the weak link.** The acoustic model and vocoder
+> reproduce Microsoft's neural voices almost exactly, so overall quality is now
+> gated by this front end, not by inference. Scraping IPA out of SAPI's
+> `PhonemeReached` event and re-deriving stress heuristically (`IpaPhonemeMap`,
+> the `atWordStart` flag) is a lossy stand-in for the real neural text frontend.
+> That frontend is not missing from the machine: community reverse-engineering
+> (the `NaturalVoiceSAPIAdapter` project) shows the on-device Natural voices are
+> hosted by the **Azure Embedded Speech runtime** that ships in Windows
+> (`Microsoft.CognitiveServices.Speech.extension.embedded.tts.dll`), and the
+> installed voice package can be driven offline via `EmbeddedSpeechConfig.FromPath`.
+> (This is a community-observed finding, not official Microsoft documentation.)
+> The best end state is therefore to reuse that real frontend — capturing the exact
+> phone-id sequence it feeds this acoustic model — behind an `ITextFrontend` seam,
+> with the SAPI path as a documented fallback. See `docs/ROADMAP.md` (“The front
+> end — reuse Microsoft's, don't reinvent it”) for the ranked plan. This is
+> precisely the public surface this library exists to demonstrate Microsoft should
+> ship.
 
 ### NaturalVoiceEngine — acoustic model
 
