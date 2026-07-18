@@ -19,7 +19,13 @@ public sealed class NaturalVoiceEngine : IDisposable
     private readonly InferenceSession _decoder;
     private bool _disposed;
 
+    /// <summary>Metadata for the voice this engine was loaded from.</summary>
     public VoiceInfo Voice { get; }
+
+    /// <summary>
+    /// The phoneme table shipped with the voice package, mapping phoneme keys
+    /// (for example <c>en-us_eh1</c>) to the acoustic model's input ids.
+    /// </summary>
     public PhonemeTable Phonemes { get; }
 
     private NaturalVoiceEngine(
@@ -259,6 +265,10 @@ public sealed class NaturalVoiceEngine : IDisposable
         return (h, c);
     }
 
+    /// <summary>
+    /// Releases the encoder and decoder ONNX Runtime inference sessions. Safe
+    /// to call more than once.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;
@@ -274,11 +284,27 @@ public sealed class NaturalVoiceEngine : IDisposable
     }
 }
 
+/// <summary>
+/// Options controlling how the ONNX Runtime inference sessions are built.
+/// The same options are applied to the acoustic model's encoder and decoder
+/// sessions and to the vocoder session.
+/// </summary>
 public sealed record NaturalVoiceEngineOptions
 {
+    /// <summary>
+    /// Graph optimization level applied to the encoder, decoder, and
+    /// vocoder sessions. Defaults to
+    /// <see cref="GraphOptimizationLevel.ORT_ENABLE_BASIC"/>, which is the
+    /// safest level for the shipped model graphs.
+    /// </summary>
     public GraphOptimizationLevel GraphOptimizationLevel { get; init; } = GraphOptimizationLevel.ORT_ENABLE_BASIC;
 }
 
+/// <summary>
+/// Options controlling a single call to
+/// <see cref="NaturalVoiceEngine.SynthesizeAsync"/>: how long the
+/// autoregressive decoder may run and when its stop gate may end generation.
+/// </summary>
 public sealed record SynthesisOptions
 {
     /// <summary>Hard cap on decoder iterations to avoid runaway generation.</summary>

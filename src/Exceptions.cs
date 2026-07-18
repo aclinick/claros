@@ -22,6 +22,9 @@ public abstract class NaturalVoiceException : Exception
 /// </summary>
 public sealed class NaturalVoiceUnavailableException : NaturalVoiceException
 {
+    /// <summary>Initializes the exception with a message and optional inner exception.</summary>
+    /// <param name="message">A description of the missing voice, model file, runtime component, or license.</param>
+    /// <param name="innerException">The underlying failure, when one is available.</param>
     public NaturalVoiceUnavailableException(string message, Exception? innerException = null)
         : base(message, innerException)
     {
@@ -37,6 +40,9 @@ public sealed class NaturalVoiceUnavailableException : NaturalVoiceException
 /// </summary>
 public sealed class VoicePackageFormatException : NaturalVoiceException
 {
+    /// <summary>Initializes the exception with a message and optional inner exception.</summary>
+    /// <param name="message">A description of what could not be parsed or loaded.</param>
+    /// <param name="innerException">The underlying parse or load failure, when one is available.</param>
     public VoicePackageFormatException(string message, Exception? innerException = null)
         : base(message, innerException)
     {
@@ -50,6 +56,9 @@ public sealed class VoicePackageFormatException : NaturalVoiceException
 /// </summary>
 public sealed class SpeechSynthesisException : NaturalVoiceException
 {
+    /// <summary>Initializes the exception with a message and optional inner exception.</summary>
+    /// <param name="message">A description of the synthesis failure.</param>
+    /// <param name="innerException">The underlying ONNX Runtime, SAPI, or Embedded Speech error, when one is available.</param>
     public SpeechSynthesisException(string message, Exception? innerException = null)
         : base(message, innerException)
     {

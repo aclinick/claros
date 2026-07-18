@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dotnet/docfx/main/schemas/docfx.schema.json",
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "src",
+          "files": [ "WindowsNaturalVoices.csproj" ]
+        }
+      ],
+      "dest": "docs/api",
+      "outputFormat": "mref",
+      "namespaceLayout": "nested",
+      "memberLayout": "separatePages",
+      "enumSortOrder": "declaringOrder"
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "src": "docs",
+        "files": [ "api/**.yml", "api/index.md", "index.md", "toc.yml", "*.md" ]
+      }
+    ],
+    "output": "docs/_site",
+    "template": [ "default", "modern" ],
+    "globalMetadata": {
+      "_appName": "WindowsNaturalVoices",
+      "_appTitle": "WindowsNaturalVoices API reference",
+      "_appFooter": "WindowsNaturalVoices \u2013 offline TTS with Windows on-device Natural Voices",
+      "_enableSearch": true,
+      "_disableContribution": true
+    }
+  }
+}

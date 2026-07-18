@@ -1,0 +1,10 @@
+- name: Home
+  href: index.md
+- name: API reference
+  href: api/
+- name: Architecture
+  href: ARCHITECTURE.md
+- name: Background
+  href: BACKGROUND.md
+- name: Roadmap
+  href: ROADMAP.md

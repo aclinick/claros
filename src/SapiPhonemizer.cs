@@ -111,6 +111,10 @@ public sealed class SapiPhonemizer : IDisposable
         return ids;
     }
 
+    /// <summary>
+    /// Releases the underlying SAPI <see cref="SpeechSynthesizer"/>. Safe to
+    /// call more than once.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;

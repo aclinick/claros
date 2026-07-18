@@ -16,6 +16,7 @@ reference implementation of the public API Microsoft should ship. See
 
 ## Documentation
 
+- [`docs/API.md`](docs/API.md): the full public API reference, plus how to build and browse the DocFX site
 - [`docs/BACKGROUND.md`](docs/BACKGROUND.md): why this exists and what Microsoft should ship
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): the pipeline and key design decisions
 - [`docs/ROADMAP.md`](docs/ROADMAP.md): what works, what's next, and the definition of done

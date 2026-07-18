@@ -206,6 +206,12 @@ public sealed class EmbeddedVoiceSpeaker : IDisposable
             "The on-device HD models support 24000 Hz output; 16000 and 48000 are also selectable."),
     };
 
+    /// <summary>
+    /// Releases the underlying Embedded Speech synthesizer and its native
+    /// resources. Safe to call more than once. Do not dispose while an
+    /// utterance is still playing; let outstanding calls to
+    /// <see cref="SpeakToDefaultOutputAsync"/> complete first.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;

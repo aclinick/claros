@@ -166,6 +166,10 @@ public sealed class Vocoder : IDisposable
         }
     }
 
+    /// <summary>
+    /// Releases the ONNX Runtime inference session backing this vocoder. Safe
+    /// to call more than once.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;

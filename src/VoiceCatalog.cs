@@ -19,6 +19,12 @@ public sealed class VoiceCatalog : IDisposable
     private readonly AppExtensionCatalog _catalog;
     private bool _disposed;
 
+    /// <summary>
+    /// Opens the Windows <c>AppExtensionCatalog</c> for the neural voice model
+    /// contract (<c>com.microsoft.voice.model.1</c>) and subscribes to package
+    /// install, update, and removal events so <see cref="VoicesChanged"/> fires
+    /// when the set of installed voices changes.
+    /// </summary>
     public VoiceCatalog()
     {
         _catalog = AppExtensionCatalog.Open(ExtensionContract);
@@ -97,6 +103,10 @@ public sealed class VoiceCatalog : IDisposable
     private void OnCatalogChanged(AppExtensionCatalog sender, object args) =>
         VoicesChanged?.Invoke(this, EventArgs.Empty);
 
+    /// <summary>
+    /// Unsubscribes from the catalog's package events. Safe to call more than
+    /// once. After disposal <see cref="VoicesChanged"/> no longer fires.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;

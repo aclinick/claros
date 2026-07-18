@@ -12,3 +12,9 @@ hello*.wav
 spike-embedded/
 voicepkg-*/
 
+
+# DocFX generated site and API metadata (regenerate with: dotnet docfx docfx.json)
+docs/_site/
+api/.manifest
+docs/api/*.yml
+docs/api/.manifest

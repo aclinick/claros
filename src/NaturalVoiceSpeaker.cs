@@ -106,6 +106,10 @@ public sealed class NaturalVoiceSpeaker : IDisposable
         return _vocoder.Synthesize(tokens);
     }
 
+    /// <summary>
+    /// Releases the phonemizer, acoustic engine, and vocoder this speaker owns.
+    /// Safe to call more than once.
+    /// </summary>
     public void Dispose()
     {
         if (_disposed) return;
