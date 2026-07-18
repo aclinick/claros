@@ -12,6 +12,12 @@
   <Folder Name="/samples/LowLevelPipeline/">
     <Project Path="samples/LowLevelPipeline/WindowsNaturalVoices.LowLevelPipeline.csproj" />
   </Folder>
+  <Folder Name="/samples/SpeakSubtitles/">
+    <Project Path="samples/SpeakSubtitles/WindowsNaturalVoices.SpeakSubtitles.csproj" />
+  </Folder>
+  <Folder Name="/samples/SpeakWebPage/">
+    <Project Path="samples/SpeakWebPage/WindowsNaturalVoices.SpeakWebPage.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/WindowsNaturalVoices.csproj" />
   </Folder>
