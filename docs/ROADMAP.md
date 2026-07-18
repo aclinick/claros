@@ -2,8 +2,8 @@
 
 ttslib works end-to-end today: it enumerates installed Windows Natural Voices,
 runs their acoustic model and vocoder, and produces offline audio. Nothing
-structural is missing for basic TTS. The items below are quality, coverage, and
-packaging improvements - and, above all, the case for a first-party API.
+structural is missing for basic TTS. The items below cover quality, coverage,
+and packaging improvements and, above all, make the case for a first-party API.
 
 ## Now (works today)
 
@@ -12,7 +12,7 @@ packaging improvements - and, above all, the case for a first-party API.
 - Acoustic model load + autoregressive decode → codec tokens.
 - Vocoder load via streaming-op rewrite → mono PCM at 26 kHz.
 - Offline G2P through the shipped SAPI frontend for supported locales.
-- **Flagship `EmbeddedVoiceSpeaker`** - drives the installed voice through
+- **Flagship `EmbeddedVoiceSpeaker`**: drives the installed voice through
   Microsoft's own on-device Azure Embedded Speech runtime, fully offline, with
   the high-fidelity HD acoustic model forced on for every utterance (see the
   front-end section). This is Microsoft's exact frontend + engine, so cadence,
@@ -38,13 +38,13 @@ packaging improvements - and, above all, the case for a first-party API.
   `atWordStart` guess (which stresses only a word-initial vowel and never fires
   for consonant-initial words).
 - **Locale-correct frontend selection.** `NaturalVoiceSpeaker` currently drives
-  en-US Zira regardless of the target voice's locale, then relabels its phones -
-  wrong pronunciation for non-English voices. Select a SAPI voice whose culture
-  matches, and fail loudly when none exists.
+  en-US Zira regardless of the target voice's locale, then relabels its phones;
+  that causes wrong pronunciation for non-English voices. Select a SAPI voice
+  whose culture matches, and fail loudly when none exists.
 - **Sample-rate handling.** Make the 26 kHz→24 kHz re-pitch an explicit,
   documented option (proper resampling) instead of a header rewrap.
 
-## The front end - reuse Microsoft's, don't reinvent it
+## The front end: reuse Microsoft's, don't reinvent it
 
 **Confirmed and shipped (2026-07):** the on-device Windows Natural voices are
 hosted by the **Azure Embedded Speech runtime that ships in Windows**
@@ -53,15 +53,15 @@ hosted by the **Azure Embedded Speech runtime that ships in Windows**
 **fully offline** via `EmbeddedSpeechConfig.FromPath`. `EmbeddedVoiceSpeaker`
 does exactly this end-to-end, so Microsoft's exact text frontend (lexicon,
 neural letter-to-sound, polyphony tagger, phone converter, prosody) and acoustic
-engine produce the audio - no lossy IPA→ARPABET re-implementation required.
+engine produce the audio; no lossy IPA→ARPABET re-implementation is required.
 
 **The HD-gating trap (the headline finding).** Each HD voice package ships two
 acoustic tiers and gates them from a legacy `1033.INI`
 (`[Pipeline] HDVoiceThreshold`, default 10). Short utterances render through a
 tiny low-fidelity **device vocoder** (~2.5 MB) that sounds like a caricature;
 only long inputs (empirically ~17–26 words and up) cross the threshold and use
-the ~127 MB HD model. So for the short phrases users hear most - UI prompts,
-Narrator snippets, chat replies - the shipped default *never* engages the HD
+the ~127 MB HD model. So for the short phrases users hear most (UI prompts,
+Narrator snippets, chat replies), the shipped default *never* engages the HD
 model the user downloaded. There is **no public runtime override**: the config
 property bag accepts `Pipeline.HDVoiceThreshold` and round-trips it, but the
 engine only reads the value from the package INI at `FromPath` time and ignores
@@ -70,7 +70,7 @@ writable **overlay** of the package (symlinks for the multi-hundred-megabyte
 models, plus a patched INI with `HDVoiceThreshold=0`), falling back to a copy
 when symlink privilege is unavailable. Two hack-free alternatives were validated
 but sound worse or need native interop: **pad-and-trim** (pad past the threshold,
-then trim the padding audio via word-boundary timestamps - zero disk, but the
+then trim the padding audio via word-boundary timestamps; zero disk, but the
 padding's prosody bleeds in) and an **in-memory INI read hook**. That this
 requires an overlay at all is itself the argument: a first-party API should
 simply expose an HD/quality switch.
@@ -78,24 +78,24 @@ simply expose an HD/quality switch.
 The remaining target end state for the *transparent, license-free* path
 (raw ONNX + a text frontend), best → most pragmatic:
 
-1. **Gold - capture the real frontend's exact phone stream.** Host the installed
+1. **Gold: capture the real frontend's exact phone stream.** Host the installed
    voice through Embedded Speech and capture the exact phone-id sequence it feeds
    the acoustic model: either the frontend metadata (`VoiceSetting.TtsPhonemeEvents`
    / the `"phones":[{"id","pron"}]` payload) or by hooking the integer tensor
    entering `hd_am_v5_encoder`, reversing it through `hd_phones.txt`. This is
    **bit-exact by construction**, needs no IPA round trip, no stress guessing, no
    coverage gaps, and generalizes to every locale. It relies on undocumented
-   interfaces - acceptable here because this is an internal reference POC - and is
+   interfaces (acceptable here because this is an internal reference POC) and is
    the strongest possible argument for a first-party API. Needs a real installed
    voice + native interop, so it lands behind the `ITextFrontend` seam as a
    research spike.
-2. **Clean fallback - native SAPI phone ids.** Drive `ISpVoice` with a custom
+2. **Clean fallback: native SAPI phone ids.** Drive `ISpVoice` with a custom
    `ISpTTSEngineSite` and read raw `SPEI_PHONEME` events (`SPPHONEID` + duration +
    `SPVFEATURE_STRESSED`) before `System.Speech` converts them to IPA. en-US phone
    ids 10–49 map almost 1:1 to our ARPABET keys. Fully documented SAPI COM.
-3. **Reference data.** Replace the ad-hoc IPA map with Microsoft's own tables -
+3. **Reference data.** Replace the ad-hoc IPA map with Microsoft's own tables:
    the MIT-licensed `System.Speech` `AlphabetConverter`/UPS resources and Azure's
-   published SAPI/IPA/UPS phonetic sets - as an authoritative, offline map.
+   published SAPI/IPA/UPS phonetic sets, as an authoritative, offline map.
 4. **PLS lexicons.** Ship/point to W3C PLS lexicons (`AddLexicon`) to fix names,
    abbreviations, and known OOV words offline.
 
@@ -122,7 +122,7 @@ until it clears a threshold.
 - **NuGet packaging.** Ship `0.1.0` once the API stabilizes (currently consumed
   via `ProjectReference`/submodule).
 
-## The north star - a first-party API
+## The north star: a first-party API
 
 The primary goal of this project is to **show Microsoft how they should ship
 this**. The pipeline is built on public NuGet packages; the header-skipping and
@@ -134,15 +134,15 @@ Embedded Speech frontend directly. A first-party API would:
 - expose voice metadata as a supported type,
 - provide an official load + inference entry point (no header skipping, no op
   rewriting), and
-- expose the on-device neural text frontend directly - the exact phone-id
-  sequence and prosody it already computes - instead of forcing callers to scrape
+- expose the on-device neural text frontend directly (the exact phone-id
+  sequence and prosody it already computes) instead of forcing callers to scrape
   SAPI's `PhonemeReached` event or reverse-engineer the Embedded Speech runtime,
   and
 - expose a supported **quality/HD switch** so callers can opt every utterance
   into the HD acoustic model, instead of the current length-gated `1033.INI`
   threshold that can only be changed by overlaying a patched package.
 
-If Windows ships that surface, most of this library becomes unnecessary - which
+If Windows ships that surface, most of this library becomes unnecessary, which
 is exactly the point.
 
 ## Definition of done (per change)

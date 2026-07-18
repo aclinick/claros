@@ -157,12 +157,12 @@ para(tb.text_frame, "the advantage that's locked away", 44, TEAL, bold=True,
      font=FONT_SB, space_after=14)
 para(tb.text_frame,
      "Mac shipped on-device intelligence to developers years ago. Windows has the "
-     "hardware and the on-device HD voices - but no public API. Here's the proof, "
+     "hardware and the on-device HD voices, but no public API. Here's the proof, "
      "and the ask.",
      20, SKY, font=FONT_L, space_after=0)
 tb2 = box(s, Inches(0.8), Inches(4.95), Inches(11.9), Inches(1.4))
 para(tb2.text_frame,
-     "A working reference implementation on Windows' on-device Natural (HD) voices -",
+     "A working reference implementation on Windows' on-device Natural (HD) voices,",
      16, RGBColor(0x9F, 0xC4, 0xE7), font=FONT, first=True, space_after=2)
 para(tb2.text_frame, "built to show Microsoft the public API it should ship.",
      16, RGBColor(0x9F, 0xC4, 0xE7), bold=True, font=FONT_SB, space_after=0)
@@ -170,7 +170,7 @@ para(tb2.text_frame, "built to show Microsoft the public API it should ship.",
 # ================================================================ 2 - WHY divider
 divider(prs, "Why",
         "Windows is sitting on something groundbreaking",
-        "Local AI models unlock scenarios cloud can't - offline, private, free, "
+        "Local AI models unlock scenarios cloud can't: offline, private, free, "
         "instant. The capability already ships on Windows. Access does not.")
 
 # ================================================================ 3 - WHY: Mac has it
@@ -179,20 +179,20 @@ rect(s, 0, 0, SW, SH, LIGHT)
 title_block(s, "Why \u00b7 the gap", "Mac has shipped this to developers for years", TEAL)
 two_cards(
     s,
-    ("APPLE - today", TEAL, [
+    ("APPLE \u00b7 today", TEAL, [
         "On-device speech (SpeechAnalyzer) and on-device neural TTS.",
-        "Apple Foundation Models run on the ANE - exposed to third-party apps.",
+        "Apple Foundation Models run on the ANE, exposed to third-party apps.",
         "Local-first AI apps ship on Mac & iPhone right now.",
     ]),
-    ("WINDOWS - today", GREY, [
+    ("WINDOWS \u00b7 today", GREY, [
         "On-device Natural (HD) voices + local models already on the machine.",
-        "They run on the CPU - no special NPU - so nearly every modern PC qualifies.",
-        "But no public API - the capability is locked to first-party features.",
+        "They run on the CPU (no special NPU), so nearly every modern PC qualifies.",
+        "But no public API exists, so the capability is locked to first-party features.",
     ]),
 )
 tb = box(s, Inches(0.72), Inches(6.0), Inches(11.9), Inches(0.7))
 para(tb.text_frame,
-     "Comparable on-device capability - running on ordinary hardware. The difference "
+     "Comparable on-device capability, running on ordinary hardware. The difference "
      "is access, and access is what innovation is built on.",
      16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 3)
@@ -203,9 +203,9 @@ rect(s, 0, 0, SW, SH, WHITE)
 title_block(s, "Why \u00b7 the tech exists", "The voice is already on the device", BLUE)
 tb = box(s, Inches(0.7), Inches(2.05), Inches(11.9), Inches(2.0))
 for i, t in enumerate([
-    ("Already installed \u00b7 shared", "One system-wide model, already offline on every machine that added a voice - apps rely on Windows instead of bundling or downloading their own."),
-    ("Near-cloud quality", "Forced-HD on-device output is near-identical to Microsoft's cloud neural voices - not the old robotic local voices."),
-    ("Runs anywhere", "Synthesis is far faster than real time on an ordinary CPU - no NPU required - fast enough to generate speech live on virtually any modern PC."),
+    ("Already installed \u00b7 shared", "One system-wide model, already offline on every machine that added a voice, so apps rely on Windows instead of bundling or downloading their own."),
+    ("Near-cloud quality", "Forced-HD on-device output is near-identical to Microsoft's cloud neural voices, not the old robotic local voices."),
+    ("Runs anywhere", "Synthesis is far faster than real time on an ordinary CPU, needs no NPU, and is fast enough to generate speech live on virtually any modern PC."),
 ]):
     rect(s, Inches(0.7), Inches(2.05 + i * 1.15), Inches(0.12), Inches(0.95), BLUE)
     tbb = box(s, Inches(1.0), Inches(2.05 + i * 1.15), Inches(11.4), Inches(0.95))
@@ -216,7 +216,7 @@ tb = box(s, Inches(1.0), Inches(5.88), Inches(11.3), Inches(0.7))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
      "The capability ships on every Windows machine. The public API to enumerate, load, "
-     "and drive it does not - so no app can build on it.",
+     "and drive it does not, so no app can build on it.",
      16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 4)
 
@@ -230,12 +230,12 @@ tb = box(s, Inches(1.0), Inches(2.3), Inches(5.2), Inches(2.5))
 para(tb.text_frame, "Edge \u201cRead Aloud\u201d", 20, AMBER, bold=True, font=FONT_SB,
      first=True, space_after=8)
 para(tb.text_frame,
-     "Its natural voices stream from the CLOUD - a network round-trip and server cost "
-     "on every play - even though a same-class Natural HD voice now runs on the very "
+     "Its natural voices stream from the CLOUD (a network round-trip and server cost "
+     "on every play), even though a same-class Natural HD voice now runs on the very "
      "same device, offline.",
      16, INK, font=FONT, space_after=0)
 facts = [
-    "Needs a connection - no offline read-aloud at natural quality.",
+    "Needs a connection, with no offline read-aloud at natural quality.",
     "A privacy boundary: text leaves the device to be spoken.",
     "A recurring cloud bill for something the local device could do for free.",
     "If Microsoft's own browser can't build on the local voice, no ISV can.",
@@ -252,7 +252,7 @@ footer(s, 5)
 # ================================================================ 6 - WHAT divider
 divider(prs, "What",
         "What local voices unlock",
-        "Open the API and the same on-device voice powers new products - and fixes "
+        "Open the API and the same on-device voice powers new products, and fixes "
         "ones Microsoft already ships.", color=TEAL)
 
 # ================================================================ 7 - WHAT: flagship demo
@@ -262,7 +262,7 @@ title_block(s, "What \u00b7 flagship", "Subtitles \u2192 live, multilingual voic
 tb = box(s, Inches(0.7), Inches(1.95), Inches(11.9), Inches(1.9))
 for i, t in enumerate([
     ("Every video already ships subtitles. Turn that track into an on-device spoken voiceover, in the viewer's language, in sync with the video.", True),
-    ("Proof: \u201cZava Dental\u201d product video - English (Ava) and French (Remy), Natural HD, fully offline. Same pipeline, only the subtitle language differs.", False),
+    ("Proof: \u201cZava Dental\u201d product video, voiced in English (Ava) and French (Remy), Natural HD, fully offline. Same pipeline, only the subtitle language differs.", False),
     ("A WinUI app plays the muted video and switches voiceover language LIVE, mid-play, on the device.", False),
 ]):
     para(tb.text_frame, t[0], 17, INK if not t[1] else DEEP, bold=t[1],
@@ -271,8 +271,8 @@ rect(s, Inches(0.7), Inches(4.35), Inches(11.9), Inches(1.55), CARD)
 tb = box(s, Inches(1.0), Inches(4.55), Inches(11.3), Inches(1.2))
 para(tb.text_frame, "Honest boundary", 15, AMBER, bold=True, font=FONT_SB, first=True, space_after=4)
 para(tb.text_frame,
-     "No lip-sync, one voice per language, neutral delivery - this complements studio "
-     "dubbing, it doesn't replace it. Transformative for the vast middle: training, docs, "
+     "No lip-sync, one voice per language, neutral delivery. This complements studio "
+     "dubbing; it doesn't replace it. It's transformative for the vast middle: training, docs, "
      "demos, news, corporate comms, education, UGC, accessibility.",
      14.5, INK, font=FONT, space_after=0)
 footer(s, 7)
@@ -295,7 +295,7 @@ para(tb.text_frame,
      16, SKY, font=FONT, space_after=0)
 facts = [
     "Subtitles are ALREADY on the wire for captions \u2192 the voiceover is effectively free bandwidth.",
-    "7 languages: ~18 KB of subtitles vs ~7 MB of dub audio - vs ~812 MB of duplicate dubbed videos.",
+    "7 languages: ~18 KB of subtitles vs ~7 MB of dub audio, versus ~812 MB of duplicate dubbed videos.",
     "One asset serves BOTH captions (deaf/HoH) and spoken narration (low-vision, dyslexic, eyes-busy, learners).",
     "Instant reach into the long tail of languages no studio would fund a voice cast for.",
 ]
@@ -309,10 +309,10 @@ s = blank(prs)
 rect(s, 0, 0, SW, SH, LIGHT)
 title_block(s, "What \u00b7 fix what already ships", "The same voice, in every app", TEAL)
 tiles = [
-    ("Edge Read Aloud \u2192 local", "Same HD quality with zero cloud cost, offline, private, instant - no round-trip.", BLUE),
-    ("Teams & Office", "On-device narration, captions read aloud, accessible documents - no per-minute bill.", DEEP),
+    ("Edge Read Aloud \u2192 local", "Same HD quality with zero cloud cost, offline, private, and instant, with no round-trip.", BLUE),
+    ("Teams & Office", "On-device narration, captions read aloud, and accessible documents, with no per-minute bill.", DEEP),
     ("Clipchamp voiceover \u2192 local", "Its text-to-speech voiceover runs on Azure today; on-device HD voices cut that cloud bill to zero and work offline.", TEAL),
-    ("Accessibility tools", "Private, offline screen narration in the user's language - nothing leaves the machine.", AMBER),
+    ("Accessibility tools", "Private, offline screen narration in the user's language, so nothing leaves the machine.", AMBER),
 ]
 positions = [(0.72, 2.15), (6.86, 2.15), (0.72, 4.55), (6.86, 4.55)]
 for (tx, ty), (h, d, col) in zip(positions, tiles):
@@ -330,10 +330,10 @@ title_block(s, "What \u00b7 a new creative surface", "Make every PowerPoint a vi
 two_cards(
     s,
     ("POWERPOINT + LOCAL VOICES", TEAL, [
-        "Speaker notes become the narration script - per slide.",
+        "Speaker notes become the narration script, one per slide.",
         "Render the deck to a fully narrated MP4, on the device.",
         "One deck \u2192 many languages, no re-recording.",
-        "Offline, private, free - Azure upsell for avatars & premium.",
+        "Offline, private, and free, with an Azure upsell for avatars & premium.",
     ]),
     ("CLOUD VIDEO TOOLS (e.g. Synthesia)", GREY, [
         "Per-minute / subscription cloud cost.",
@@ -345,7 +345,7 @@ two_cards(
 )
 tb = box(s, Inches(0.72), Inches(5.95), Inches(11.9), Inches(0.8))
 para(tb.text_frame,
-     "Turn every deck into a narrated, multilingual video - built into the tool, on the "
+     "Turn every deck into a narrated, multilingual video, built into the tool and running on the "
      "device. Even this deck could narrate itself.",
      16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 10)
@@ -385,13 +385,13 @@ footer(s, 11)
 # ================================================================ 12 - HOW divider
 divider(prs, "How",
         "Make the POC real: remove the hack, ship the API",
-        "One API surface. Local-first and free by default - and the same code scales "
+        "One API surface. Local-first and free by default, and the same code scales "
         "to Azure with your creds.", color=AMBER)
 
 # ================================================================ 13 - HOW: today it's a hack
 s = blank(prs)
 rect(s, 0, 0, SW, SH, WHITE)
-title_block(s, "How \u00b7 the friction today", "It works - but only as a hack", AMBER)
+title_block(s, "How \u00b7 the friction today", "It works, but only as a hack", AMBER)
 tb = box(s, Inches(0.7), Inches(2.0), Inches(11.9), Inches(1.4))
 para(tb.text_frame,
      "To reach the on-device HD runtime with no public API, this reference "
@@ -409,7 +409,7 @@ rect(s, Inches(0.7), Inches(5.35), Inches(11.9), Inches(1.05), RGBColor(0xFB, 0x
 tb = box(s, Inches(1.0), Inches(5.55), Inches(11.3), Inches(0.75))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
-     "Unsupported and fragile - exactly the friction that stops real products from "
+     "Unsupported and fragile, exactly the friction that stops real products from "
      "shipping on the capability. That's what the API removes.",
      16, AMBER, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 13)
@@ -422,7 +422,7 @@ title_block(s, "How \u00b7 the design", "One API. Local by default. Cloud when y
 rect(s, Inches(0.72), Inches(2.05), Inches(5.75), Inches(3.0), WHITE, line=RGBColor(0xD9, 0xE4, 0xF0))
 rect(s, Inches(0.72), Inches(2.05), Inches(5.75), Inches(0.62), TEAL)
 tb = box(s, Inches(1.04), Inches(2.17), Inches(5.1), Inches(0.5))
-para(tb.text_frame, "DEFAULT - on-device", 16, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
+para(tb.text_frame, "DEFAULT: on-device", 16, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
 tb = box(s, Inches(1.04), Inches(2.9), Inches(5.1), Inches(2.0))
 for i, t in enumerate([
     "Offline, private, free, instant.",
@@ -434,12 +434,12 @@ for i, t in enumerate([
 rect(s, Inches(6.86), Inches(2.05), Inches(5.75), Inches(3.0), WHITE, line=RGBColor(0xD9, 0xE4, 0xF0))
 rect(s, Inches(6.86), Inches(2.05), Inches(5.75), Inches(0.62), BLUE)
 tb = box(s, Inches(7.18), Inches(2.17), Inches(5.1), Inches(0.5))
-para(tb.text_frame, "UPSELL - same API + your Azure creds", 16, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
+para(tb.text_frame, "UPSELL: same API + your Azure creds", 16, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
 tb = box(s, Inches(7.18), Inches(2.9), Inches(5.1), Inches(2.0))
 for i, t in enumerate([
     "More voices, more languages, server-side scale.",
     "Batch, streaming, and cross-device workloads.",
-    "Same code path - credentials switch the backend.",
+    "Same code path; credentials switch the backend.",
 ]):
     para(tb.text_frame, t, 15, INK, font=FONT, bullet=True, first=(i == 0), space_after=9)
 # arrow between
@@ -448,8 +448,8 @@ rect(s, Inches(0.72), Inches(5.35), Inches(11.9), Inches(1.05), CARD)
 tb = box(s, Inches(1.02), Inches(5.55), Inches(11.3), Inches(0.75))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
-     "Local is the free on-ramp; Azure is the upsell. Apple has no cloud to graduate to "
-     "- Windows + Azure is a funnel only Microsoft can offer.",
+     "Local is the free on-ramp; Azure is the upsell. Apple has no cloud to graduate to; "
+     "Windows + Azure is a funnel only Microsoft can offer.",
      16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 14)
 
@@ -471,7 +471,7 @@ bl = [
     "Enumerate installed Natural voices (locale, gender, package).",
     "Load a voice and synthesize offline through the on-device HD runtime.",
     "Stream synthesis live to the speaker with word-boundary events.",
-    "Same surface scales to Azure with credentials - local-first, cloud-optional.",
+    "Same surface scales to Azure with credentials, so it's local-first and cloud-optional.",
 ]
 tb = box(s, Inches(1.0), Inches(3.15), Inches(11.4), Inches(2.2))
 for i, t in enumerate(bl):
@@ -480,7 +480,7 @@ rect(s, Inches(0.7), Inches(5.65), Inches(11.9), Inches(1.05), STEEL)
 tb = box(s, Inches(1.0), Inches(5.82), Inches(11.3), Inches(0.75))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
-     "Then every app - Edge, Teams, Office, media players, accessibility tools - gets "
+     "Then every app (Edge, Teams, Office, media players, accessibility tools) gets "
      "instant, private, multilingual, on-device narration for free, with a paved road to Azure.",
      16, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
 

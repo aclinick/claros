@@ -1,8 +1,8 @@
-# ttslib - Windows Natural Voices for .NET
+# ttslib: Windows Natural Voices for .NET
 
 A .NET library for offline text-to-speech on Windows, built entirely on the neural
 voice models that ship with the operating system. It turns text into audio using
-the Natural Voices already installed on the machine - no cloud, no third-party G2P
+the Natural Voices already installed on the machine: no cloud, no third-party G2P
 engine, no vendor SDK.
 
 - Enumerates installed Natural Voices via the AppExtension catalog.
@@ -10,16 +10,16 @@ engine, no vendor SDK.
 - Uses the shipped **Windows SAPI** text preprocessor for grapheme-to-phoneme.
 
 The models already ship in Windows and sound like Microsoft's cloud voices, but
-there is no supported API to reach them. ttslib fills that gap - and doubles as a
+there is no supported API to reach them. ttslib fills that gap, and doubles as a
 reference implementation of the public API Microsoft should ship. See
 [`docs/BACKGROUND.md`](docs/BACKGROUND.md).
 
 ## Documentation
 
-- [`docs/BACKGROUND.md`](docs/BACKGROUND.md) - why this exists and what Microsoft should ship
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) - the pipeline and key design decisions
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) - what works, what's next, and the definition of done
-- [`src/README.md`](src/README.md) - the deeper technical writeup
+- [`docs/BACKGROUND.md`](docs/BACKGROUND.md): why this exists and what Microsoft should ship
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): the pipeline and key design decisions
+- [`docs/ROADMAP.md`](docs/ROADMAP.md): what works, what's next, and the definition of done
+- [`src/README.md`](src/README.md): the deeper technical writeup
 
 ## Install
 
