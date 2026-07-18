@@ -36,6 +36,11 @@ if (cues.Count == 0)
 
 Console.WriteLine($"Parsed {cues.Count} cues spanning {cues.Max(c => c.End):hh\\:mm\\:ss}.");
 
+// Speak whole sentences, not cue fragments: grouping consecutive cues keeps the
+// synthesizer's intonation continuous so the talkover doesn't sound clipped.
+var groups = SentenceGrouper.Group(cues, TimeSpan.FromSeconds(1.2));
+Console.WriteLine($"Grouped into {groups.Count} sentence utterances.");
+
 using var catalog = new VoiceCatalog();
 var voices = await catalog.ListVoicesAsync();
 if (voices.Count == 0)
@@ -60,10 +65,11 @@ Console.WriteLine($"Voice: {voice.DisplayName}  [{voice.Locale}]  ({reason})");
 
 if (opt.DryRun)
 {
-    Console.WriteLine("\nDry run — cues that would be narrated:");
-    foreach (var cue in cues)
+    Console.WriteLine("\nDry run — sentence utterances that would be narrated:");
+    foreach (var g in groups)
     {
-        Console.WriteLine($"  {cue.Start:hh\\:mm\\:ss\\.fff}  {Preview(cue.Text)}");
+        var label = g.FirstIndex == g.LastIndex ? $"[{g.FirstIndex}]" : $"[{g.FirstIndex}-{g.LastIndex}]";
+        Console.WriteLine($"  {label} {g.Start:hh\\:mm\\:ss\\.fff}  {Preview(g.Text)}");
     }
     return 0;
 }
@@ -82,23 +88,26 @@ catch (NaturalVoiceException ex)
 }
 
 int sampleRate;
-var clips = new List<(int StartSample, float[] Samples)>(cues.Count);
+var clips = new List<(int StartSample, float[] Samples)>(groups.Count);
 using (speaker)
 {
-    // Synthesize each cue and remember where it starts on the timeline.
+    // Synthesize each sentence once and remember where it starts on the timeline.
     var rate = 0;
-    for (var i = 0; i < cues.Count; i++)
+    for (var i = 0; i < groups.Count; i++)
     {
-        var cue = cues[i];
-        var wave = await speaker.SpeakAsync(cue.Text);
+        var g = groups[i];
+        var wave = await speaker.SpeakAsync(g.Text);
         rate = wave.SampleRate;
-        var startSample = (int)(cue.Start.TotalSeconds * rate);
-        clips.Add((startSample, wave.Samples));
+        var samples = wave.Samples;
+        Fade.ApplyEdges(samples, rate); // soften clip edges so mixes don't click
+        var startSample = (int)(g.Start.TotalSeconds * rate);
+        clips.Add((startSample, samples));
 
-        var clipEnd = cue.Start + TimeSpan.FromSeconds(wave.Samples.Length / (double)rate);
-        var overrun = i + 1 < cues.Count && clipEnd > cues[i + 1].Start;
-        var flag = overrun ? "  (overruns next cue)" : string.Empty;
-        Console.WriteLine($"  [{cue.Index}] {cue.Start:hh\\:mm\\:ss\\.fff} -> {clipEnd:hh\\:mm\\:ss\\.fff}{flag}  {Preview(cue.Text)}");
+        var clipEnd = g.Start + TimeSpan.FromSeconds(samples.Length / (double)rate);
+        var overrun = i + 1 < groups.Count && clipEnd > groups[i + 1].Start;
+        var flag = overrun ? "  (overruns next)" : string.Empty;
+        var label = g.FirstIndex == g.LastIndex ? $"[{g.FirstIndex}]" : $"[{g.FirstIndex}-{g.LastIndex}]";
+        Console.WriteLine($"  {label} {g.Start:hh\\:mm\\:ss\\.fff} -> {clipEnd:hh\\:mm\\:ss\\.fff}{flag}  {Preview(g.Text)}");
     }
     sampleRate = rate;
 }
@@ -127,6 +136,22 @@ Console.WriteLine($"\nWrote {totalSamples / (double)sampleRate:F1}s voiceover at
 return 0;
 
 static string Preview(string text) => text.Length <= 60 ? text : text[..57] + "...";
+
+internal static class Fade
+{
+    // Apply a short linear fade-in and fade-out to a clip's edges so adjacent or
+    // overlapping clips don't begin or end with an audible click.
+    public static void ApplyEdges(float[] samples, int sampleRate, double milliseconds = 8)
+    {
+        var n = Math.Min(samples.Length / 2, (int)(sampleRate * milliseconds / 1000.0));
+        for (var i = 0; i < n; i++)
+        {
+            var gain = (float)(i / (double)n);
+            samples[i] *= gain;
+            samples[samples.Length - 1 - i] *= gain;
+        }
+    }
+}
 
 internal sealed record Options(string InputPath, string? OutPath, string? Voice, string? Lang, bool DryRun)
 {

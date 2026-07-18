@@ -23,4 +23,9 @@
     <ProjectReference Include="..\..\src\WindowsNaturalVoices.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="1.5.2" />
+    <PackageReference Include="SmartReader" Version="0.11.0" />
+  </ItemGroup>
+
 </Project>

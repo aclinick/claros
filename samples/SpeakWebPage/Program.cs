@@ -3,11 +3,13 @@ using System.Text;
 using System.Text.RegularExpressions;
 using WindowsNaturalVoices;
 
-// SpeakWebPage: fetch a web page, extract its readable text, and narrate it to a
-// WAV file with the flagship, fully-offline EmbeddedVoiceSpeaker (forced HD).
+// SpeakWebPage: fetch a web page, extract its readable text, and read it aloud in
+// real time with the flagship, fully-offline EmbeddedVoiceSpeaker (forced HD).
+// By default it streams narration to the speakers as it is synthesized and echoes
+// each word as it is spoken; pass --out to write a WAV file instead.
 //
 // Usage:
-//   dotnet run -r win-arm64 --project samples\SpeakWebPage\WindowsNaturalVoices.SpeakWebPage.csproj -- <url> [--out page.wav] [--voice Ava] [--max 1200]
+//   dotnet run -r win-arm64 --project samples\SpeakWebPage\WindowsNaturalVoices.SpeakWebPage.csproj -- <url> [--voice Ava] [--max 1200] [--out page.wav]
 //
 // The Embedded Speech runtime requires a Microsoft-issued license for the
 // on-device models; by default it is read automatically from the installed voice
@@ -38,7 +40,7 @@ catch (Exception ex)
     return 4;
 }
 
-var (title, body) = HtmlText.Extract(html);
+var (title, body) = ContentExtractor.Extract(parsed.Url, html);
 var text = body;
 if (parsed.MaxChars > 0 && text.Length > parsed.MaxChars)
 {
@@ -79,7 +81,6 @@ if (voice is null)
 }
 
 Console.WriteLine($"Voice: {voice.DisplayName} (forced HD)");
-Console.WriteLine($"Narrating {text.Length} characters ...");
 
 EmbeddedVoiceSpeaker speaker;
 try
@@ -94,11 +95,38 @@ catch (NaturalVoiceException ex)
 
 using (speaker)
 {
-    var waveform = await speaker.SpeakAsync(text);
-    var outPath = Path.GetFullPath(parsed.OutPath ?? "page.wav");
-    WaveFile.WriteMono16(outPath, waveform.Samples, waveform.SampleRate);
-    var seconds = waveform.Samples.Length / (double)waveform.SampleRate;
-    Console.WriteLine($"Wrote {seconds:F1}s at {waveform.SampleRate} Hz: {outPath}");
+    if (parsed.OutPath is not null)
+    {
+        Console.WriteLine($"Narrating {text.Length} characters ...");
+        var waveform = await speaker.SpeakAsync(text);
+        var outPath = Path.GetFullPath(parsed.OutPath);
+        WaveFile.WriteMono16(outPath, waveform.Samples, waveform.SampleRate);
+        var seconds = waveform.Samples.Length / (double)waveform.SampleRate;
+        Console.WriteLine($"Wrote {seconds:F1}s at {waveform.SampleRate} Hz: {outPath}");
+    }
+    else
+    {
+        Console.WriteLine($"Reading aloud ({text.Length} characters) - press Ctrl+C to stop.\n");
+        using var cts = new CancellationTokenSource();
+        Console.CancelKeyPress += (_, e) => { e.Cancel = true; cts.Cancel(); };
+
+        var column = 0;
+        try
+        {
+            await speaker.SpeakToDefaultOutputAsync(text, word =>
+            {
+                if (column + word.Text.Length + 1 > 100) { Console.WriteLine(); column = 0; }
+                Console.Write(word.Text);
+                Console.Write(' ');
+                column += word.Text.Length + 1;
+            }, cts.Token);
+            Console.WriteLine("\n\nDone.");
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("\n\nStopped.");
+        }
+    }
 }
 
 return 0;
@@ -136,11 +164,52 @@ internal static class Args
 
     public static void PrintUsage()
     {
-        Console.WriteLine("Usage: SpeakWebPage <url> [--out page.wav] [--voice <name>] [--max <chars>]");
-        Console.WriteLine("  --out    Output WAV path (default page.wav).");
+        Console.WriteLine("Usage: SpeakWebPage <url> [--voice <name>] [--max <chars>] [--out page.wav]");
         Console.WriteLine("  --voice  Substring of the Natural voice display name (default first installed).");
         Console.WriteLine("  --max    Max characters to narrate; 0 reads the whole page (default 1200).");
+        Console.WriteLine("  --out    Write a WAV file instead of reading aloud live.");
+        Console.WriteLine("By default the page is read aloud in real time. Ctrl+C stops playback.");
         Console.WriteLine("The on-device model license is read from the installed voice package (override with NATURAL_VOICE_LICENSE).");
+    }
+}
+
+internal static class ContentExtractor
+{
+    // Reader-mode extraction: SmartReader is the .NET port of Mozilla's
+    // Readability (the engine behind Edge/Firefox reader view), so it isolates
+    // the article body from navigation, headers, and other page chrome. If the
+    // page isn't article-shaped (or parsing fails), fall back to the
+    // dependency-free heuristic in HtmlText.
+    public static (string Title, string Body) Extract(string url, string html)
+    {
+        try
+        {
+            var reader = new SmartReader.Reader(url, html);
+            var article = reader.GetArticle();
+            if (article.IsReadable && !string.IsNullOrWhiteSpace(article.TextContent))
+            {
+                var title = article.Title?.Trim() ?? string.Empty;
+                return (title, NormalizeLines(article.TextContent));
+            }
+        }
+        catch
+        {
+            // Not readable as an article; fall through to the heuristic.
+        }
+
+        return HtmlText.Extract(html);
+    }
+
+    // Readability returns plain text with generous blank lines; trim each line
+    // and drop empties so the narration flows without long dead-air gaps.
+    private static string NormalizeLines(string text)
+    {
+        var lines = text
+            .Replace("\r\n", "\n")
+            .Split('\n')
+            .Select(l => l.Trim())
+            .Where(l => l.Length > 0);
+        return string.Join("\n", lines);
     }
 }
 
