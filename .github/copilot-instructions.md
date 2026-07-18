@@ -31,7 +31,8 @@ dotnet run --project samples\Demo\WindowsNaturalVoices.Demo.csproj -- "text to s
   installed Natural Voice (Settings > Time & language > Speech > Manage voices)
   plus the stock "Microsoft Zira Desktop" SAPI voice. Validate those runtime
   paths by building and running the Demo — model files are read from
-  `VoiceInfo.InstalledPath`.
+  `VoiceInfo.InstalledPath`. See `samples/` for runnable examples (Demo,
+  ListVoices, BatchSynthesis, LowLevelPipeline) and `samples/README.md`.
 
 ## Pipeline architecture (the big picture)
 
