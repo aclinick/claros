@@ -95,7 +95,7 @@ def blank(prs):
 
 def footer(slide, n):
     tb = box(slide, Inches(0.55), Inches(7.02), Inches(9), Inches(0.35))
-    para(tb.text_frame, "WindowsNaturalVoices  \u00b7  on-device HD voices, offline",
+    para(tb.text_frame, "WindowsNaturalVoices  \u00b7  on-device speech, offline",
          10, GREY, font=FONT, first=True, space_after=0)
     tb2 = box(slide, Inches(12.2), Inches(7.02), Inches(0.7), Inches(0.35))
     para(tb2.text_frame, str(n), 10, GREY, align=PP_ALIGN.RIGHT, first=True, space_after=0)
@@ -157,13 +157,13 @@ para(tb.text_frame, "the advantage that's locked away", 44, TEAL, bold=True,
      font=FONT_SB, space_after=14)
 para(tb.text_frame,
      "Local AI unlocks a new class of experiences: offline, private, instant, and "
-     "free. Windows already ships the on-device HD voices and the hardware to run "
-     "them. The one thing missing is the public API to build on. Here's the proof, "
-     "and the ask.",
+     "free. Windows already ships the on-device HD voices, the speech recognition, "
+     "and the hardware to run both. The one thing missing is the public API to build "
+     "on. Here's the proof, and the ask.",
      20, SKY, font=FONT_L, space_after=0)
 tb2 = box(s, Inches(0.8), Inches(4.95), Inches(11.9), Inches(1.4))
 para(tb2.text_frame,
-     "A working reference implementation on Windows' on-device Natural (HD) voices,",
+     "A working reference implementation on Windows' on-device speech (HD voices + recognition),",
      16, RGBColor(0x9F, 0xC4, 0xE7), font=FONT, first=True, space_after=2)
 para(tb2.text_frame, "built to show Microsoft the public API it should ship.",
      16, RGBColor(0x9F, 0xC4, 0xE7), bold=True, font=FONT_SB, space_after=0)
@@ -181,12 +181,12 @@ title_block(s, "Why \u00b7 the opportunity", "Mac proves the model; Windows can 
 two_cards(
     s,
     ("APPLE \u00b7 proven, but capped", TEAL, [
-        "On-device speech and neural TTS already ship to third-party apps.",
-        "It proves local-first AI is real, shipped, and wanted by developers.",
+        "On-device speech recognition (SpeechAnalyzer) and neural TTS ship to apps.",
+        "It proves local-first speech, in and out, is real, shipped, and wanted.",
         "But there is no cloud to graduate to: Apple cannot scale you past the device.",
     ]),
     ("WINDOWS + AZURE \u00b7 the bigger story", BLUE, [
-        "The same on-device HD voices are already on the machine, free and offline.",
+        "The same on-device HD voices AND Live Captions recognition already ship, free.",
         "One API can scale from local to Azure with your credentials, no rewrite.",
         "First-party reach (Edge, Office, Teams, PowerPoint, Clipchamp) no rival matches.",
     ]),
@@ -384,7 +384,82 @@ para(tb.text_frame,
      15, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 11)
 
-# ================================================================ 12 - HOW divider
+# ================================================================ 12 - WHAT: the listening half (STT)
+s = blank(prs)
+rect(s, 0, 0, SW, SH, WHITE)
+title_block(s, "What \u00b7 the complete platform", "TTS is only half. Windows already listens, too.", TEAL)
+tb = box(s, Inches(0.7), Inches(1.95), Inches(11.9), Inches(2.15))
+for i, t in enumerate([
+    ("The same story runs on the input side. Windows ships the on-device Live Captions speech recognizer, fully offline, on the CPU, with no NPU.", True),
+    ("This reference implementation adds a call listener: one recognizer per speaker (advisor + customer), finals-only clean punctuated sentences, merged into one two-party transcript, the same pattern Contoso-Finance uses on Mac.", False),
+    ("Pair it with the HD voices and you have a complete, round-trip speech platform, speech-in and speech-out, both on-device, both already shipping in Windows, both free, private, and offline.", False),
+]):
+    para(tb.text_frame, t[0], 16.5, DEEP if t[1] else INK, bold=t[1],
+         font=FONT_SB if t[1] else FONT, bullet=(not t[1]), first=(i == 0), space_after=12)
+rect(s, Inches(0.7), Inches(4.75), Inches(11.9), Inches(1.75), CARD)
+tb = box(s, Inches(1.0), Inches(4.98), Inches(11.3), Inches(1.35))
+tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+para(tb.text_frame, "Speak \u2192 transcribe \u2192 understand \u2192 respond \u2192 speak",
+     20, TEAL, bold=True, font=FONT_SB, first=True, space_after=6)
+para(tb.text_frame,
+     "Every stage runs on the device, on hardware already in Windows. Microsoft can "
+     "deliver a full speech platform out of technology that already ships, no NPU and "
+     "no cloud required.",
+     15, DEEP, font=FONT, space_after=0)
+footer(s, 12)
+
+# ================================================================ 13 - WHAT: STT benchmark table
+s = blank(prs)
+rect(s, 0, 0, SW, SH, WHITE)
+title_block(s, "What \u00b7 proof (listening)",
+            "On-device transcription at the quality tier, on the CPU", BLUE)
+tb = box(s, Inches(0.7), Inches(1.75), Inches(11.9), Inches(0.5))
+para(tb.text_frame,
+     "Real 58 s two-party mortgage call, normalized to a 2-leg call (one recognizer "
+     "per speaker); single-stream engines doubled.",
+     13.5, GREY, font=FONT, first=True, space_after=0)
+# columns: engine | first sentence | peak RAM | hardware | quality
+cols = [(0.7, 3.7), (4.5, 1.35), (5.95, 2.0), (8.05, 1.55), (9.65, 2.95)]
+heads = ["Engine", "First final", "Peak RAM (2 legs)", "Hardware", "Quality (numbers / ITN)"]
+hy = 2.2
+rect(s, Inches(0.7), Inches(hy), Inches(11.9), Inches(0.5), DEEP)
+for (cx, cw), h in zip(cols, heads):
+    hb = box(s, Inches(cx + 0.1), Inches(hy), Inches(cw - 0.15), Inches(0.5))
+    hb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+    para(hb.text_frame, h, 12.5, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
+rows = [
+    ("Live Captions (this library)", "~4 s", "~500 MB", "CPU", "ITN tier ($ / % / currency)", "ours"),
+    ("Apple SpeechAnalyzer (macOS)", "~4 s", "~440 MB", "Apple ANE", "Reference: $610,000, 6.2%", "peer"),
+    ("WinAI Speech Preview", "3.5 s", "~6,400 MB", "Hexagon NPU", "Best ITN (Whisper Turbo)", "peer"),
+    ("Nemotron 0.6B (Foundry Local)", "1.2 s", "~1,750 MB", "CPU", "No clean sentence breaks", "out"),
+    ("Whisper small (CPU ONNX)", "2.3 s", "~1,200 MB", "CPU", "Low: hallucinates numbers", "out"),
+]
+ry = hy + 0.5
+for cells in rows:
+    tag = cells[5]
+    bg = RGBColor(0xE4, 0xF3, 0xF0) if tag == "ours" else (LIGHT if tag == "peer" else WHITE)
+    rect(s, Inches(0.7), Inches(ry), Inches(11.9), Inches(0.56), bg)
+    if tag == "ours":
+        rect(s, Inches(0.7), Inches(ry), Inches(0.1), Inches(0.56), TEAL)
+    for (cx, cw), val, idx in zip(cols, cells[:5], range(5)):
+        cb = box(s, Inches(cx + 0.1), Inches(ry), Inches(cw - 0.15), Inches(0.56))
+        cb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+        col = INK if idx == 0 else GREY
+        bold = (idx == 0)
+        if idx == 2 and tag in ("ours", "peer"):
+            col, bold = BLUE, True
+        para(cb.text_frame, val, 12.5, col, bold=bold,
+             font=FONT_SB if bold else FONT, first=True, space_after=0)
+    ry += 0.56
+rect(s, Inches(0.7), Inches(ry + 0.12), Inches(11.9), Inches(1.05), CARD)
+tb = box(s, Inches(1.0), Inches(ry + 0.28), Inches(11.3), Inches(0.75))
+tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+para(tb.text_frame,
+     "The quality peers are Apple and NPU Whisper Turbo. This library matches that "
+     "ITN tier on the CPU at ~500 MB for two legs: ~13\u00d7 less RAM than the NPU path, "
+     "no NPU. Nemotron and Whisper small are ruled out on quality, not memory.",
+     14.5, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
+footer(s, 13)
 divider(prs, "How",
         "Make the POC real: remove the hack, ship the API",
         "One API surface. Local-first and free by default, and the same code scales "
@@ -396,8 +471,8 @@ rect(s, 0, 0, SW, SH, WHITE)
 title_block(s, "How \u00b7 the friction today", "It works, but only as a hack", AMBER)
 tb = box(s, Inches(0.7), Inches(2.0), Inches(11.9), Inches(1.4))
 para(tb.text_frame,
-     "To reach the on-device HD runtime with no public API, this reference "
-     "implementation has to:",
+     "To reach the on-device HD voice and Live Captions runtimes with no public API, "
+     "this reference implementation has to:",
      17, INK, font=FONT, first=True, space_after=10)
 hacks = [
     "Pass an undocumented Embedded Speech license string to unlock synthesis.",
@@ -414,7 +489,7 @@ para(tb.text_frame,
      "Unsupported and fragile, exactly the friction that stops real products from "
      "shipping on the capability. That's what the API removes.",
      16, AMBER, bold=True, font=FONT_SB, first=True, space_after=0)
-footer(s, 13)
+footer(s, 15)
 
 # ================================================================ 14 - HOW: one API, local + cloud upsell
 s = blank(prs)
@@ -454,7 +529,7 @@ para(tb.text_frame,
      "device, with no cloud to graduate to. Windows plus Azure plus Microsoft's "
      "own apps is a funnel no competitor can match.",
      16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
-footer(s, 14)
+footer(s, 16)
 
 # ================================================================ 15 - HOW: the ask / close
 s = blank(prs)
@@ -463,7 +538,7 @@ rect(s, 0, 0, SW, Inches(0.16), BLUE)
 tb = box(s, Inches(0.7), Inches(0.65), Inches(12), Inches(1.2))
 para(tb.text_frame, "THE ASK TO MICROSOFT", 14, RGBColor(0x8F, 0xC4, 0xF0), bold=True,
      font=FONT_SB, first=True, space_after=6)
-para(tb.text_frame, "Ship this as a first-class Windows API", 32, WHITE, bold=True,
+para(tb.text_frame, "Ship this as a first-class Windows speech API", 30, WHITE, bold=True,
      font=FONT_SB, space_after=0)
 tb = box(s, Inches(0.7), Inches(2.0), Inches(11.9), Inches(1.1))
 para(tb.text_frame,
@@ -471,9 +546,9 @@ para(tb.text_frame,
      "Take the hack out; make it supported:",
      16, SKY, font=FONT, first=True, space_after=0)
 bl = [
-    "Enumerate installed Natural voices (locale, gender, package).",
-    "Load a voice and synthesize offline through the on-device HD runtime.",
+    "Enumerate installed Natural voices and synthesize offline through the on-device HD runtime.",
     "Stream synthesis live to the speaker with word-boundary events.",
+    "Recognize speech on-device with the same Live Captions model, one recognizer per audio source.",
     "Same surface scales to Azure with credentials, so it's local-first and cloud-optional.",
 ]
 tb = box(s, Inches(1.0), Inches(3.15), Inches(11.4), Inches(2.2))
@@ -484,7 +559,8 @@ tb = box(s, Inches(1.0), Inches(5.82), Inches(11.3), Inches(0.75))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
      "Then every app (Edge, Teams, Office, media players, accessibility tools) gets "
-     "instant, private, multilingual, on-device narration for free, with a paved road to Azure.",
+     "instant, private, multilingual, on-device narration and transcription for free, "
+     "with a paved road to Azure.",
      16, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
 
 out = Path(__file__).with_name("live-voiceover.pptx")

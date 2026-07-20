@@ -26,15 +26,16 @@ Apple has shipped on-device intelligence to developers for years, so local-first
 AI is proven, real, and wanted. Windows already has almost the equivalent on the
 box. The opportunity is to go further than Mac can.
 
-- **Apple (proven, but capped):** exposes on-device speech (SpeechAnalyzer),
-  on-device neural TTS, and Apple Foundation Models running on the ANE to
-  third-party apps. It proves the model, but there's no cloud to graduate to, so
-  Apple can't scale you past the device.
+- **Apple (proven, but capped):** exposes on-device speech recognition
+  (SpeechAnalyzer), on-device neural TTS, and Apple Foundation Models running on
+  the ANE to third-party apps. It proves local-first speech, in and out, but
+  there's no cloud to graduate to, so Apple can't scale you past the device.
 - **Windows + Azure (the bigger story):** the same on-device Natural (HD) voices
-  are already on the machine, free and offline, and they run on the **CPU of
-  virtually any modern PC** (no special NPU required). One API can then scale from
-  local to Azure with your credentials, no rewrite. First-party reach across Edge,
-  Office, Teams, PowerPoint, and Clipchamp is something no rival can match.
+  **and** the Live Captions speech recognizer are already on the machine, free
+  and offline, and they run on the **CPU of virtually any modern PC** (no special
+  NPU required). One API can then scale from local to Azure with your credentials,
+  no rewrite. First-party reach across Edge, Office, Teams, PowerPoint, and
+  Clipchamp is something no rival can match.
 
 Mac already has almost the equivalent on-device. Only Microsoft can pair it with
 Azure and its own product suite, turning a proven idea into a platform advantage.
@@ -148,6 +149,47 @@ content leave the org to render. Even this deck could narrate itself.
 
 Pre-load the offered languages once → switching is **instant**: change the
 dropdown and the next line speaks in the new language.
+
+### The complete platform: TTS is only half. Windows already listens, too.
+
+The same story runs on the input side. Windows ships the on-device **Live
+Captions speech recognizer**, fully offline, on the **CPU** with no NPU. This
+reference implementation adds a **call listener**: one recognizer per speaker
+(advisor + customer), **finals-only** clean punctuated sentences, merged into one
+two-party transcript, the same pattern Contoso-Finance uses on Mac.
+
+Pair it with the HD voices and you have a complete, round-trip speech platform,
+**speech-in and speech-out**, both on-device, both already shipping in Windows,
+both free, private, and offline:
+
+> **Speak → transcribe → understand → respond → speak.** Every stage runs on the
+> device, on hardware already in Windows.
+
+### Proof it's real (listening): on-device transcription at the quality tier, on the CPU
+
+A real 58-second two-party mortgage call, **normalized to a 2-leg call** (one
+recognizer per speaker); single-stream engines are doubled since a real call
+needs one recognizer per leg.
+
+| Engine | First final | Peak RAM (2 legs) | Hardware | Quality (numbers / ITN) |
+|---|---|---|---|---|
+| **Live Captions (this library)** | ~4 s | **~500 MB** | CPU | ITN tier ($ / % / currency) |
+| Apple SpeechAnalyzer (macOS) | ~4 s | ~440 MB | Apple ANE | Reference: $610,000, 6.2% |
+| WinAI Speech Preview | 3.5 s | ~6,400 MB | Hexagon NPU | Best ITN (Whisper Turbo) |
+| Nemotron 0.6B (Foundry Local) | 1.2 s | ~1,750 MB | CPU | No clean sentence breaks |
+| Whisper small (CPU ONNX) | 2.3 s | ~1,200 MB | CPU | Low: hallucinates numbers |
+
+- The **quality peers** are Apple SpeechAnalyzer and WinAI Speech (Whisper Large
+  v3 Turbo on the NPU); both render `$610,000` / `6.2%` with full ITN.
+- This library **matches that ITN tier on the CPU** at ~500 MB for two legs:
+  **~13× less RAM than the NPU path**, with no NPU.
+- **Nemotron** has good word accuracy but no reliable sentence-boundary
+  punctuation, so it can't be segmented into clean chat bubbles. **Whisper small**
+  is the low-quality tier (hallucinates dollar amounts and percentages, removed
+  from Contoso's default path). Both are ruled out on **quality, not memory**.
+
+The takeaway: Microsoft can deliver a **complete speech platform** out of
+technology that already ships in Windows, no NPU and no cloud required.
 
 ---
 
