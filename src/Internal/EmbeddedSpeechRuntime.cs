@@ -29,6 +29,30 @@ internal static class EmbeddedSpeechRuntime
         "Microsoft.CognitiveServices.Speech.extension.audio.sys.dll",
     };
 
+    /// <summary>
+    /// The gated native extension DLLs the embedded speech-recognition
+    /// (Live Captions) runtime needs. Sourced from the OS.
+    /// </summary>
+    public static readonly IReadOnlyList<string> RecognitionExtensionDllNames = new[]
+    {
+        "Microsoft.CognitiveServices.Speech.extension.embedded.sr.dll",
+        "Microsoft.CognitiveServices.Speech.extension.embedded.sr.runtime.dll",
+        "Microsoft.CognitiveServices.Speech.extension.onnxruntime.dll",
+        "Microsoft.CognitiveServices.Speech.extension.telemetry.dll",
+        "Microsoft.CognitiveServices.Speech.extension.audio.sys.dll",
+        "Microsoft.CognitiveServices.Speech.extension.lu.dll",
+        "Microsoft.CognitiveServices.Speech.extension.mas.dll",
+    };
+
+    /// <summary>
+    /// Extra native dependencies the recognition runtime links against that are
+    /// not themselves SDK extensions. Copied when present (best effort).
+    /// </summary>
+    public static readonly IReadOnlyList<string> RecognitionNativeDependencyNames = new[]
+    {
+        "FPIEProcessor.dll",
+    };
+
     /// <summary>The UWP Visual C++ runtimes the extension links against.</summary>
     public static readonly IReadOnlyList<string> AppRuntimeDllNames = new[]
     {
@@ -38,6 +62,22 @@ internal static class EmbeddedSpeechRuntime
     };
 
     private const string ExtensionProbe = "Microsoft.CognitiveServices.Speech.extension.embedded.tts.dll";
+
+    private const string RecognitionExtensionProbe =
+        "Microsoft.CognitiveServices.Speech.extension.embedded.sr.runtime.dll";
+
+    private const string VcLibsFamilyName = "Microsoft.VCLibs.140.00_8wekyb3d8bbwe";
+
+    /// <summary>
+    /// The client folders (under a <c>MicrosoftWindows.Client.*</c> SystemApp)
+    /// that host the gated recognition runtime, in preference order.
+    /// </summary>
+    private static readonly IReadOnlyList<string> RecognitionRuntimeSubdirs = new[]
+    {
+        "LiveCaptions",
+        "VoiceAccess",
+        "TextInput",
+    };
 
     private static string DefaultSystemAppsRoot =>
         Path.Combine(
@@ -70,8 +110,30 @@ internal static class EmbeddedSpeechRuntime
         return null;
     }
 
-    /// <summary>The publisher family of the UWP Visual C++ runtime framework.</summary>
-    private const string VcLibsFamilyName = "Microsoft.VCLibs.140.00_8wekyb3d8bbwe";
+    /// <summary>
+    /// Return the on-box directory that holds the gated embedded
+    /// speech-recognition runtime (the engine behind Windows Live Captions), or
+    /// <c>null</c> when it cannot be found. Searches
+    /// <c>{systemAppsRoot}\MicrosoftWindows.Client.*\{LiveCaptions|VoiceAccess|TextInput}</c>.
+    /// </summary>
+    public static string? FindRecognitionRuntimeDirectory(string? systemAppsRoot = null)
+    {
+        var root = systemAppsRoot ?? DefaultSystemAppsRoot;
+        if (!Directory.Exists(root)) return null;
+
+        foreach (var client in Directory.EnumerateDirectories(root, "MicrosoftWindows.Client.*"))
+        {
+            foreach (var sub in RecognitionRuntimeSubdirs)
+            {
+                var candidate = Path.Combine(client, sub);
+                if (File.Exists(Path.Combine(candidate, RecognitionExtensionProbe)))
+                {
+                    return candidate;
+                }
+            }
+        }
+        return null;
+    }
 
     /// <summary>
     /// Return the architecture-appropriate <c>Microsoft.VCLibs</c> directory that
@@ -204,6 +266,50 @@ internal static class EmbeddedSpeechRuntime
         return staged;
     }
 
+    /// <summary>
+    /// Copy the gated speech-recognition extension DLLs (the Live Captions
+    /// engine) and the UWP VC++ runtimes into <paramref name="targetDir"/> and
+    /// return the staged file paths. Throws
+    /// <see cref="NaturalVoiceUnavailableException"/> when a required source
+    /// directory is missing on this machine.
+    /// </summary>
+    public static IReadOnlyList<string> StageRecognition(
+        string targetDir,
+        string? systemAppsRoot = null,
+        string? windowsAppsRoot = null,
+        Architecture? architecture = null)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(targetDir);
+        Directory.CreateDirectory(targetDir);
+
+        var nativeDir = FindRecognitionRuntimeDirectory(systemAppsRoot)
+            ?? throw new NaturalVoiceUnavailableException(
+                "The gated embedded speech-recognition runtime was not found on this machine. " +
+                "It ships with Windows Live Captions / Voice Access; enable Live Captions " +
+                "(Settings > Accessibility > Captions) so the runtime is present.");
+
+        var runtimeDir = FindAppRuntimeDirectory(windowsAppsRoot, architecture)
+            ?? throw new NaturalVoiceUnavailableException(
+                "The architecture-matched Microsoft.VCLibs UWP runtimes were not found on this machine.");
+
+        var staged = new List<string>();
+        foreach (var name in RecognitionExtensionDllNames)
+        {
+            staged.Add(CopyRequired(nativeDir, targetDir, name));
+        }
+        foreach (var name in RecognitionNativeDependencyNames)
+        {
+            // Best effort: these dependencies vary across Windows builds.
+            var copied = CopyOptional(nativeDir, targetDir, name);
+            if (copied is not null) staged.Add(copied);
+        }
+        foreach (var name in AppRuntimeDllNames)
+        {
+            staged.Add(CopyRequired(runtimeDir, targetDir, name));
+        }
+        return staged;
+    }
+
     private static string CopyRequired(string sourceDir, string targetDir, string name)
     {
         var source = Path.Combine(sourceDir, name);
@@ -219,6 +325,19 @@ internal static class EmbeddedSpeechRuntime
         if (!IsSameContent(source, dest))
         {
             File.Copy(source, dest, overwrite: true);
+        }
+        return dest;
+    }
+
+    private static string? CopyOptional(string sourceDir, string targetDir, string name)
+    {
+        var source = Path.Combine(sourceDir, name);
+        if (!File.Exists(source)) return null;
+        var dest = Path.Combine(targetDir, name);
+        if (!IsSameContent(source, dest))
+        {
+            try { File.Copy(source, dest, overwrite: true); }
+            catch (IOException) { /* already loaded and locked; keep the staged copy */ }
         }
         return dest;
     }

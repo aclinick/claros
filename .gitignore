@@ -18,3 +18,5 @@ docs/_site/
 api/.manifest
 docs/api/*.yml
 docs/api/.manifest
+# STT spike (not shipped)
+spike-sr/

@@ -43,6 +43,28 @@ WaveFile.WriteMono16("hello.wav", waveform.Samples, waveform.SampleRate);
 See [`samples/`](samples) for runnable end-to-end examples (quick-start Demo,
 voice discovery, batch synthesis, and a low-level pipeline walkthrough).
 
+## Speech-to-text (offline)
+
+The library also transcribes audio with the same on-device recognition model
+that powers **Windows Live Captions**, through Microsoft's Azure Embedded Speech
+runtime. Everything runs locally; no network call is made.
+
+```csharp
+using WindowsNaturalVoices;
+
+var model = TranscriptionModelCatalog.FindModel("en-US");
+using var transcriber = EmbeddedTranscriber.Load(model!);
+
+var result = await transcriber.TranscribeFileAsync("call.wav");
+Console.WriteLine(result.Text);
+```
+
+For live audio, `EmbeddedTranscriber.StartSession()` returns a
+`LiveTranscriptionSession` you feed 16-bit mono PCM as it arrives; commit a turn
+per speaker (for example, one session per channel of a stereo call). The
+[TranscriptionBenchmark](samples/TranscriptionBenchmark) sample does exactly
+that and measures memory and latency against Foundry Local and NPU engines.
+
 ## Build
 
 ```

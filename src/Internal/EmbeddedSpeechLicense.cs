@@ -47,12 +47,17 @@ internal static class EmbeddedSpeechLicense
     }
 
     // Prefer the acoustic-model decoder (where the notice reliably sits at the
-    // head), then fall back to any other model binary.
+    // head), then fall back to any other model binary. Both the TTS voice
+    // packages (*.bin) and the recognition packs (*.onnx) carry the same notice.
     private static IEnumerable<string> EnumerateModelFiles(string packageDirectory)
     {
-        var all = Directory.EnumerateFiles(packageDirectory, "*.bin", SearchOption.AllDirectories).ToList();
+        var all = Directory
+            .EnumerateFiles(packageDirectory, "*.bin", SearchOption.AllDirectories)
+            .Concat(Directory.EnumerateFiles(packageDirectory, "*.onnx", SearchOption.AllDirectories))
+            .ToList();
         return all
             .OrderByDescending(f => Path.GetFileName(f).StartsWith("am_", StringComparison.OrdinalIgnoreCase))
+            .ThenByDescending(f => Path.GetFileName(f).StartsWith("encoder", StringComparison.OrdinalIgnoreCase))
             .ThenBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase);
     }
 
