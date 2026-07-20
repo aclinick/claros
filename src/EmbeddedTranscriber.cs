@@ -110,6 +110,22 @@ public sealed class EmbeddedTranscriber : IDisposable
     }
 
     /// <summary>
+    /// Starts a <see cref="CallLegTranscriber"/> for one call leg (one audio
+    /// source / speaker). Feed this leg's mono 16-bit PCM as it arrives; each
+    /// completed sentence is attributed to <paramref name="sourceLabel"/> and
+    /// raised through <see cref="CallLegTranscriber.TranscriptFinalized"/>. Start
+    /// one leg per speaker (for example one for the local microphone and one for
+    /// the incoming/far-end stream) to get an exactly-attributed, finals-only
+    /// multi-speaker transcript, matching the Contoso-Finance Mac listener.
+    /// </summary>
+    public CallLegTranscriber StartLeg(string sourceId, string sourceLabel)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(sourceId);
+        ArgumentException.ThrowIfNullOrEmpty(sourceLabel);
+        return new CallLegTranscriber(sourceId, sourceLabel, StartSession());
+    }
+
+    /// <summary>
     /// Transcribe a mono 16-bit PCM WAV file and return its text. Audio is fed
     /// through a streaming session (the crash-prone native end-of-utterance
     /// finalizer is bypassed); when <paramref name="onPartial"/> is supplied and

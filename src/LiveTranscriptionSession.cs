@@ -30,6 +30,7 @@ public sealed class LiveTranscriptionSession : IDisposable
     private readonly SpeechRecognizer _recognizer;
     private readonly int _bytesPerSecond;
     private readonly object _gate = new();
+    private readonly SentenceCommitter _sentences = new();
 
     private string _current = string.Empty;
     private string _committed = string.Empty;
@@ -113,6 +114,32 @@ public sealed class LiveTranscriptionSession : IDisposable
             _committedAt = now;
             if (delta.Length == 0) return null;
             return new TranscriptionSegment(delta, start, now - start);
+        }
+    }
+
+    /// <summary>
+    /// Returns the sentences that have fully completed since the previous call,
+    /// each as a discrete <see cref="TranscriptionSegment"/> stamped with the
+    /// current <see cref="AudioPosition"/>. This gives clean, whole-sentence chat
+    /// lines (one bubble per utterance) by withholding the still-in-progress
+    /// trailing fragment until it terminates. Poll it as audio streams in; pass
+    /// <paramref name="flush"/> = <c>true</c> once at end of audio to also emit
+    /// any remaining unterminated tail.
+    /// </summary>
+    public IReadOnlyList<TranscriptionSegment> CommitSentences(bool flush = false)
+    {
+        lock (_gate)
+        {
+            var newSentences = _sentences.Take(_current, flush);
+            if (newSentences.Count == 0) return Array.Empty<TranscriptionSegment>();
+
+            var at = TimeSpan.FromSeconds((double)_bytesWritten / _bytesPerSecond);
+            var result = new TranscriptionSegment[newSentences.Count];
+            for (var i = 0; i < newSentences.Count; i++)
+            {
+                result[i] = new TranscriptionSegment(newSentences[i], at, TimeSpan.Zero);
+            }
+            return result;
         }
     }
 
