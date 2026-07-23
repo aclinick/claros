@@ -19,8 +19,8 @@ There is no cryptographic protection on the model files. Each `*.bin` in a voice
 ```csharp
 using WindowsNaturalVoices;
 
-using var catalog = new VoiceCatalog();
-var voices = await catalog.ListVoicesAsync();
+using var platform = new SpeechPlatform();
+var voices = await platform.ListVoicesAsync();
 
 using var speaker = NaturalVoiceSpeaker.Load(voices[0]);
 var waveform = await speaker.SpeakAsync("The quick brown fox, jumps over the lazy dog.");

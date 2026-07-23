@@ -64,3 +64,20 @@ public sealed class SpeechSynthesisException : NaturalVoiceException
     {
     }
 }
+
+/// <summary>
+/// Recognition failed while initializing or running the on-device Embedded Speech
+/// runtime. The <see cref="System.Exception.InnerException"/> carries the
+/// underlying Embedded Speech error when one is available. This is the
+/// speech-to-text counterpart of <see cref="SpeechSynthesisException"/>.
+/// </summary>
+public sealed class SpeechRecognitionException : NaturalVoiceException
+{
+    /// <summary>Initializes the exception with a message and optional inner exception.</summary>
+    /// <param name="message">A description of the recognition failure.</param>
+    /// <param name="innerException">The underlying Embedded Speech runtime error, when one is available.</param>
+    public SpeechRecognitionException(string message, Exception? innerException = null)
+        : base(message, innerException)
+    {
+    }
+}

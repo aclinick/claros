@@ -19,13 +19,15 @@ if (wavPath is null)
     return 2;
 }
 
+using var platform = new SpeechPlatform();
+
 Console.WriteLine("Installed recognition models:");
-foreach (var m in TranscriptionModelCatalog.ListModels())
+foreach (var m in platform.ListRecognitionModels())
 {
     Console.WriteLine($"  {m.Locale,-6} {m.ModelName}");
 }
 
-var model = TranscriptionModelCatalog.FindModel(locale);
+var model = platform.FindRecognitionModel(locale);
 if (model is null)
 {
     Console.Error.WriteLine($"No recognition model installed for '{locale}'.");
@@ -35,7 +37,7 @@ if (model is null)
 Console.WriteLine($"\nUsing {model.ModelName} ({model.Locale})");
 Console.WriteLine($"Transcribing {wavPath} ...\n");
 
-using var transcriber = EmbeddedTranscriber.Load(model);
+using var transcriber = platform.CreateTranscriber(model);
 var result = await transcriber.TranscribeFileAsync(
     wavPath,
     onPartial: text => Console.WriteLine($"  ~ {text}"));

@@ -76,7 +76,8 @@ var audioSeconds = (double)totalFrames / SampleRate;
 Console.WriteLine($"Captured {audioSeconds:0.0}s of {SampleRate} Hz 16-bit stereo " +
     $"({totalFrames} frames); ONE recording, de-interleaved in-process into two channels.\n");
 
-var model = TranscriptionModelCatalog.FindModel(locale);
+using var platform = new SpeechPlatform();
+var model = platform.FindRecognitionModel(locale);
 if (model is null)
 {
     Console.Error.WriteLine($"No recognition model installed for '{locale}'.");
@@ -88,7 +89,7 @@ var proc = Process.GetCurrentProcess();
 proc.Refresh();
 long baselineBytes = proc.WorkingSet64;
 
-using var transcriber = EmbeddedTranscriber.Load(model);
+using var transcriber = platform.CreateTranscriber(model);
 
 // Finalized chat lines, in arrival (time) order across both legs.
 var chat = new List<(TranscriptChunk Chunk, int Channel)>();

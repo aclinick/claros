@@ -41,8 +41,8 @@ Console.WriteLine($"Parsed {cues.Count} cues spanning {cues.Max(c => c.End):hh\\
 var groups = SentenceGrouper.Group(cues, TimeSpan.FromSeconds(1.2));
 Console.WriteLine($"Grouped into {groups.Count} sentence utterances.");
 
-using var catalog = new VoiceCatalog();
-var voices = await catalog.ListVoicesAsync();
+using var platform = new SpeechPlatform();
+var voices = await platform.ListVoicesAsync();
 if (voices.Count == 0)
 {
     Console.Error.WriteLine(
@@ -79,7 +79,7 @@ var license = Environment.GetEnvironmentVariable("NATURAL_VOICE_LICENSE"); // nu
 EmbeddedVoiceSpeaker speaker;
 try
 {
-    speaker = EmbeddedVoiceSpeaker.Load(voice, license);
+    speaker = platform.CreateSpeaker(voice, license);
 }
 catch (NaturalVoiceException ex)
 {

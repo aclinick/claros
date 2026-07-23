@@ -5,6 +5,41 @@ namespace WindowsNaturalVoices.Tests;
 public class SentenceCommitterTests
 {
     [Fact]
+    public void Take_RecoversTrailingRevisionAfterTransientSentenceAdvancedThePosition()
+    {
+        var committer = new SentenceCommitter();
+
+        // The recognizer briefly splits the trailing region into an extra short
+        // sentence ("You have six.") which — because a genuinely new sentence
+        // ("Hundred thousand...") has started after it — becomes non-trailing and
+        // is surfaced. It then revises that same region into the correct, longer
+        // sentence. A count-based tracker would treat the corrected sentence as
+        // "already past" and drop it; prefix reconciliation must re-surface it.
+        var first = committer.Take("Let's check the numbers. You have six. Hundred thousand");
+        Assert.Equal(new[] { "Let's check the numbers.", "You have six." }, first);
+
+        var recovered = committer.Take(
+            "Let's check the numbers. You have $610,000 in stocks that reset. Understandable.");
+
+        // The 14-second financial sentence is recovered, not silently dropped.
+        Assert.Equal(new[] { "You have $610,000 in stocks that reset." }, recovered);
+    }
+
+    [Fact]
+    public void Take_IdenticalReobservationOfARevisedTrailingEmitsNothingTwice()
+    {
+        var committer = new SentenceCommitter();
+
+        committer.Take("Alpha. Bravo. Charlie");
+        var revised = committer.Take("Alpha. Bravo revised entirely. Charlie");
+        Assert.Equal(new[] { "Bravo revised entirely." }, revised);
+
+        // Re-observing the same stable segmentation must not duplicate anything.
+        Assert.Empty(committer.Take("Alpha. Bravo revised entirely. Charlie"));
+        Assert.Empty(committer.Take("Alpha. Bravo revised entirely. Charlie and more"));
+    }
+
+    [Fact]
     public void Take_WithholdsUnterminatedTrailingFragment()
     {
         var committer = new SentenceCommitter();

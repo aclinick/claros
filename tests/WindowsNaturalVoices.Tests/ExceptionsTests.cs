@@ -8,6 +8,16 @@ public class ExceptionsTests
         Assert.IsAssignableFrom<NaturalVoiceException>(new NaturalVoiceUnavailableException("x"));
         Assert.IsAssignableFrom<NaturalVoiceException>(new VoicePackageFormatException("x"));
         Assert.IsAssignableFrom<NaturalVoiceException>(new SpeechSynthesisException("x"));
+        Assert.IsAssignableFrom<NaturalVoiceException>(new SpeechRecognitionException("x"));
+    }
+
+    [Fact]
+    public void SpeechRecognitionException_IsDistinctFromSynthesis()
+    {
+        // Recognition failures must not surface as a synthesis exception; callers
+        // catching one must not accidentally swallow the other.
+        Assert.IsNotType<SpeechSynthesisException>(new SpeechRecognitionException("x"));
+        Assert.IsNotType<SpeechRecognitionException>(new SpeechSynthesisException("x"));
     }
 
     [Fact]

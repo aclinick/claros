@@ -1,7 +1,7 @@
 using WindowsNaturalVoices;
 
-using var catalog = new VoiceCatalog();
-var voices = await catalog.ListVoicesAsync();
+using var platform = new SpeechPlatform();
+var voices = await platform.ListVoicesAsync();
 
 if (voices.Count == 0)
 {

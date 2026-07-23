@@ -25,7 +25,7 @@ public sealed partial class MainPage : Page
     private readonly MediaPlayer _player;
     private readonly VoiceoverController _controller;
 
-    private VoiceCatalog? _catalog;
+    private SpeechPlatform? _platform;
     private IReadOnlyList<VoiceInfo> _voices = [];
     private string? _videoPath;
     private bool _suppressSelection;
@@ -50,8 +50,8 @@ public sealed partial class MainPage : Page
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        _catalog = new VoiceCatalog();
-        _catalog.VoicesChanged += OnVoicesChanged;
+        _platform = new SpeechPlatform();
+        _platform.VoicesChanged += OnVoicesChanged;
         await RefreshVoicesAsync();
 
         if (File.Exists(DefaultVideoPath))
@@ -67,10 +67,10 @@ public sealed partial class MainPage : Page
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         _controller.Dispose();
-        if (_catalog is not null)
+        if (_platform is not null)
         {
-            _catalog.VoicesChanged -= OnVoicesChanged;
-            _catalog.Dispose();
+            _platform.VoicesChanged -= OnVoicesChanged;
+            _platform.Dispose();
         }
         _player.Dispose();
     }
@@ -82,7 +82,7 @@ public sealed partial class MainPage : Page
     {
         try
         {
-            _voices = await _catalog!.ListVoicesAsync();
+            _voices = await _platform!.ListVoicesAsync();
         }
         catch (Exception ex)
         {

@@ -47,7 +47,7 @@ public sealed class EmbeddedTranscriber : IDisposable
     /// The model package, the gated recognition runtime, or the license could
     /// not be found on this machine.
     /// </exception>
-    /// <exception cref="SpeechSynthesisException">
+    /// <exception cref="SpeechRecognitionException">
     /// The Embedded Speech runtime failed to initialize for the model.
     /// </exception>
     public static EmbeddedTranscriber Load(
@@ -86,7 +86,7 @@ public sealed class EmbeddedTranscriber : IDisposable
         }
         catch (Exception ex) when (ex is not NaturalVoiceException)
         {
-            throw new SpeechSynthesisException(
+            throw new SpeechRecognitionException(
                 $"Failed to initialize the Embedded Speech recognition runtime for model '{model.ModelName}'. " +
                 "Confirm the native runtime is staged and the license is valid.", ex);
         }

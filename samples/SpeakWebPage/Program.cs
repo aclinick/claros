@@ -60,8 +60,8 @@ if (!string.IsNullOrWhiteSpace(title))
     text = $"{title}. {text}";
 }
 
-using var catalog = new VoiceCatalog();
-var voices = await catalog.ListVoicesAsync();
+using var platform = new SpeechPlatform();
+var voices = await platform.ListVoicesAsync();
 if (voices.Count == 0)
 {
     Console.Error.WriteLine(
@@ -85,7 +85,7 @@ Console.WriteLine($"Voice: {voice.DisplayName} (forced HD)");
 EmbeddedVoiceSpeaker speaker;
 try
 {
-    speaker = EmbeddedVoiceSpeaker.Load(voice, license); // null license => resolved from the package
+    speaker = platform.CreateSpeaker(voice, license); // null license => resolved from the package
 }
 catch (NaturalVoiceException ex)
 {

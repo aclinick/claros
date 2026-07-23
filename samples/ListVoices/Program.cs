@@ -1,18 +1,18 @@
 // ListVoices — discovery only.
 //
 // Shows how to enumerate the Windows Natural Voices installed on the machine
-// through VoiceCatalog, read each voice's metadata (VoiceInfo), and react to
+// through SpeechPlatform, read each voice's metadata (VoiceInfo), and react to
 // install/update/uninstall events without polling. No synthesis happens here.
 using WindowsNaturalVoices;
 
-using var catalog = new VoiceCatalog();
+using var platform = new SpeechPlatform();
 
-// The catalog raises VoicesChanged whenever the OS installs, updates, or
+// The platform raises VoicesChanged whenever the OS installs, updates, or
 // removes a voice package. A real app would rebuild its voice list here.
-catalog.VoicesChanged += (_, _) =>
+platform.VoicesChanged += (_, _) =>
     Console.WriteLine("\n[VoicesChanged] Installed voices changed — call ListVoicesAsync again.");
 
-var voices = await catalog.ListVoicesAsync();
+var voices = await platform.ListVoicesAsync();
 
 if (voices.Count == 0)
 {

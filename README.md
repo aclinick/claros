@@ -31,8 +31,10 @@ Not yet published to NuGet. Consume via `ProjectReference` or a submodule until 
 ```csharp
 using WindowsNaturalVoices;
 
-using var catalog = new VoiceCatalog();
-var voices = await catalog.ListVoicesAsync();
+// SpeechPlatform is the single entry point: it discovers installed voices and
+// recognition models and creates warm speakers/transcribers for both halves.
+using var platform = new SpeechPlatform();
+var voices = await platform.ListVoicesAsync();
 
 using var speaker = NaturalVoiceSpeaker.Load(voices[0]);
 var waveform = await speaker.SpeakAsync("The quick brown fox, jumps over the lazy dog.");
@@ -52,8 +54,9 @@ runtime. Everything runs locally; no network call is made.
 ```csharp
 using WindowsNaturalVoices;
 
-var model = TranscriptionModelCatalog.FindModel("en-US");
-using var transcriber = EmbeddedTranscriber.Load(model!);
+using var platform = new SpeechPlatform();
+var model = platform.FindRecognitionModel("en-US");
+using var transcriber = platform.CreateTranscriber(model!);
 
 var result = await transcriber.TranscribeFileAsync("call.wav");
 Console.WriteLine(result.Text);
