@@ -151,6 +151,77 @@ public sealed class SpeechPlatform : IDisposable
         return new TimedNarrator(speaker);
     }
 
+    /// <summary>
+    /// Wires an end-to-end, barge-in <see cref="SpeechConversation"/>: it loads a
+    /// warm synthesizer for <paramref name="voice"/> and a live recognizer plus an
+    /// energy voice-activity detector for <paramref name="model"/>, then connects
+    /// them to the supplied <paramref name="microphone"/> and
+    /// <paramref name="speaker"/> and the caller's <paramref name="turnHandler"/>.
+    /// </summary>
+    /// <remarks>
+    /// The conversation borrows the components; the caller owns their lifetimes and
+    /// must dispose the returned <paramref name="synthesizer"/>,
+    /// <paramref name="transcriber"/>, <paramref name="recognizer"/>, and
+    /// <paramref name="activityDetector"/> once the loop has finished. The
+    /// recognizer and detector are bound to <paramref name="microphone"/>'s sample
+    /// rate, so all three must agree (Live Captions expects 16 kHz mono).
+    /// </remarks>
+    public SpeechConversation CreateConversation(
+        VoiceInfo voice,
+        TranscriptionModelInfo model,
+        IAudioSource microphone,
+        IAudioSink speaker,
+        ConversationTurnHandler turnHandler,
+        out EmbeddedVoiceSpeaker synthesizer,
+        out EmbeddedTranscriber transcriber,
+        out StreamingRecognizer recognizer,
+        out EnergyVoiceActivityDetector activityDetector,
+        VoiceActivityOptions? activityOptions = null,
+        string? synthesisLicense = null,
+        string? recognitionLicense = null,
+        EmbeddedVoiceOptions? synthesisOptions = null,
+        EmbeddedTranscriberOptions? recognitionOptions = null)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(voice);
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(microphone);
+        ArgumentNullException.ThrowIfNull(speaker);
+        ArgumentNullException.ThrowIfNull(turnHandler);
+
+        EmbeddedVoiceSpeaker? synth = null;
+        EmbeddedTranscriber? trans = null;
+        StreamingRecognizer? rec = null;
+        EnergyVoiceActivityDetector? vad = null;
+        try
+        {
+            synth = EmbeddedVoiceSpeaker.Load(voice, synthesisLicense, synthesisOptions);
+            trans = EmbeddedTranscriber.Load(model, recognitionLicense, recognitionOptions);
+            rec = trans.StartRecognizer();
+            vad = new EnergyVoiceActivityDetector(microphone.Format, activityOptions);
+
+            var conversation = new SpeechConversation(
+                microphone, rec, vad, synth, speaker, turnHandler);
+
+            synthesizer = synth;
+            transcriber = trans;
+            recognizer = rec;
+            activityDetector = vad;
+            return conversation;
+        }
+        catch
+        {
+            // Roll back any native resources created before the failure so the
+            // caller is not left with unreachable, undisposed engines.
+            vad?.Dispose();
+            rec?.Dispose();
+            trans?.Dispose();
+            synth?.Dispose();
+            throw;
+        }
+    }
+
+
     private void OnVoicesChanged(object? sender, EventArgs e) =>
         VoicesChanged?.Invoke(this, EventArgs.Empty);
 

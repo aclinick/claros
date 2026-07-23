@@ -3,6 +3,9 @@
   <Folder Name="/samples/BatchSynthesis/">
     <Project Path="samples/BatchSynthesis/WindowsNaturalVoices.BatchSynthesis.csproj" />
   </Folder>
+  <Folder Name="/samples/ConversationLoop/">
+    <Project Path="samples/ConversationLoop/WindowsNaturalVoices.ConversationLoop.csproj" />
+  </Folder>
   <Folder Name="/samples/Demo/">
     <Project Path="samples/Demo/WindowsNaturalVoices.Demo.csproj" />
   </Folder>

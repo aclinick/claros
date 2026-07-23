@@ -8,6 +8,7 @@
     <RootNamespace>WindowsNaturalVoices</RootNamespace>
     <AssemblyName>WindowsNaturalVoices</AssemblyName>
     <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 
     <PackageId>WindowsNaturalVoices</PackageId>
     <Version>0.1.0</Version>
