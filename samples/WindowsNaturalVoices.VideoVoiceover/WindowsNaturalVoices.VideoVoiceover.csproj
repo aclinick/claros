@@ -50,10 +50,10 @@
     <ProjectReference Include="..\..\src\WindowsNaturalVoices.csproj" />
   </ItemGroup>
 
-  <!-- Reuse the subtitle parsing / grouping / voice-selection logic from the
-       SpeakSubtitles sample instead of duplicating it. -->
+  <!-- Subtitle parsing and sentence grouping now live in the platform
+       (SubtitleParser / CueSentenceGrouper). Reuse only the voice-selection
+       helper from the SpeakSubtitles sample. -->
   <ItemGroup>
-    <Compile Include="..\SpeakSubtitles\Subtitle.cs" Link="Subtitle.cs" />
     <Compile Include="..\SpeakSubtitles\Selection.cs" Link="Selection.cs" />
   </ItemGroup>
 </Project>

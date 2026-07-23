@@ -67,7 +67,7 @@ public sealed class VoiceoverController : IDisposable
     private readonly Dictionary<string, LangTrack> _tracks =
         new(StringComparer.OrdinalIgnoreCase);
 
-    private IReadOnlyList<CueGroup> _groups = [];
+    private IReadOnlyList<TimedCue> _groups = [];
     private EmbeddedVoiceSpeaker? _speaker;
     private Task? _utteranceTask;
     private int _nextIndex;
@@ -164,11 +164,11 @@ public sealed class VoiceoverController : IDisposable
                 var opt = options[i];
                 progress?.Invoke($"Preparing {opt.Label} ({i + 1}/{count})…");
 
-                IReadOnlyList<CueGroup> groups;
+                IReadOnlyList<TimedCue> groups;
                 try
                 {
                     var cues = SubtitleParser.Parse(await File.ReadAllTextAsync(opt.SubtitlePath));
-                    groups = SentenceGrouper.Group(cues, GroupGap);
+                    groups = CueSentenceGrouper.GroupIntoSentences(cues, GroupGap);
                 }
                 catch (Exception ex)
                 {
@@ -320,7 +320,7 @@ public sealed class VoiceoverController : IDisposable
             StartUtterance(group);
     }
 
-    private void StartUtterance(CueGroup group)
+    private void StartUtterance(TimedCue group)
     {
         var speaker = _speaker;
         if (speaker is null) return;
@@ -449,7 +449,7 @@ public sealed class VoiceoverController : IDisposable
         string Lang,
         string Label,
         VoiceInfo Voice,
-        IReadOnlyList<CueGroup> Groups,
+        IReadOnlyList<TimedCue> Groups,
         EmbeddedVoiceSpeaker Speaker);
 
     /// <summary>

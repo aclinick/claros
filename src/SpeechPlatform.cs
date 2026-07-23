@@ -133,6 +133,24 @@ public sealed class SpeechPlatform : IDisposable
         return EmbeddedTranscriber.Load(model, license, options);
     }
 
+    /// <summary>
+    /// Creates a warm <see cref="EmbeddedVoiceSpeaker"/> bound to
+    /// <paramref name="voice"/> and wraps it in a <see cref="TimedNarrator"/> for
+    /// subtitle- and cue-timed narration. The narrator borrows the speaker, so the
+    /// returned <paramref name="speaker"/> is owned by the caller and must be
+    /// disposed (which the narrator does not do).
+    /// </summary>
+    public TimedNarrator CreateNarrator(
+        VoiceInfo voice,
+        out EmbeddedVoiceSpeaker speaker,
+        string? license = null,
+        EmbeddedVoiceOptions? options = null)
+    {
+        ThrowIfDisposed();
+        speaker = EmbeddedVoiceSpeaker.Load(voice, license, options);
+        return new TimedNarrator(speaker);
+    }
+
     private void OnVoicesChanged(object? sender, EventArgs e) =>
         VoicesChanged?.Invoke(this, EventArgs.Empty);
 

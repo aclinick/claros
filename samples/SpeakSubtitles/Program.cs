@@ -38,7 +38,7 @@ Console.WriteLine($"Parsed {cues.Count} cues spanning {cues.Max(c => c.End):hh\\
 
 // Speak whole sentences, not cue fragments: grouping consecutive cues keeps the
 // synthesizer's intonation continuous so the talkover doesn't sound clipped.
-var groups = SentenceGrouper.Group(cues, TimeSpan.FromSeconds(1.2));
+var groups = CueSentenceGrouper.GroupIntoSentences(cues);
 Console.WriteLine($"Grouped into {groups.Count} sentence utterances.");
 
 using var platform = new SpeechPlatform();
@@ -68,8 +68,7 @@ if (opt.DryRun)
     Console.WriteLine("\nDry run — sentence utterances that would be narrated:");
     foreach (var g in groups)
     {
-        var label = g.FirstIndex == g.LastIndex ? $"[{g.FirstIndex}]" : $"[{g.FirstIndex}-{g.LastIndex}]";
-        Console.WriteLine($"  {label} {g.Start:hh\\:mm\\:ss\\.fff}  {Preview(g.Text)}");
+        Console.WriteLine($"  [{g.Index}] {g.Start:hh\\:mm\\:ss\\.fff}  {Preview(g.Text)}");
     }
     return 0;
 }
@@ -87,71 +86,28 @@ catch (NaturalVoiceException ex)
     return 8;
 }
 
-int sampleRate;
-var clips = new List<(int StartSample, float[] Samples)>(groups.Count);
+// Render the whole subtitle timeline to one voiceover track: TimedNarrator
+// synthesizes each sentence and mixes it in at the cue's start time. The cues are
+// already grouped into sentences above, so skip the narrator's own grouping.
+WaveformResult track;
 using (speaker)
 {
-    // Synthesize each sentence once and remember where it starts on the timeline.
-    var rate = 0;
-    for (var i = 0; i < groups.Count; i++)
-    {
-        var g = groups[i];
-        var wave = await speaker.SpeakAsync(g.Text);
-        rate = wave.SampleRate;
-        var samples = wave.Samples;
-        Fade.ApplyEdges(samples, rate); // soften clip edges so mixes don't click
-        var startSample = (int)(g.Start.TotalSeconds * rate);
-        clips.Add((startSample, samples));
-
-        var clipEnd = g.Start + TimeSpan.FromSeconds(samples.Length / (double)rate);
-        var overrun = i + 1 < groups.Count && clipEnd > groups[i + 1].Start;
-        var flag = overrun ? "  (overruns next)" : string.Empty;
-        var label = g.FirstIndex == g.LastIndex ? $"[{g.FirstIndex}]" : $"[{g.FirstIndex}-{g.LastIndex}]";
-        Console.WriteLine($"  {label} {g.Start:hh\\:mm\\:ss\\.fff} -> {clipEnd:hh\\:mm\\:ss\\.fff}{flag}  {Preview(g.Text)}");
-    }
-    sampleRate = rate;
+    var narrator = new TimedNarrator(speaker);
+    track = await narrator.RenderAsync(groups, new TimedNarrationOptions { GroupIntoSentences = false });
 }
 
-// Lay every clip onto one silent timeline at its start offset, mixing overlaps.
-// Cues are sorted by start, so the latest END may belong to an earlier cue.
-var lastCueEnd = (int)(cues.Max(c => c.End).TotalSeconds * sampleRate);
-var totalSamples = lastCueEnd;
-foreach (var (start, samples) in clips)
+if (track.SampleRate == 0)
 {
-    totalSamples = Math.Max(totalSamples, start + samples.Length);
-}
-
-var timeline = new float[totalSamples];
-foreach (var (start, samples) in clips)
-{
-    for (var i = 0; i < samples.Length; i++)
-    {
-        timeline[start + i] += samples[i]; // additive mix; WriteMono16 clamps
-    }
+    Console.Error.WriteLine("Nothing was synthesized.");
+    return 7;
 }
 
 var outPath = Path.GetFullPath(opt.OutPath ?? Path.ChangeExtension(opt.InputPath, ".wav"));
-WaveFile.WriteMono16(outPath, timeline, sampleRate);
-Console.WriteLine($"\nWrote {totalSamples / (double)sampleRate:F1}s voiceover at {sampleRate} Hz: {outPath}");
+WaveFile.WriteMono16(outPath, track.Samples, track.SampleRate);
+Console.WriteLine($"\nWrote {track.Samples.Length / (double)track.SampleRate:F1}s voiceover at {track.SampleRate} Hz: {outPath}");
 return 0;
 
 static string Preview(string text) => text.Length <= 60 ? text : text[..57] + "...";
-
-internal static class Fade
-{
-    // Apply a short linear fade-in and fade-out to a clip's edges so adjacent or
-    // overlapping clips don't begin or end with an audible click.
-    public static void ApplyEdges(float[] samples, int sampleRate, double milliseconds = 8)
-    {
-        var n = Math.Min(samples.Length / 2, (int)(sampleRate * milliseconds / 1000.0));
-        for (var i = 0; i < n; i++)
-        {
-            var gain = (float)(i / (double)n);
-            samples[i] *= gain;
-            samples[samples.Length - 1 - i] *= gain;
-        }
-    }
-}
 
 internal sealed record Options(string InputPath, string? OutPath, string? Voice, string? Lang, bool DryRun)
 {
