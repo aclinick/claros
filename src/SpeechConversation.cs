@@ -6,10 +6,14 @@ namespace WindowsNaturalVoices;
 
 /// <summary>
 /// Handles one recognized user turn and returns what the assistant should say, or
-/// <see langword="null"/> to stay silent. Deliberately free of any language-model
-/// coupling: the platform recognizes the utterance and speaks the response, and
-/// this delegate is the only seam where a caller plugs in their own logic (an LLM,
-/// a rules engine, an echo, …).
+/// <see langword="null"/> to stay silent. This is the conversation's natural AI
+/// extensibility point: the platform does everything around it — capturing audio,
+/// endpointing turns, recognizing the utterance, speaking the response, handling
+/// barge-in — and this delegate is where a caller plugs in the intelligence that
+/// decides <em>what</em> to say (an on-device LLM, a rules engine, a retrieval bot,
+/// or a trivial echo). It is deliberately free of any language-model coupling so
+/// the reusable speech plumbing stays generic and the opinionated part stays the
+/// caller's choice.
 /// </summary>
 /// <param name="utterance">The recognized text of the user's turn.</param>
 /// <param name="cancellationToken">Cancelled when the conversation stops.</param>
