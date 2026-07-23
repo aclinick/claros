@@ -156,14 +156,18 @@ The same story runs on the input side. Windows ships the on-device **Live
 Captions speech recognizer**, fully offline, on the **CPU** with no NPU. This
 reference implementation adds a **call listener**: one recognizer per speaker
 (advisor + customer), **finals-only** clean punctuated sentences, merged into one
-two-party transcript, the same pattern Contoso-Finance uses on Mac.
+two-party transcript, the same pattern Contoso-Finance uses on Mac. And it
+**closes the loop**: a conversation orchestrator captures the mic, endpoints each
+turn, recognizes it, and speaks the reply, with **barge-in**, leaving one natural
+place to **plug in intelligence** (an on-device LLM).
 
 Pair it with the HD voices and you have a complete, round-trip speech platform,
 **speech-in and speech-out**, both on-device, both already shipping in Windows,
 both free, private, and offline:
 
 > **Speak → transcribe → understand → respond → speak.** Every stage runs on the
-> device, on hardware already in Windows.
+> device, on hardware already in Windows. The **"understand"** step is a drop-in
+> **AI extensibility point** where you add on-device intelligence.
 
 ### Proof it's real (listening): on-device transcription at the quality tier, on the CPU
 
@@ -226,7 +230,12 @@ Take the hack out; make it supported:
 
 - Enumerate installed Natural voices (locale, gender, package).
 - Load a voice and synthesize offline through the on-device HD runtime.
-- Stream synthesis live to the speaker with word-boundary events.
+- Stream synthesis and recognition live, with word-boundary events and immutable
+  finals.
+- Recognize speech on-device with the same Live Captions model, one recognizer
+  per audio source.
+- Drive a full on-device conversation loop: capture, endpoint, recognize,
+  respond, speak, with barge-in and a place to plug in intelligence.
 - Same surface scales to Azure with credentials, so it's **local-first and
   cloud-optional.**
 
@@ -240,11 +249,15 @@ shared OS model with no per-app download, and comes with a paved road to Azure.
 ## What's in this repo
 
 - **`WindowsNaturalVoices`**: the library, providing a voice catalog and
-  `EmbeddedVoiceSpeaker` (forced-HD, offline, live playback).
+  `EmbeddedVoiceSpeaker` (forced-HD, offline, live playback), on-device
+  recognition, and a `SpeechConversation` orchestrator (mic → endpoint →
+  recognize → respond → speak, with barge-in and a plug-in-intelligence handler).
 - **`samples/SpeakWebPage`**: reads any web page aloud live (reader-mode
   extraction).
 - **`samples/SpeakSubtitles`**: turns a subtitle file into a timeline-aligned
   voiceover track (the localization pipeline).
+- **`samples/ConversationLoop`**: a full round-trip, on-device conversation loop
+  (capture, recognize, respond, speak) with a pluggable turn handler.
 - **`samples/VideoVoiceover`**: a WinUI app that plays a muted video, lets you
   pick a language, plays the live on-device voiceover, and switches languages
   while it plays.

@@ -388,23 +388,25 @@ footer(s, 11)
 s = blank(prs)
 rect(s, 0, 0, SW, SH, WHITE)
 title_block(s, "What \u00b7 the complete platform", "TTS is only half. Windows already listens, too.", TEAL)
-tb = box(s, Inches(0.7), Inches(1.95), Inches(11.9), Inches(2.15))
+tb = box(s, Inches(0.7), Inches(1.9), Inches(11.9), Inches(2.9))
 for i, t in enumerate([
-    ("The same story runs on the input side. Windows ships the on-device Live Captions speech recognizer, fully offline, on the CPU, with no NPU.", True),
-    ("This reference implementation adds a call listener: one recognizer per speaker (advisor + customer), finals-only clean punctuated sentences, merged into one two-party transcript, the same pattern Contoso-Finance uses on Mac.", False),
-    ("Pair it with the HD voices and you have a complete, round-trip speech platform, speech-in and speech-out, both on-device, both already shipping in Windows, both free, private, and offline.", False),
+    ("The same story runs on the input side: Windows ships the on-device Live Captions recognizer, offline, on the CPU, with no NPU.", True),
+    ("A call listener: one recognizer per speaker, finals-only punctuated sentences, merged into a single two-party transcript, the pattern Contoso-Finance uses on Mac.", False),
+    ("And it closes the loop: a conversation orchestrator captures the mic, endpoints each turn, recognizes it, and speaks the reply, with barge-in, and one place to plug in intelligence (an on-device LLM).", False),
+    ("Pair it with the HD voices for a complete round-trip platform, speech-in and speech-out, both on-device, both already in Windows, free, private, and offline.", False),
 ]):
-    para(tb.text_frame, t[0], 16.5, DEEP if t[1] else INK, bold=t[1],
-         font=FONT_SB if t[1] else FONT, bullet=(not t[1]), first=(i == 0), space_after=12)
-rect(s, Inches(0.7), Inches(4.75), Inches(11.9), Inches(1.75), CARD)
-tb = box(s, Inches(1.0), Inches(4.98), Inches(11.3), Inches(1.35))
+    para(tb.text_frame, t[0], 14.5, DEEP if t[1] else INK, bold=t[1],
+         font=FONT_SB if t[1] else FONT, bullet=(not t[1]), first=(i == 0), space_after=8)
+rect(s, Inches(0.7), Inches(5.1), Inches(11.9), Inches(1.5), CARD)
+tb = box(s, Inches(1.0), Inches(5.28), Inches(11.3), Inches(1.15))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame, "Speak \u2192 transcribe \u2192 understand \u2192 respond \u2192 speak",
      20, TEAL, bold=True, font=FONT_SB, first=True, space_after=6)
 para(tb.text_frame,
-     "Every stage runs on the device, on hardware already in Windows. Microsoft can "
-     "deliver a full speech platform out of technology that already ships, no NPU and "
-     "no cloud required.",
+     "Every stage runs on the device, on hardware already in Windows. The "
+     "\u2018understand\u2019 step is a drop-in AI extensibility point where you add "
+     "on-device intelligence. Microsoft can deliver a full speech platform out of "
+     "technology that already ships, no NPU and no cloud required.",
      15, DEEP, font=FONT, space_after=0)
 footer(s, 12)
 
@@ -547,13 +549,14 @@ para(tb.text_frame,
      16, SKY, font=FONT, first=True, space_after=0)
 bl = [
     "Enumerate installed Natural voices and synthesize offline through the on-device HD runtime.",
-    "Stream synthesis live to the speaker with word-boundary events.",
+    "Stream synthesis and recognition live, with word-boundary events and immutable finals.",
     "Recognize speech on-device with the same Live Captions model, one recognizer per audio source.",
+    "Drive a full on-device conversation loop: capture, endpoint, recognize, respond, speak, with barge-in and a place to plug in intelligence.",
     "Same surface scales to Azure with credentials, so it's local-first and cloud-optional.",
 ]
-tb = box(s, Inches(1.0), Inches(3.15), Inches(11.4), Inches(2.2))
+tb = box(s, Inches(1.0), Inches(3.1), Inches(11.4), Inches(2.4))
 for i, t in enumerate(bl):
-    para(tb.text_frame, t, 18, WHITE, font=FONT, bullet=True, first=(i == 0), space_after=10)
+    para(tb.text_frame, t, 16, WHITE, font=FONT, bullet=True, first=(i == 0), space_after=8)
 rect(s, Inches(0.7), Inches(5.65), Inches(11.9), Inches(1.05), STEEL)
 tb = box(s, Inches(1.0), Inches(5.82), Inches(11.3), Inches(0.75))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
