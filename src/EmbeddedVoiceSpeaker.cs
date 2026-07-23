@@ -23,10 +23,11 @@ namespace WindowsNaturalVoices;
 /// to <see cref="SpeakAsync"/>.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public sealed class EmbeddedVoiceSpeaker : IDisposable
+public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
 {
     private readonly EmbeddedSpeechConfig _config;
     private readonly SpeechSynthesizer _synth;
+    private Task<SpeechSynthesisResult>? _pending;
     private bool _disposed;
 
     /// <summary>The Natural Voice this speaker is bound to.</summary>
@@ -95,19 +96,139 @@ public sealed class EmbeddedVoiceSpeaker : IDisposable
     /// <summary>
     /// Convert <paramref name="text"/> to a waveform. Cancellation stops the
     /// in-flight synthesis. Throws <see cref="SpeechSynthesisException"/> when
-    /// the runtime cancels the request.
+    /// the runtime cancels the request. Equivalent to
+    /// <see cref="SynthesizeAsync"/> with a plain-text request.
     /// </summary>
-    public async Task<WaveformResult> SpeakAsync(string text, CancellationToken cancellationToken = default)
+    public Task<WaveformResult> SpeakAsync(string text, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(text);
+        return RunAsync(s => s.SpeakTextAsync(text), cancellationToken);
+    }
+
+    /// <summary>
+    /// Synthesizes <paramref name="request"/> — plain text, prosody-shaped text,
+    /// or raw SSML — into a complete waveform. Prosody-shaped text is rendered
+    /// through generated SSML (the on-device runtime applies prosody only via
+    /// SSML). Cancellation stops the in-flight synthesis.
+    /// </summary>
+    public Task<WaveformResult> SynthesizeAsync(
+        SpeechSynthesisRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        request.Validate();
+
+        if (request.RequiresSsml)
+        {
+            var ssml = request.IsSsml
+                ? request.Content
+                : SsmlBuilder.BuildTextSsml(
+                    request.Content, request.Prosody, Voice.DisplayName, Voice.Locale);
+            return RunAsync(s => s.SpeakSsmlAsync(ssml), cancellationToken);
+        }
+
+        return RunAsync(s => s.SpeakTextAsync(request.Content), cancellationToken);
+    }
+
+    /// <summary>
+    /// Synthesizes <paramref name="request"/> in full, then writes the audio to
+    /// <paramref name="sink"/> in ~100 ms <see cref="AudioBuffer"/> chunks so
+    /// consumers receive uniform buffers and can cancel between chunks. Synthesis
+    /// is buffered before the first write (the embedded engine returns a complete
+    /// waveform), so this decouples the consumer rather than lowering
+    /// first-audio latency. The sink is not completed; the caller owns its
+    /// lifetime. The sink's format must match this voice's output (mono at its
+    /// sample rate). When <paramref name="onWord"/> is supplied it is raised for
+    /// each word as its audio is produced.
+    /// </summary>
+    public async Task SynthesizeToSinkAsync(
+        SpeechSynthesisRequest request,
+        IAudioSink sink,
+        Action<SpokenWord>? onWord = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(sink);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        void OnWord(object? sender, SpeechSynthesisWordBoundaryEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e.Text)) return;
+            onWord!(new SpokenWord(e.Text, TimeSpan.FromTicks((long)e.AudioOffset), e.Duration));
+        }
+
+        if (onWord is not null) _synth.WordBoundary += OnWord;
+        WaveformResult waveform;
+        try
+        {
+            waveform = await SynthesizeAsync(request, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (onWord is not null) _synth.WordBoundary -= OnWord;
+        }
+
+        var format = AudioFormat.Pcm16Mono(waveform.SampleRate);
+        if (!sink.Format.Equals(format))
+        {
+            throw new ArgumentException(
+                $"The sink expects {sink.Format.SampleRate} Hz / {sink.Format.Channels}-channel audio, " +
+                $"but this voice produces {format.SampleRate} Hz mono. Match the sink's format to the voice.",
+                nameof(sink));
+        }
+
+        var samples = waveform.Samples;
+        var chunk = Math.Max(1, format.SampleRate / 10); // ~100 ms
+        for (var offset = 0; offset < samples.Length; offset += chunk)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var length = Math.Min(chunk, samples.Length - offset);
+            var buffer = AudioBuffer.FromSamples(samples.AsSpan(offset, length), format);
+            await sink.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<WaveformResult> RunAsync(
+        Func<SpeechSynthesizer, Task<SpeechSynthesisResult>> speak,
+        CancellationToken cancellationToken)
+    {
         ObjectDisposedException.ThrowIf(_disposed, this);
         cancellationToken.ThrowIfCancellationRequested();
 
-        using var registration = cancellationToken.CanBeCanceled
-            ? cancellationToken.Register(static s => ((SpeechSynthesizer)s!).StopSpeakingAsync(), _synth)
-            : default;
+        // A previously cancelled call may have abandoned an in-flight synthesis
+        // that is still draining on the runtime's own thread. Never touch the
+        // native engine concurrently: wait for it to go idle before starting the
+        // next request.
+        if (_pending is { } previous)
+        {
+            _pending = null;
+            try { await previous.ConfigureAwait(false); }
+            catch { /* result of an abandoned call; already surfaced to its caller */ }
+        }
 
-        using var result = await _synth.SpeakTextAsync(text).ConfigureAwait(false);
+        // Draining the previous call may have taken a while; if we were cancelled
+        // meanwhile, don't bother starting native synthesis just to abandon it.
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var speakTask = speak(_synth);
+        _pending = speakTask;
+
+        // Cooperative cancellation only. This runtime crashes if StopSpeakingAsync
+        // is invoked cross-thread from the cancellation callback (see the
+        // VideoVoiceover sample's VoiceoverController), so on cancellation we stop
+        // awaiting and leave the in-flight synthesis to complete on its own thread;
+        // the _pending gate above keeps the next call from racing it.
+        if (cancellationToken.CanBeCanceled)
+        {
+            var cancelled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            using var registration = cancellationToken.Register(
+                static s => ((TaskCompletionSource)s!).TrySetResult(), cancelled);
+            var finished = await Task.WhenAny(speakTask, cancelled.Task).ConfigureAwait(false);
+            if (finished != speakTask)
+                cancellationToken.ThrowIfCancellationRequested();
+        }
+
+        using var result = await speakTask.ConfigureAwait(false);
+        _pending = null;
 
         if (result.Reason == ResultReason.Canceled)
         {
@@ -116,10 +237,6 @@ public sealed class EmbeddedVoiceSpeaker : IDisposable
             throw new SpeechSynthesisException(
                 $"Embedded synthesis was canceled ({details.ErrorCode}): {details.ErrorDetails}");
         }
-
-        // The stop request can race the completion: if cancellation fired after
-        // synthesis started but the result still came back as completed, honor it.
-        cancellationToken.ThrowIfCancellationRequested();
 
         var (samples, sampleRate) = WaveFile.ReadMono16(result.AudioData);
         return new WaveformResult(samples, sampleRate);
@@ -216,6 +333,17 @@ public sealed class EmbeddedVoiceSpeaker : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+
+        // A cancelled call may have left synthesis running on the runtime's own
+        // thread. Drain it (best effort) before disposing the native engine so we
+        // never free it out from under an in-flight operation.
+        if (_pending is { } pending)
+        {
+            _pending = null;
+            try { pending.Wait(TimeSpan.FromSeconds(5)); }
+            catch { /* abandoned call; its result was already surfaced or discarded */ }
+        }
+
         _synth.Dispose();
     }
 }
