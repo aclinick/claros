@@ -93,6 +93,24 @@ public sealed class EmbeddedTranscriber : IDisposable
     }
 
     /// <summary>
+    /// Starts a live <see cref="StreamingRecognizer"/>: push <see cref="AudioBuffer"/>s
+    /// as audio arrives and consume ordered <see cref="RecognitionEvent"/>s
+    /// (partials, finalized sentences, corrections) from
+    /// <see cref="StreamingRecognizer.ReadEventsAsync"/>. This is the event-stream
+    /// front end over the same underlying session as <see cref="StartSession"/>;
+    /// prefer it when you want the unified streaming event model rather than
+    /// polling <see cref="LiveTranscriptionSession.CommitSentences"/> yourself.
+    /// </summary>
+    public StreamingRecognizer StartRecognizer()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        var session = new LiveTranscriptionSession(_config, _options.SampleRate);
+        lock (_sessions) _sessions.Add(session);
+        session.StartAsync().GetAwaiter().GetResult();
+        return new StreamingRecognizer(Model, session, _options.SampleRate);
+    }
+
+    /// <summary>
     /// Starts a live, push-driven transcription session. Write 16-bit mono PCM
     /// audio (at <see cref="EmbeddedTranscriberOptions.SampleRate"/>) as it
     /// arrives, observe the streaming text through the returned session, and call
