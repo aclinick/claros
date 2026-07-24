@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// One finalized transcript line from a single call leg: a completed, punctuated

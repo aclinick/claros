@@ -1,4 +1,4 @@
-# WindowsNaturalVoices
+# Windows.Speech
 
 A small .NET library that enables offline text-to-speech on Windows using the
 neural voice models already built into the operating system. It enumerates the
@@ -17,7 +17,7 @@ There is no cryptographic protection on the model files. Each `*.bin` in a voice
 ## What it does
 
 ```csharp
-using WindowsNaturalVoices;
+using Windows.Speech;
 
 using var platform = new SpeechPlatform();
 var voices = await platform.ListVoicesAsync();
@@ -51,8 +51,8 @@ The vocoder rewrite loses streaming state, so this library synthesizes each phra
 ## Building
 
 ```
-dotnet build WindowsNaturalVoices.slnx
-dotnet run --project samples\Demo\WindowsNaturalVoices.Demo.csproj
+dotnet build Windows.Speech.slnx
+dotnet run --project samples\Demo\Windows.Speech.Demo.csproj
 ```
 
 Requires the .NET 10 SDK and the Windows App SDK target framework

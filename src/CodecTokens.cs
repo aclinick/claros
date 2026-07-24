@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Result of running the acoustic model on a phoneme sequence. Contains

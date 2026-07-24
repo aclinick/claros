@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Base type for every error the library raises for expected, actionable

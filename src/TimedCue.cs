@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// A single timed text cue: some text anchored to a start/end time on a timeline.

@@ -1,4 +1,4 @@
-using WindowsNaturalVoices;
+using Windows.Speech;
 
 using var platform = new SpeechPlatform();
 var voices = await platform.ListVoicesAsync();

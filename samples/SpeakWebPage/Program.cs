@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
-using WindowsNaturalVoices;
+using Windows.Speech;
 
 // SpeakWebPage: fetch a web page, extract its readable text, and read it aloud in
 // real time with the flagship, fully-offline EmbeddedVoiceSpeaker (forced HD).
@@ -9,7 +9,7 @@ using WindowsNaturalVoices;
 // each word as it is spoken; pass --out to write a WAV file instead.
 //
 // Usage:
-//   dotnet run -r win-arm64 --project samples\SpeakWebPage\WindowsNaturalVoices.SpeakWebPage.csproj -- <url> [--voice Ava] [--max 1200] [--out page.wav]
+//   dotnet run -r win-arm64 --project samples\SpeakWebPage\Windows.Speech.SpeakWebPage.csproj -- <url> [--voice Ava] [--max 1200] [--out page.wav]
 //
 // The Embedded Speech runtime requires a Microsoft-issued license for the
 // on-device models; by default it is read automatically from the installed voice
@@ -30,7 +30,7 @@ try
 {
     using var http = new HttpClient();
     http.DefaultRequestHeaders.UserAgent.ParseAdd(
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) WindowsNaturalVoices/0.1 SpeakWebPage");
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Windows.Speech/0.1 SpeakWebPage");
     http.Timeout = TimeSpan.FromSeconds(30);
     html = await http.GetStringAsync(parsed.Url);
 }

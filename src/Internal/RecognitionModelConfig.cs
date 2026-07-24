@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// The identifying fields of an on-device recognition model, parsed from the

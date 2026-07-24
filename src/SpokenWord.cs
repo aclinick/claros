@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// A word (or punctuation token) reported during live synthesis through

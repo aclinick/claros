@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>A state transition reported by <see cref="EnergyEndpointer"/>.</summary>
 internal enum VadTransition

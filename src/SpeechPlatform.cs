@@ -1,6 +1,6 @@
 using System.Runtime.Versioning;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Single entry point that unifies the two halves of the library — offline

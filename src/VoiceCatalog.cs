@@ -1,9 +1,9 @@
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.AppExtensions;
 using Windows.Foundation.Collections;
-using WindowsNaturalVoices.Internal;
+using Windows.Speech.Internal;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Enumerates installed Windows Natural Voice packages via the

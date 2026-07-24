@@ -1,7 +1,7 @@
 using Google.Protobuf;
 using Onnx;
 
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// Strips the plaintext EULA header from a Natural Voice model binary.

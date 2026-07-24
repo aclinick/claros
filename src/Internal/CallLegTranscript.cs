@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// Pure-logic core of a single call leg's transcript: converts newly completed

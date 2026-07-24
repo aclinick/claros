@@ -1,9 +1,9 @@
 using System.Runtime.Versioning;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
-using WindowsNaturalVoices.Internal;
+using Windows.Speech.Internal;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Offline speech-to-text: transcribes audio with the same on-device recognition
@@ -81,7 +81,7 @@ public sealed class EmbeddedTranscriber : IDisposable
             // Keep the engine in a continuous streaming state; see the option docs.
             config.SetProperty(
                 PropertyId.Speech_SegmentationSilenceTimeoutMs,
-                options.SegmentationSilenceTimeoutMs.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                options.SegmentationSilenceTimeoutMs.ToString(global::System.Globalization.CultureInfo.InvariantCulture));
             return new EmbeddedTranscriber(model, config, options);
         }
         catch (Exception ex) when (ex is not NaturalVoiceException)

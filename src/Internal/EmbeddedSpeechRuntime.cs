@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// Locates and stages the native components the Azure Embedded Speech runtime

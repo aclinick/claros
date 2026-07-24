@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// What a <see cref="RecognitionEvent"/> represents in the streaming recognition

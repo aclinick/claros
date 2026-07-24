@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// Parses the <c>Tokens.xml</c> file that every Natural Voice package

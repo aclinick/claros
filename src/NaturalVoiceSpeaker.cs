@@ -1,6 +1,6 @@
 using System.Runtime.Versioning;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// One-call facade over <see cref="SapiPhonemizer"/>,

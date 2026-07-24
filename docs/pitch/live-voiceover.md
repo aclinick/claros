@@ -248,7 +248,7 @@ shared OS model with no per-app download, and comes with a paved road to Azure.
 
 ## What's in this repo
 
-- **`WindowsNaturalVoices`**: the library, providing a voice catalog and
+- **`Windows.Speech`**: the library, providing a voice catalog and
   `EmbeddedVoiceSpeaker` (forced-HD, offline, live playback), on-device
   recognition, and a `SpeechConversation` orchestrator (mic → endpoint →
   recognize → respond → speak, with barge-in and a plug-in-intelligence handler).

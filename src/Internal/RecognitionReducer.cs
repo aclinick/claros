@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// Turns the ever-growing streaming hypothesis of a live recognition session into

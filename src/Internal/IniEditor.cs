@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// Minimal, section-aware editor for the classic <c>*.INI</c> files that the

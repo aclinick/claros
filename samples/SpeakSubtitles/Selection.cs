@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace WindowsNaturalVoices.SpeakSubtitles;
+namespace Windows.Speech.SpeakSubtitles;
 
 /// <summary>
 /// Infers a target locale from a subtitle file name that follows the common

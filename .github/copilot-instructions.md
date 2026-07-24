@@ -1,4 +1,4 @@
-# Copilot instructions: ttslib (WindowsNaturalVoices)
+# Copilot instructions: ttslib (Windows.Speech)
 
 Offline text-to-speech for .NET that drives the **Natural Voices already installed
 on a Windows machine**. No cloud, no bundled models, no third-party G2P engine.
@@ -8,14 +8,14 @@ ONNX acoustic model and vocoder through stock ONNX Runtime.
 ## Build & run
 
 ```
-dotnet build WindowsNaturalVoices.slnx
-dotnet test WindowsNaturalVoices.slnx
-dotnet run --project samples\Demo\WindowsNaturalVoices.Demo.csproj -- "text to speak"
+dotnet build Windows.Speech.slnx
+dotnet test Windows.Speech.slnx
+dotnet run --project samples\Demo\Windows.Speech.Demo.csproj -- "text to speak"
 ```
 
-- `WindowsNaturalVoices.slnx` is the solution (XML `slnx` format); it aggregates the
+- `Windows.Speech.slnx` is the solution (XML `slnx` format); it aggregates the
   library, the Demo, and the test project. `global.json` pins the SDK to the 10.x band.
-- **Tests:** xUnit project at `tests\WindowsNaturalVoices.Tests`. It covers only the
+- **Tests:** xUnit project at `tests\Windows.Speech.Tests`. It covers only the
   pure-logic units (header extraction, streaming-op rewrite, phoneme table, IPA map,
   Tokens.xml, WAV, vocoder tensor/normalize helpers) with synthetic inputs; no
   installed voice required. Internal types are reachable via `InternalsVisibleTo`
@@ -80,8 +80,8 @@ facade (`SpeakAsync` → phonemize → acoustic model → vocoder):
 - **Threading:** `NaturalVoiceSpeaker`, `NaturalVoiceEngine`, and `SapiPhonemizer`
   are thread-hostile. Construct one per voice, keep it warm across phrases (model
   load dominates first-call latency), and serialize calls.
-- **Namespacing:** public API in `WindowsNaturalVoices`; helpers in
-  `WindowsNaturalVoices.Internal`. Windows-only public types carry
+- **Namespacing:** public API in `Windows.Speech`; helpers in
+  `Windows.Speech.Internal`. Windows-only public types carry
   `[SupportedOSPlatform("windows")]`. Nullable and implicit usings are enabled.
 - **G2P fallback:** for locales SAPI can't handle, callers supply phoneme ids
   directly via `PhonemeTable.TryGetArpabet`/`TryGet`; ARPABET keys are looked up

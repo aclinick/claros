@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// An <see cref="IAudioSink"/> that keeps every buffer written to it in memory.

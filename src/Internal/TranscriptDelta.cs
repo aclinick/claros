@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// Computes the newly committed text of a live transcript. The on-device

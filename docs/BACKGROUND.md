@@ -47,7 +47,7 @@ streaming operators are rewritten to their standard ONNX equivalents.
 
 ## What this library is
 
-**ttslib (`WindowsNaturalVoices`) fills that hole in the Windows API.** It is a
+**ttslib (`Windows.Speech`) fills that hole in the Windows API.** It is a
 small .NET library that:
 
 - discovers the Natural Voices installed on the machine,

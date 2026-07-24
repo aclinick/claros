@@ -1,8 +1,8 @@
 using System.Runtime.Versioning;
 using System.Speech.Synthesis;
-using WindowsNaturalVoices.Internal;
+using Windows.Speech.Internal;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Runs the Windows SAPI text preprocessor over a string and returns a phoneme

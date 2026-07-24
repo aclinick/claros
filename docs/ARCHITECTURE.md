@@ -1,6 +1,6 @@
 # Architecture
 
-`WindowsNaturalVoices` turns a string into audio in three stages, plus a
+`Windows.Speech` turns a string into audio in three stages, plus a
 discovery layer that finds the installed voices. Everything runs offline on the
 CPU with stock NuGet packages.
 
@@ -106,10 +106,10 @@ peak-normalizes the result to 0.9. Output is mono PCM at **26000 Hz**.
 
 ## Namespaces
 
-- `WindowsNaturalVoices`: the public API (`VoiceCatalog`, `VoiceInfo`,
+- `Windows.Speech`: the public API (`VoiceCatalog`, `VoiceInfo`,
   `NaturalVoiceSpeaker`, `NaturalVoiceEngine`, `Vocoder`, `SapiPhonemizer`,
   `PhonemeTable`, `CodecTokens`, `WaveformResult`, `WaveFile`, option records).
-- `WindowsNaturalVoices.Internal`: implementation shims (`ModelExtractor`,
+- `Windows.Speech.Internal`: implementation shims (`ModelExtractor`,
   `StreamingOpRewriter`, `IpaPhonemeMap`, `TokensXmlParser`). Exposed to the test
   assembly via `InternalsVisibleTo`.
 

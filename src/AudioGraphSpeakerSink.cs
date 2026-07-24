@@ -6,7 +6,7 @@ using Windows.Media.Audio;
 using Windows.Media.MediaProperties;
 using Windows.Media.Render;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// A speaker <see cref="IAudioSink"/> backed by Windows <see cref="AudioGraph"/>.
@@ -26,7 +26,7 @@ public sealed class AudioGraphSpeakerSink : IAudioSink, IAsyncDisposable
     private readonly AudioGraph _graph;
     private readonly AudioDeviceOutputNode _output;
     private readonly AudioFrameInputNode _input;
-    private readonly System.Diagnostics.Stopwatch _clock = new();
+    private readonly global::System.Diagnostics.Stopwatch _clock = new();
     private double _submittedSeconds;
 
     // Keep at most this much audio queued ahead of the playhead. Bounding the

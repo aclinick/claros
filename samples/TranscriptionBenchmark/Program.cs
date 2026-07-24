@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
-using WindowsNaturalVoices;
+using Windows.Speech;
 
 // ---------------------------------------------------------------------------
 // Live call transcription benchmark.

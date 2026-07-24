@@ -1,7 +1,7 @@
 using System.Text;
 using System.Xml;
 
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// Builds a minimal, valid SSML document that wraps plain text in a bound voice

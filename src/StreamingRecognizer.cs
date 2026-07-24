@@ -1,8 +1,8 @@
 using System.Runtime.Versioning;
 using System.Threading.Channels;
-using WindowsNaturalVoices.Internal;
+using Windows.Speech.Internal;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// The default <see cref="ISpeechRecognizer"/>: a thin runtime wrapper that drives

@@ -29,7 +29,7 @@ Not yet published to NuGet. Consume via `ProjectReference` or a submodule until 
 ## Quick start
 
 ```csharp
-using WindowsNaturalVoices;
+using Windows.Speech;
 
 // SpeechPlatform is the single entry point: it discovers installed voices and
 // recognition models and creates warm speakers/transcribers for both halves.
@@ -52,7 +52,7 @@ that powers **Windows Live Captions**, through Microsoft's Azure Embedded Speech
 runtime. Everything runs locally; no network call is made.
 
 ```csharp
-using WindowsNaturalVoices;
+using Windows.Speech;
 
 using var platform = new SpeechPlatform();
 var model = platform.FindRecognitionModel("en-US");
@@ -71,17 +71,17 @@ that and measures memory and latency against Foundry Local and NPU engines.
 ## Build
 
 ```
-dotnet build WindowsNaturalVoices.slnx
-dotnet run --project samples\Demo\WindowsNaturalVoices.Demo.csproj -- "text to speak"
+dotnet build Windows.Speech.slnx
+dotnet run --project samples\Demo\Windows.Speech.Demo.csproj -- "text to speak"
 ```
 
-The `WindowsNaturalVoices.slnx` solution builds the library and the Demo together.
+The `Windows.Speech.slnx` solution builds the library and the Demo together.
 `global.json` pins the toolchain to the .NET 10 SDK.
 
 ## Test
 
 ```
-dotnet test WindowsNaturalVoices.slnx
+dotnet test Windows.Speech.slnx
 ```
 
 The suite covers the pure-logic core (header extraction, streaming-op rewriting,

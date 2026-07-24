@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// Maps IPA symbols (as emitted by <c>System.Speech.Synthesis.SpeechSynthesizer.PhonemeReached</c>)

@@ -1,7 +1,7 @@
-using WindowsNaturalVoices;
+using Windows.Speech;
 
 // Offline speech-to-text with the Windows Live Captions recognition model,
-// through the WindowsNaturalVoices library. Everything runs on-device; no
+// through the Windows.Speech library. Everything runs on-device; no
 // network call is made.
 //
 //   dotnet run -r win-arm64 -- <path-to-16kHz-mono-wav> [locale]

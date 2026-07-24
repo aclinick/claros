@@ -1,6 +1,6 @@
 using System.Runtime.Versioning;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Configuration for <see cref="EmbeddedTranscriber"/>, the offline

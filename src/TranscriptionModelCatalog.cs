@@ -1,7 +1,7 @@
 using Windows.Management.Deployment;
-using WindowsNaturalVoices.Internal;
+using Windows.Speech.Internal;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Enumerates the on-device speech-recognition models installed on this machine:

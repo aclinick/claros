@@ -1,6 +1,6 @@
 using System.Runtime.Versioning;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// A request-driven, streamable text-to-speech engine. Turns a

@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Describes the layout of an uncompressed PCM audio stream: its sample rate,

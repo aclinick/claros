@@ -1,4 +1,4 @@
-using WindowsNaturalVoices;
+using Windows.Speech;
 
 // End-to-end, barge-in-capable conversation loop — entirely on-device.
 //

@@ -1,7 +1,7 @@
 using System.Runtime.Versioning;
-using WindowsNaturalVoices.Internal;
+using Windows.Speech.Internal;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// A single call "leg": one live recognizer bound to one audio source, such as

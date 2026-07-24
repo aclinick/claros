@@ -8,7 +8,7 @@ using Windows.Media.Capture;
 using Windows.Media.MediaProperties;
 using Windows.Media.Render;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// A live-microphone <see cref="IAudioSource"/> backed by Windows
@@ -119,10 +119,10 @@ public sealed class AudioGraphMicrophoneSource : IAudioSource, IAsyncDisposable
         await Task.CompletedTask;
     }
 
-    [System.Runtime.InteropServices.ComImport]
-    [System.Runtime.InteropServices.Guid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")]
-    [System.Runtime.InteropServices.InterfaceType(
-        System.Runtime.InteropServices.ComInterfaceType.InterfaceIsIUnknown)]
+    [global::System.Runtime.InteropServices.ComImport]
+    [global::System.Runtime.InteropServices.Guid("5B0D3235-4DBA-4D44-865E-8F1D0E4FD04D")]
+    [global::System.Runtime.InteropServices.InterfaceType(
+        global::System.Runtime.InteropServices.ComInterfaceType.InterfaceIsIUnknown)]
     private interface IMemoryBufferByteAccess
     {
         unsafe void GetBuffer(out byte* buffer, out uint capacity);

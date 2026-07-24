@@ -1,7 +1,7 @@
 using System.Runtime.Versioning;
-using WindowsNaturalVoices.Internal;
+using Windows.Speech.Internal;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Turns <see cref="TimedCue"/>s into speech aligned to a timeline, on top of any

@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Minimal parser for SubRip (<c>.srt</c>) and WebVTT (<c>.vtt</c>) subtitle
@@ -71,7 +71,7 @@ public static partial class SubtitleParser
     private static string CleanText(string raw)
     {
         var stripped = TagRegex().Replace(raw, string.Empty); // drop <i>, <c>, <00:00:01.000> etc.
-        stripped = System.Net.WebUtility.HtmlDecode(stripped);
+        stripped = global::System.Net.WebUtility.HtmlDecode(stripped);
         return WhitespaceRegex().Replace(stripped, " ").Trim();
     }
 

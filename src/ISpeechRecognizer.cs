@@ -1,6 +1,6 @@
 using System.Runtime.Versioning;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// A live speech-to-text recognizer that consumes pushed <see cref="AudioBuffer"/>s

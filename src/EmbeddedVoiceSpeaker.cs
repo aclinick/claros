@@ -1,9 +1,9 @@
 using System.Runtime.Versioning;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
-using WindowsNaturalVoices.Internal;
+using Windows.Speech.Internal;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Flagship offline text-to-speech engine: drives a Windows Natural Voice
@@ -303,7 +303,7 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
     {
         var root = options.OverlayRoot ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "WindowsNaturalVoices", "hd-overlays");
+            "Windows.Speech", "hd-overlays");
 
         var name = new DirectoryInfo(voice.InstalledPath.TrimEnd(
             Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)).Name;

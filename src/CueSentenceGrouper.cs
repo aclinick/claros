@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Merges consecutive <see cref="TimedCue"/>s into sentence-sized cues. A group

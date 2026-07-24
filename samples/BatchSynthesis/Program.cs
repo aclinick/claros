@@ -5,7 +5,7 @@
 // loads one speaker, then writes each phrase to its own WAV file, and shows
 // how SynthesisOptions can be tuned per call.
 using System.Diagnostics;
-using WindowsNaturalVoices;
+using Windows.Speech;
 
 using var platform = new SpeechPlatform();
 var voices = await platform.ListVoicesAsync();

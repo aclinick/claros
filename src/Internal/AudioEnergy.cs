@@ -1,4 +1,4 @@
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>Pure audio-energy helpers used by the energy VAD.</summary>
 internal static class AudioEnergy

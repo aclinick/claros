@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace WindowsNaturalVoices;
+namespace Windows.Speech;
 
 /// <summary>
 /// Factories for simple <see cref="IAudioSource"/> instances, chiefly an

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace WindowsNaturalVoices.Internal;
+namespace Windows.Speech.Internal;
 
 /// <summary>
 /// Resolves the on-device model license string that the Embedded Speech runtime
