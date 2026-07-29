@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Describes the layout of an uncompressed PCM audio stream: its sample rate,

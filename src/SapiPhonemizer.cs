@@ -1,8 +1,8 @@
 using System.Runtime.Versioning;
 using System.Speech.Synthesis;
-using Windows.Speech.Internal;
+using Claros.Internal;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Runs the Windows SAPI text preprocessor over a string and returns a phoneme

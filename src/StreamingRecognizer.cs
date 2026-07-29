@@ -1,8 +1,8 @@
 using System.Runtime.Versioning;
 using System.Threading.Channels;
-using Windows.Speech.Internal;
+using Claros.Internal;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// The default <see cref="ISpeechRecognizer"/>: a thin runtime wrapper that drives

@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Resolves the on-device model license string that the Embedded Speech runtime

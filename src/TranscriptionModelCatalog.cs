@@ -1,7 +1,7 @@
 using Windows.Management.Deployment;
-using Windows.Speech.Internal;
+using Claros.Internal;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Enumerates the on-device speech-recognition models installed on this machine:

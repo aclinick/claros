@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// An installed on-device speech-recognition model: one of the

@@ -1,6 +1,6 @@
 using System.Runtime.Versioning;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Single entry point that unifies the two halves of the library — offline

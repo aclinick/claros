@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Tuning for the energy-based voice-activity detector

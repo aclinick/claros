@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// An <see cref="IAudioSource"/> that replays a mono 16-bit PCM WAV file in

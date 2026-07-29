@@ -1,6 +1,6 @@
 # Architecture
 
-`Windows.Speech` turns a string into audio in three stages, plus a
+`Claros` turns a string into audio in three stages, plus a
 discovery layer that finds the installed voices. Everything runs offline on the
 CPU with stock NuGet packages.
 
@@ -106,10 +106,10 @@ peak-normalizes the result to 0.9. Output is mono PCM at **26000 Hz**.
 
 ## Namespaces
 
-- `Windows.Speech`: the public API (`VoiceCatalog`, `VoiceInfo`,
+- `Claros`: the public API (`VoiceCatalog`, `VoiceInfo`,
   `NaturalVoiceSpeaker`, `NaturalVoiceEngine`, `Vocoder`, `SapiPhonemizer`,
   `PhonemeTable`, `CodecTokens`, `WaveformResult`, `WaveFile`, option records).
-- `Windows.Speech.Internal`: implementation shims (`ModelExtractor`,
+- `Claros.Internal`: implementation shims (`ModelExtractor`,
   `StreamingOpRewriter`, `IpaPhonemeMap`, `TokensXmlParser`). Exposed to the test
   assembly via `InternalsVisibleTo`.
 

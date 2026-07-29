@@ -13,7 +13,7 @@ so the native runtime is placed correctly:
 
 ```powershell
 dotnet run -r win-arm64 `
-  --project samples\SpeakWebPage\Windows.Speech.SpeakWebPage.csproj `
+  --project samples\SpeakWebPage\Claros.SpeakWebPage.csproj `
   -- https://example.com/article --out article.wav --voice Ava
 ```
 

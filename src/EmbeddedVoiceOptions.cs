@@ -1,6 +1,6 @@
 using System.Runtime.Versioning;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Configuration for <see cref="EmbeddedVoiceSpeaker"/>, the flagship engine

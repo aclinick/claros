@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Result of running the acoustic model on a phoneme sequence. Contains

@@ -5,7 +5,7 @@
       "src": [
         {
           "src": "src",
-          "files": [ "Windows.Speech.csproj" ]
+          "files": [ "Claros.csproj" ]
         }
       ],
       "dest": "docs/api",
@@ -25,9 +25,9 @@
     "output": "docs/_site",
     "template": [ "default", "modern" ],
     "globalMetadata": {
-      "_appName": "Windows.Speech",
-      "_appTitle": "Windows.Speech API reference",
-      "_appFooter": "Windows.Speech \u2013 offline TTS with Windows on-device Natural Voices",
+      "_appName": "Claros",
+      "_appTitle": "Claros API reference",
+      "_appFooter": "Claros \u2013 offline TTS with Windows on-device Natural Voices",
       "_enableSearch": true,
       "_disableContribution": true
     }

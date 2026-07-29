@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// An immutable chunk of 16-bit PCM audio together with the <see cref="AudioFormat"/>

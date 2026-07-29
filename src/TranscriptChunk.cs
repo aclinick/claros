@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// One finalized transcript line from a single call leg: a completed, punctuated

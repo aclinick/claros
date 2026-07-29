@@ -1,4 +1,4 @@
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Computes the newly committed text of a live transcript. The on-device

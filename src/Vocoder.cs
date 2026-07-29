@@ -1,8 +1,8 @@
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using Windows.Speech.Internal;
+using Claros.Internal;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Waveform samples returned by <see cref="Vocoder.Synthesize"/> and

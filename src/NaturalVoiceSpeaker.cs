@@ -1,7 +1,7 @@
 using System.Runtime.Versioning;
-using Windows.Speech.Internal;
+using Claros.Internal;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// One-call facade over <see cref="SapiPhonemizer"/>,

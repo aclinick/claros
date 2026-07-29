@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// What a <see cref="RecognitionEvent"/> represents in the streaming recognition

@@ -1,4 +1,4 @@
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// The identifying fields of an on-device recognition model, parsed from the

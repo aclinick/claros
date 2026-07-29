@@ -1,4 +1,4 @@
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Loader for the phoneme table shipped inside a Natural Voice package.

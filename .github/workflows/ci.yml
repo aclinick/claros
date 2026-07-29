@@ -28,12 +28,12 @@ jobs:
           global-json-file: global.json
 
       - name: Restore
-        run: dotnet restore Windows.Speech.slnx
+        run: dotnet restore Claros.slnx
 
       - name: Build
-        run: dotnet build Windows.Speech.slnx --configuration Release --no-restore
+        run: dotnet build Claros.slnx --configuration Release --no-restore
 
       # The synthesis pipeline needs an installed Natural Voice, which the runner
       # does not have, so only the pure-logic unit tests run here.
       - name: Test
-        run: dotnet test Windows.Speech.slnx --configuration Release --no-build --verbosity normal
+        run: dotnet test Claros.slnx --configuration Release --no-build --verbosity normal

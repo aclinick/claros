@@ -5,7 +5,7 @@
 // phoneme, the acoustic model that emits discrete codec tokens, and the vocoder
 // that turns those tokens into audio. Use this pattern when you need access to
 // the intermediate phoneme ids or codec tokens.
-using Windows.Speech;
+using Claros;
 
 using var platform = new SpeechPlatform();
 var voices = await platform.ListVoicesAsync();

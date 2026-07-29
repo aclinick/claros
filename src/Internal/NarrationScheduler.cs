@@ -1,4 +1,4 @@
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Pure scheduling core for live, playhead-synced narration. Given a monotonic

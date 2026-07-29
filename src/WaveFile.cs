@@ -1,7 +1,7 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
-/// Minimal RIFF WAV writer used by <c>Windows.Speech.Demo</c> so the
+/// Minimal RIFF WAV writer used by <c>Claros.Demo</c> so the
 /// sample has no extra dependencies. Writes 16 bit mono PCM.
 /// </summary>
 public static class WaveFile
@@ -66,7 +66,7 @@ public static class WaveFile
         int pos = 12;
         while (pos + 8 <= wav.Length)
         {
-            var id = global::System.Text.Encoding.ASCII.GetString(wav, pos, 4);
+            var id = System.Text.Encoding.ASCII.GetString(wav, pos, 4);
             int size = BitConverter.ToInt32(wav, pos + 4);
             int body = pos + 8;
             if (size < 0 || body + size > wav.Length)

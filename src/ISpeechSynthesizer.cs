@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// A request-driven, streamable text-to-speech engine. Turns a

@@ -1,0 +1,39 @@
+<Solution>
+  <Folder Name="/samples/" />
+  <Folder Name="/samples/BatchSynthesis/">
+    <Project Path="samples/BatchSynthesis/Claros.BatchSynthesis.csproj" />
+  </Folder>
+  <Folder Name="/samples/ConversationLoop/">
+    <Project Path="samples/ConversationLoop/Claros.ConversationLoop.csproj" />
+  </Folder>
+  <Folder Name="/samples/Demo/">
+    <Project Path="samples/Demo/Claros.Demo.csproj" />
+  </Folder>
+  <Folder Name="/samples/ListVoices/">
+    <Project Path="samples/ListVoices/Claros.ListVoices.csproj" />
+  </Folder>
+  <Folder Name="/samples/LowLevelPipeline/">
+    <Project Path="samples/LowLevelPipeline/Claros.LowLevelPipeline.csproj" />
+  </Folder>
+  <Folder Name="/samples/SpeakSubtitles/">
+    <Project Path="samples/SpeakSubtitles/Claros.SpeakSubtitles.csproj" />
+  </Folder>
+  <Folder Name="/samples/SpeakWebPage/">
+    <Project Path="samples/SpeakWebPage/Claros.SpeakWebPage.csproj" />
+  </Folder>
+  <Folder Name="/samples/TranscribeFile/">
+    <Project Path="samples/TranscribeFile/Claros.TranscribeFile.csproj" />
+  </Folder>
+  <Folder Name="/samples/TranscriptionBenchmark/">
+    <Project Path="samples/TranscriptionBenchmark/Claros.TranscriptionBenchmark.csproj" />
+  </Folder>
+  <Folder Name="/samples/VideoVoiceover/">
+    <Project Path="samples/Claros.VideoVoiceover/Claros.VideoVoiceover.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Claros.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Claros.Tests/Claros.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,9 +1,9 @@
 using System.Runtime.Versioning;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
-using Windows.Speech.Internal;
+using Claros.Internal;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Flagship offline text-to-speech engine: drives a Windows Natural Voice
@@ -305,7 +305,7 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
     {
         var root = options.OverlayRoot ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Windows.Speech", "hd-overlays");
+            "Claros", "hd-overlays");
 
         var name = new DirectoryInfo(voice.InstalledPath.TrimEnd(
             Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)).Name;

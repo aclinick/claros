@@ -1,7 +1,7 @@
 using System.Runtime.Versioning;
-using Windows.Speech.Internal;
+using Claros.Internal;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Turns <see cref="TimedCue"/>s into speech aligned to a timeline, on top of any

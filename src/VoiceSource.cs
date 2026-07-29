@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Where a <see cref="VoiceInfo"/>'s audio is produced — the tier a caller has

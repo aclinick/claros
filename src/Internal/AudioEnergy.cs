@@ -1,4 +1,4 @@
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>Pure audio-energy helpers used by the energy VAD.</summary>
 internal static class AudioEnergy

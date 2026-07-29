@@ -1,7 +1,7 @@
 using System.Text;
 using System.Xml;
 
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Builds a minimal, valid SSML document that wraps plain text in a bound voice

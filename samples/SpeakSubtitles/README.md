@@ -30,12 +30,12 @@ Manage voices.
 ```powershell
 # Dry run: parse, pick a voice, and print the plan (no synthesis, nothing needed)
 dotnet run -r win-arm64 `
-  --project samples\SpeakSubtitles\Windows.Speech.SpeakSubtitles.csproj `
+  --project samples\SpeakSubtitles\Claros.SpeakSubtitles.csproj `
   -- movie.fr-FR.srt --dry-run
 
 # Render the aligned voiceover track
 dotnet run -r win-arm64 `
-  --project samples\SpeakSubtitles\Windows.Speech.SpeakSubtitles.csproj `
+  --project samples\SpeakSubtitles\Claros.SpeakSubtitles.csproj `
   -- movie.fr-FR.srt --out movie.fr.wav
 ```
 

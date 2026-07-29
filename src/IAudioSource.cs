@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// A pull-based source of streaming audio: a microphone, a decoded file, or an

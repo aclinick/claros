@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Locates and stages the native components the Azure Embedded Speech runtime

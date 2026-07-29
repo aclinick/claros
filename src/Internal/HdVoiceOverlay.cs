@@ -1,4 +1,4 @@
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Materializes a "force HD" overlay of a Windows Natural Voice package.
@@ -25,7 +25,7 @@ internal static class HdVoiceOverlay
     internal const string PipelineSection = "Pipeline";
     internal const string ThresholdKey = "HDVoiceThreshold";
 
-    private static readonly global::System.Collections.Concurrent.ConcurrentDictionary<string, object> OverlayLocks =
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, object> OverlayLocks =
         new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
@@ -79,7 +79,7 @@ internal static class HdVoiceOverlay
                 {
                     var patched = IniEditor.SetValue(
                         File.ReadAllText(file), PipelineSection, ThresholdKey,
-                        hdThreshold.ToString(global::System.Globalization.CultureInfo.InvariantCulture));
+                        hdThreshold.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     File.WriteAllText(dest, patched);
                     continue;
                 }

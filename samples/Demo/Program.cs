@@ -1,4 +1,4 @@
-using Windows.Speech;
+using Claros;
 
 using var platform = new SpeechPlatform();
 var voices = await platform.ListVoicesAsync();

@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Factories for simple <see cref="IAudioSource"/> instances, chiefly an

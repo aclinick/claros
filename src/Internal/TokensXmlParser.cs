@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Parses the <c>Tokens.xml</c> file that every Natural Voice package

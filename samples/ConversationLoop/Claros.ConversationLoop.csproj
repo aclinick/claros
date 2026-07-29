@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Claros.ConversationLoop</RootNamespace>
+
+    <!--
+      The conversation wires the embedded recognizer (native Azure Embedded
+      Speech + gated OS recognition packs) and the natural-voice synthesizer, so
+      the app must be built for a concrete runtime. Run with an explicit RID:
+      dotnet run -r win-arm64  (or  -r win-x64).
+    -->
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Claros.csproj" />
+  </ItemGroup>
+
+</Project>

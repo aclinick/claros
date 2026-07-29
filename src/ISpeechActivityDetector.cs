@@ -1,6 +1,6 @@
 using System.Runtime.Versioning;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>Details of a voice-activity transition.</summary>
 /// <param name="Position">

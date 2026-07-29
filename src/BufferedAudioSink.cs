@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// An <see cref="IAudioSink"/> that keeps every buffer written to it in memory.

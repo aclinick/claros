@@ -1,9 +1,9 @@
 using System.Runtime.Versioning;
 using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
-using Windows.Speech.Internal;
+using Claros.Internal;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// A live, push-driven transcription session over the on-device Live Captions

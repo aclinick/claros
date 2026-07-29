@@ -1,4 +1,4 @@
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// A voice a caller can synthesize with. On-device voices are discovered through

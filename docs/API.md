@@ -1,6 +1,6 @@
 # API reference
 
-`Windows.Speech` ships full XML documentation on every public type and
+`Claros` ships full XML documentation on every public type and
 member. There are three ways to read it.
 
 ## 1. In your IDE

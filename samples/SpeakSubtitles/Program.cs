@@ -1,5 +1,5 @@
-using Windows.Speech;
-using Windows.Speech.SpeakSubtitles;
+using Claros;
+using Claros.SpeakSubtitles;
 
 // SpeakSubtitles: turn a subtitle file (.srt / .vtt) into a voiceover track whose
 // audio is aligned to the subtitle timings. Because the narration follows the cue
@@ -12,7 +12,7 @@ using Windows.Speech.SpeakSubtitles;
 // name (movie.fr-FR.srt / movie.fr.srt), or defaults to the first installed voice.
 //
 // Usage:
-//   dotnet run -r win-arm64 --project samples\SpeakSubtitles\Windows.Speech.SpeakSubtitles.csproj -- <file> [--out track.wav] [--lang fr-FR] [--voice Ava] [--dry-run]
+//   dotnet run -r win-arm64 --project samples\SpeakSubtitles\Claros.SpeakSubtitles.csproj -- <file> [--out track.wav] [--lang fr-FR] [--voice Ava] [--dry-run]
 
 var opt = Options.Parse(args);
 if (opt is null)

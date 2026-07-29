@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Minimal, section-aware editor for the classic <c>*.INI</c> files that the

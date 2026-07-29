@@ -1,7 +1,7 @@
 using System.Runtime.Versioning;
-using Windows.Speech.Internal;
+using Claros.Internal;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// An energy-based <see cref="ISpeechActivityDetector"/>: it thresholds the RMS
@@ -79,7 +79,7 @@ public sealed class EnergyVoiceActivityDetector : ISpeechActivityDetector
         var consumed = 0;
         while (_residual.Count - consumed >= _frameSampleCount)
         {
-            var frame = global::System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_residual)
+            var frame = System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_residual)
                 .Slice(consumed, _frameSampleCount);
             var rms = AudioEnergy.Rms(frame);
             consumed += _frameSampleCount;

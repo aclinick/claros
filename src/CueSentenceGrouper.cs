@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Merges consecutive <see cref="TimedCue"/>s into sentence-sized cues. A group

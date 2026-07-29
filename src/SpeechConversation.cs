@@ -2,7 +2,7 @@ using System.Runtime.Versioning;
 using System.Text;
 using System.Threading.Channels;
 
-namespace Windows.Speech;
+namespace Claros;
 
 /// <summary>
 /// Handles one recognized user turn and returns what the assistant should say, or

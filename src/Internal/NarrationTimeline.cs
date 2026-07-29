@@ -1,4 +1,4 @@
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Pure timeline mixing for offline narration. Lays synthesized clips onto one

@@ -1,4 +1,4 @@
-using Windows.Speech;
+using Claros;
 
 // End-to-end, barge-in-capable conversation loop — entirely on-device.
 //

@@ -3,7 +3,7 @@
 // Shows how to enumerate the Windows Natural Voices installed on the machine
 // through SpeechPlatform, read each voice's metadata (VoiceInfo), and react to
 // install/update/uninstall events without polling. No synthesis happens here.
-using Windows.Speech;
+using Claros;
 
 using var platform = new SpeechPlatform();
 

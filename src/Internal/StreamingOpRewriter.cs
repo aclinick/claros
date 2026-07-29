@@ -1,7 +1,7 @@
 using Google.Protobuf;
 using Onnx;
 
-namespace Windows.Speech.Internal;
+namespace Claros.Internal;
 
 /// <summary>
 /// Rewrites the "Streaming*" custom operators that Microsoft's Natural Voice
