@@ -54,6 +54,21 @@ currently apply it, so numbers arrive spelled out (`six hundred ten thousand
 dollars` rather than `$610,000`). That is a fixable in-box gap, not a model
 limitation.
 
+## A scoping note on the Parakeet result
+
+Third-party Windows apps do run Parakeet live, including on CPU, and the
+evaluation carries an addendum (§11) explaining precisely why their result and
+ours differ. Two of the reasons were our own configuration — we used the stateless
+ONNX export and re-encoded a 10 s window every second, rather than a cache-aware
+export chunked on silence — so the "cannot hold real time" figure measures our
+harness, not the model's ceiling.
+
+What survives that correction is the part that matters here: a captioning UI is
+free to repaint text as context arrives, and this library's listener is not,
+because a sentence handed to a reasoning model cannot be unsent. Parakeet's
+wide-window ITN needs audio that has not arrived when an immutable final must be
+committed. That conflict is architectural, and so is the memory gap.
+
 ## Reproducing
 
 The Live Captions numbers come from `samples/TranscriptionBenchmark`, which is in

@@ -35,11 +35,18 @@ all engines: the only variable is the model.
 
 ## 2. Why "offline" is the crux
 
-Parakeet TDT is an **encoder/attention model with no carried streaming state.**
-To transcribe, it runs its encoder over a *whole buffer at once*, and every output
-token is conditioned on the **entire window**, including audio that arrives *after*
-the word being emitted. That wide context is exactly what makes its ITN so good:
-it sees `...six hundred ten thousand dollars in stocks averaging six point two...`
+> **Scoping correction (2026-07-29).** The sentence below describes **the ONNX
+> export this evaluation used**, not the Parakeet architecture in general. NeMo
+> can export a *cache-aware / stateful* FastConformer that carries encoder state
+> between chunks, but that is not the default export and was not what we ran. See
+> §11 for what this changes and what it does not.
+
+The stateless Parakeet TDT export behaves as an **encoder model with no carried
+streaming state.** To transcribe, it runs its encoder over a *whole buffer at
+once*, and every output token is conditioned on the **entire window**, including
+audio that arrives *after* the word being emitted. That wide context is exactly
+what makes its ITN so good: it sees
+`...six hundred ten thousand dollars in stocks averaging six point two...`
 as one span and *rewrites* it to `$610,000 ... 6.2%`.
 
 That rewrite is precisely what breaks under a live, immutable contract. To emit a
@@ -403,3 +410,71 @@ Bottom line: **Nova-3 is the one to watch - the first third-party engine that
 architecturally matches the whole contract - but on-device it is announced, not
 available, so it does not yet displace Live Captions as Microsoft's shortest path
 to on-device Apple-parity.**
+
+---
+
+## 11. Addendum (2026-07-29): what shipping third-party Parakeet apps do differently
+
+Third-party Windows apps *do* run Parakeet for live transcription, including on
+plain CPU. That is not in dispute and it is worth being precise about why their
+result and ours differ, because two of the five reasons are things we could have
+done and did not.
+
+### The one that is a requirements difference, not a technique
+
+**They are allowed to rewrite what they already showed.** A captioning or
+dictation UI paints volatile hypotheses and repaints them as context arrives; the
+user sees text settle. That is a perfectly good product, and Parakeet's wide-window
+ITN is an *asset* there, because the final repaint is the good one.
+
+This evaluation deliberately forbade that (§1, rule 2), because the consumer is a
+reasoning LLM in a live call, and a sentence handed to it cannot be unsent. Nothing
+about our measurement contradicts theirs; we were grading a different exam. Any
+comparison that ignores this is comparing a repaintable display against an
+immutable commit.
+
+### The two that were our own configuration, and are fixable
+
+**We used the stateless ONNX export and re-encoded a rolling window.** Our harness
+held a 10 s context and re-ran the encoder every 1 s, so roughly ten seconds of
+audio was re-encoded per second of speech - about 10x redundant compute. That, not
+the model, is what produced 0.7x real time on the second leg. NeMo can export a
+**cache-aware / stateful** FastConformer that carries encoder state across chunks
+and encodes each frame once; it simply is not the default export, and the
+`onnx-asr` path we used does not expose it. Several third-party stacks either use
+such an export or keep the decoder stateful in application code.
+
+**We re-encoded on a fixed 1 s cadence rather than at pauses.** Shipping apps
+typically chunk on VAD/silence boundaries, which both cuts how often the encoder
+runs and puts chunk edges where they damage the transcript least.
+
+### The two that are scope, and were deliberate
+
+**Two concurrent legs, not one.** Every number here is a two-recognizer call so
+speaker attribution is exact. Most demos - including the 2-vCPU real-time Space on
+Hugging Face - transcribe a single microphone. Our peak of 1778 MB was for one
+leg's process; a two-leg call needs two.
+
+**Peak RAM was measured, not tuned.** We did not pursue quantization or runtime
+tuning beyond the INT8 weights we already used, because the memory verdict was
+already decided by the 507 MB baseline.
+
+### What this changes
+
+- **Overstated:** that Parakeet cannot hold real time on CPU. With a cache-aware
+  export and VAD chunking it very likely can, for one stream. Our figure measures
+  our configuration.
+- **Unchanged:** that you cannot have *immutable finals* and *Parakeet-quality ITN*
+  at the same time. That conflict is architectural, not a tuning problem - the ITN
+  rewrite needs audio that has not arrived when the final must be committed. §3's
+  two failure modes are both instances of it.
+- **Unchanged:** the memory comparison. Even generously configured, Parakeet's
+  working set is multiples of the 507 MB streaming recognizer, and that gap is what
+  the platform argument rests on.
+
+### Honest bottom line
+
+Parakeet is a better *transcriber* than the conclusion above might suggest, and a
+Windows app that shows settling text is right to use it. It remains the wrong
+engine for this library's live-listener contract, and the reason is the contract -
+not a benchmark we could re-run our way out of.
