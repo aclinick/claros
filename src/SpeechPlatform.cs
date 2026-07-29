@@ -60,10 +60,11 @@ public sealed class SpeechPlatform : IDisposable
     /// OS. This is the synthesis counterpart of
     /// <see cref="ListRecognitionModels"/>.
     /// </summary>
-    public Task<IReadOnlyList<VoiceInfo>> ListVoicesAsync()
+    public Task<IReadOnlyList<VoiceInfo>> ListVoicesAsync(
+        CancellationToken cancellationToken = default)
     {
         ThrowIfDisposed();
-        return _voices.ListVoicesAsync();
+        return _voices.ListVoicesAsync(cancellationToken);
     }
 
     /// <summary>
@@ -71,12 +72,27 @@ public sealed class SpeechPlatform : IDisposable
     /// <paramref name="locale"/> (compared case-insensitively, e.g. <c>en-US</c>),
     /// or <c>null</c> when none is installed for that locale.
     /// </summary>
-    public async Task<VoiceInfo?> FindVoiceAsync(string locale)
+    public async Task<VoiceInfo?> FindVoiceAsync(
+        string locale, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrEmpty(locale);
-        var voices = await ListVoicesAsync().ConfigureAwait(false);
+        var voices = await ListVoicesAsync(cancellationToken).ConfigureAwait(false);
         return voices.FirstOrDefault(
             v => string.Equals(v.Locale, locale, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Finds the installed voice with the given <see cref="VoiceInfo.Id"/>, or
+    /// <c>null</c> when it is no longer installed. Ids are stable across calls,
+    /// so this is the reliable way to re-open the exact voice a user picked
+    /// earlier, where a locale lookup could return a different voice.
+    /// </summary>
+    public async Task<VoiceInfo?> FindVoiceByIdAsync(
+        string id, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(id);
+        var voices = await ListVoicesAsync(cancellationToken).ConfigureAwait(false);
+        return voices.FirstOrDefault(v => string.Equals(v.Id, id, StringComparison.Ordinal));
     }
 
     /// <summary>

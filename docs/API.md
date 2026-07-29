@@ -45,8 +45,24 @@ hand-written landing pages (`docs/index.md`, `docs/api/index.md`) are committed.
 | `Vocoder` | Converts codec tokens to mono PCM samples via stock ONNX Runtime. |
 | `SapiPhonemizer` | Drives the shipped Windows SAPI text preprocessor for grapheme-to-phoneme conversion. |
 | `PhonemeTable` | Phoneme-key to model-id map shipped inside a voice package. |
+| `CodecTokens` | Discrete codec tokens emitted by the acoustic model, consumed by the vocoder. |
 | `WaveFile` | Write mono 16-bit PCM WAV files. |
 | `NaturalVoiceException` and subtypes | Typed errors: voice unavailable, package format, synthesis failure. |
+
+### Platform facade and streaming interfaces
+
+| Type | Purpose |
+| --- | --- |
+| `SpeechPlatform` | Single entry point over both halves: discover voices and recognition models, then create warm speakers, transcribers, narrators, and conversations. |
+| `VoiceSource` | Which tier produces a voice's audio. `Device` is the default; `Cloud` only ever comes from an explicit opt-in. |
+| `ISpeechSynthesizer` | Request-in/audio-out synthesis contract, buffered or streamed to an `IAudioSink`. Deliberately platform-neutral so another tier can implement it. |
+| `ISpeechRecognizer`, `RecognitionEvent` | Streaming recognition contract and its partial/final events. |
+| `ISpeechActivityDetector`, `EnergyVoiceActivityDetector` | Voice-activity detection used to endpoint a turn and trigger barge-in. |
+| `SpeechSynthesisRequest`, `SpeechProsody` | Plain text, prosody-shaped text, or raw SSML input to a synthesizer. |
+| `AudioFormat`, `AudioBuffer`, `IAudioSource`, `IAudioSink` | Audio primitives shared by capture, synthesis, and playback. |
+| `SpeechConversation` | Round-trip loop: capture, endpoint, recognize, hand the turn to a handler, speak the reply, with barge-in. |
+| `TimedNarrator`, `TimedCue`, `SubtitleParser` | Subtitle- and cue-timed narration: turn a timeline of cues into an aligned voiceover track. |
+| `StreamingRecognizer`, `CallLegTranscriber` | Live recognition over a push audio stream, and per-channel transcription of a two-party call. |
 
 See the [generated API reference](api/index.md) for the complete member-level
 documentation.

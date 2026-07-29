@@ -45,42 +45,47 @@ public sealed class VoiceCatalog : IDisposable
     /// Return every installed voice that advertises the Natural Voice
     /// AppExtension contract. Never cached; each call queries the OS.
     /// </summary>
-    public async Task<IReadOnlyList<VoiceInfo>> ListVoicesAsync()
+    /// <remarks>
+    /// A package that cannot describe itself (for example one caught mid-install
+    /// or mid-uninstall) is skipped rather than failing the whole enumeration, so
+    /// one bad package cannot hide every other installed voice.
+    /// </remarks>
+    /// <param name="cancellationToken">Cancels the OS query and the per-package reads.</param>
+    public async Task<IReadOnlyList<VoiceInfo>> ListVoicesAsync(
+        CancellationToken cancellationToken = default)
     {
-        var extensions = await _catalog.FindAllAsync();
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        var extensions = await _catalog.FindAllAsync().AsTask(cancellationToken)
+            .ConfigureAwait(false);
         var result = new List<VoiceInfo>(extensions.Count);
         foreach (var ext in extensions)
         {
-            var voice = TryBuildVoiceInfo(ext);
+            cancellationToken.ThrowIfCancellationRequested();
+            var voice = await TryBuildVoiceInfoAsync(ext, cancellationToken).ConfigureAwait(false);
             if (voice is not null) result.Add(voice);
         }
         return result;
     }
 
-    private static VoiceInfo? TryBuildVoiceInfo(AppExtension ext)
+    private static async Task<VoiceInfo?> TryBuildVoiceInfoAsync(
+        AppExtension ext, CancellationToken cancellationToken)
     {
-        var pkg = ext.Package;
-        var installedPath = pkg.InstalledLocation.Path;
-
-        var locale = string.Empty;
+        Package pkg;
+        string installedPath;
         try
         {
-            var props = ext.GetExtensionPropertiesAsync().AsTask().GetAwaiter().GetResult();
-            if (props is not null && props.TryGetValue("LocaleId", out var value)
-                && value is IPropertySet localeSet
-                && localeSet.TryGetValue("#text", out var textObj)
-                && textObj is string text)
-            {
-                locale = text;
-            }
-            else if (props is not null && props.TryGetValue("LocaleId", out var raw))
-            {
-                locale = raw?.ToString() ?? string.Empty;
-            }
+            pkg = ext.Package;
+            installedPath = pkg.InstalledLocation.Path;
         }
-        catch
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            // The package is not readable right now (mid-install, mid-uninstall,
+            // or otherwise in a bad state). Skip this one and keep enumerating.
+            return null;
         }
+
+        var locale = await TryReadLocaleAsync(ext, cancellationToken).ConfigureAwait(false);
 
         var tokensPath = Path.Combine(installedPath, "Tokens.xml");
         var tokens = TokensXmlParser.TryParse(tokensPath);
@@ -98,6 +103,38 @@ public sealed class VoiceCatalog : IDisposable
             PackageFamilyName: pkg.Id.FamilyName,
             PackageFullName: pkg.Id.FullName,
             InstalledPath: installedPath);
+    }
+
+    // Reads the extension's declared LocaleId. This is awaited rather than
+    // blocked on: the previous GetAwaiter().GetResult() was sync-over-async and
+    // could deadlock when discovery ran on a UI thread.
+    private static async Task<string> TryReadLocaleAsync(
+        AppExtension ext, CancellationToken cancellationToken)
+    {
+        IPropertySet? props;
+        try
+        {
+            props = await ext.GetExtensionPropertiesAsync().AsTask(cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return string.Empty;
+        }
+
+        if (props is null || !props.TryGetValue("LocaleId", out var value))
+        {
+            return string.Empty;
+        }
+
+        if (value is IPropertySet localeSet
+            && localeSet.TryGetValue("#text", out var textObj)
+            && textObj is string text)
+        {
+            return text;
+        }
+
+        return value?.ToString() ?? string.Empty;
     }
 
     private void OnCatalogChanged(AppExtensionCatalog sender, object args) =>
