@@ -24,3 +24,9 @@ or add a language with Live Captions / Voice Typing support).
 All samples are part of `Claros.slnx`, so `dotnet build
 Claros.slnx` builds them together. If no voice is installed, each
 sample prints guidance and exits without synthesizing.
+
+## Desktop app
+
+| Sample | Shows | Run |
+| --- | --- | --- |
+| [VideoVoiceover](Claros.VideoVoiceover) | WinUI 3 app that narrates a video's subtitles live and on device, switching voice language mid-playback without ever cutting a sentence in half. Includes `demo-drive.ps1`, a hands-off demo maker that drives the whole arc over UI Automation so you can screen-record it untouched. | `dotnet run -c Release --project samples\Claros.VideoVoiceover\Claros.VideoVoiceover.csproj` |
