@@ -158,4 +158,49 @@ public class SentenceCommitterTests
 
         Assert.Equal(new[] { "Third." }, committer.Take("First. Second. Third.", flush: true));
     }
+
+    [Fact]
+    public void Take_OscillatingHeadSegmentation_DoesNotReemitTheUnchangedTail()
+    {
+        // Measured against a real call: the recognizer flip-flops between
+        // "Hi, Mark." + "Good to see you." and the merged "Hi, Mark, good to see
+        // you.". Each flip changes position 0, which invalidates the common prefix
+        // and used to make every later sentence look new again - one unstable head
+        // sentence re-emitted the whole tail on every flip.
+        var committer = new SentenceCommitter();
+
+        Assert.Equal(
+            new[] { "Hi, Mark.", "Good to see you." },
+            committer.Take("Hi, Mark. Good to see you. What's"));
+
+        // Merged form: the merge itself is new text, so it surfaces; the sentences
+        // after it are new text too.
+        Assert.Equal(
+            new[] { "Hi, Mark, good to see you.", "What's on your mind?" },
+            committer.Take("Hi, Mark, good to see you. What's on your mind? I hear"));
+
+        // Flips back to the split form. Every sentence here has been surfaced
+        // before, so nothing is re-emitted except the genuinely new trailing one.
+        Assert.Equal(
+            new[] { "I hear you." },
+            committer.Take("Hi, Mark. Good to see you. What's on your mind? I hear you. Let's"));
+
+        // And flipping again yields only the next new sentence, not the tail.
+        Assert.Equal(
+            new[] { "Let's check the numbers." },
+            committer.Take(
+                "Hi, Mark, good to see you. What's on your mind? I hear you. Let's check the numbers. And"));
+    }
+
+    [Fact]
+    public void Take_RepeatedIdenticalSentence_IsSurfacedOnce()
+    {
+        // The accepted trade-off of text-level dedup, pinned so it is a decision
+        // rather than a surprise: an exact repeat is treated as a recognizer
+        // artifact, which is what it was in every observed case.
+        var committer = new SentenceCommitter();
+
+        Assert.Equal(new[] { "I hear you." }, committer.Take("I hear you. Next"));
+        Assert.Empty(committer.Take("I hear you. I hear you. Next"));
+    }
 }

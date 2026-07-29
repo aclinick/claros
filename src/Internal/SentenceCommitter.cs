@@ -38,6 +38,23 @@ internal sealed class SentenceCommitter
 {
     private readonly List<string> _emitted = new();
 
+    // Every sentence text surfaced so far this session. The prefix diff below
+    // decides which POSITIONS look new; this decides whether the TEXT at those
+    // positions has genuinely been seen before.
+    //
+    // This exists because the recognizer's segmentation oscillates: "Hi, Mark." +
+    // "Good to see you." becomes "Hi, Mark, good to see you." and then splits back
+    // again. Every flip changes position 0, which invalidates the common prefix and
+    // makes the whole tail look new - so sentences whose text never changed get
+    // re-surfaced on each flip. One unstable sentence at the head was enough to
+    // re-emit everything after it, repeatedly.
+    //
+    // Trade-off, accepted deliberately: a sentence genuinely spoken twice with
+    // identical wording is surfaced only once. In a call transcript an exact
+    // repeat is far more often a recognizer artifact than a real restatement, and
+    // the alternative measured five copies of the same line.
+    private readonly HashSet<string> _everEmitted = new(StringComparer.Ordinal);
+
     /// <summary>
     /// Given the current full hypothesis <paramref name="text"/>, returns the
     /// sentences whose boundary is now confirmed (i.e. a later sentence has
@@ -75,7 +92,13 @@ internal sealed class SentenceCommitter
         var result = new List<string>(stableCount - shared);
         for (var i = shared; i < stableCount; i++)
         {
-            result.Add(sentences[i].Text);
+            // A position may look new because an earlier sentence was re-segmented,
+            // even though the text here is one we already surfaced. Emit only text
+            // that is genuinely new.
+            if (_everEmitted.Add(sentences[i].Text))
+            {
+                result.Add(sentences[i].Text);
+            }
         }
 
         // Remember the exact stable segmentation for the next diff.
