@@ -101,8 +101,11 @@ public sealed class NaturalVoiceSpeaker : IDisposable
         var ids = _phonemizer.Phonemize(text, _engine.Phonemes, _locale);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var tokens = _engine.SynthesizeAsync(ids, synthesisOptions, cancellationToken)
-            .GetAwaiter().GetResult();
+        // Call the engine synchronously. This method already runs inside a
+        // Task.Run, so going through SynthesizeAsync would queue a second pool
+        // work item and block this thread waiting on it, occupying two threads
+        // per utterance for no benefit.
+        var tokens = _engine.Synthesize(ids, synthesisOptions, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
         return _vocoder.Synthesize(tokens);

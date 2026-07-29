@@ -120,9 +120,34 @@ public sealed class NaturalVoiceEngine : IDisposable
         SynthesisOptions? options = null,
         CancellationToken cancellationToken = default)
     {
-        options ??= new SynthesisOptions();
+        // Disposal is checked before the argument, preserving the order callers
+        // saw before this method delegated to the synchronous path.
         ObjectDisposedException.ThrowIf(_disposed, this);
-        return Task.Run(() => SynthesizeCore(phonemeIds, options, cancellationToken), cancellationToken);
+        ArgumentNullException.ThrowIfNull(phonemeIds);
+        return Task.Run(() => Synthesize(phonemeIds, options, cancellationToken), cancellationToken);
+    }
+
+    /// <summary>
+    /// Synchronous counterpart of <see cref="SynthesizeAsync"/>, for callers that
+    /// are already running on a pool thread. It exists so an owning speaker can
+    /// run the whole text-to-waveform chain inside a single <c>Task.Run</c>
+    /// instead of starting a second one and blocking a pool thread waiting on it.
+    /// </summary>
+    internal CodecTokens Synthesize(
+        IReadOnlyList<int> phonemeIds,
+        SynthesisOptions? options,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(phonemeIds);
+
+        // Checked up front because the first cancellation check inside the
+        // decoder loop only happens after the encoder pass, which is expensive
+        // and not itself cancellable. Task.Run used to provide this guarantee
+        // for the async path; the synchronous path has to make it explicit.
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return SynthesizeCore(phonemeIds, options ?? new SynthesisOptions(), cancellationToken);
     }
 
     private CodecTokens SynthesizeCore(
