@@ -16,8 +16,8 @@ namespace Claros;
 /// <para>
 /// The contract itself is deliberately platform-neutral — it describes only
 /// "request in, audio out" — so an engine that is not backed by an installed
-/// Windows voice package can implement it. The shipped on-device implementations
-/// (<see cref="EmbeddedVoiceSpeaker"/>, <see cref="NaturalVoiceSpeaker"/>) carry
+/// Windows voice package can implement it. The shipped implementation
+/// (<see cref="EmbeddedVoiceSpeaker"/>) carries
 /// their own Windows platform annotations. Implementations must not silently
 /// substitute a different tier than the one their <see cref="Voice"/> declares;
 /// see <see cref="VoiceSource"/>.

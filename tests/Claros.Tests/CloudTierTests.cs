@@ -66,6 +66,31 @@ public class CloudTierTests
     }
 
     [Fact]
+    public void Options_ToStringNeverRevealsTheKey()
+    {
+        // A record's generated ToString prints every property, which would put the
+        // Speech key into any log line, exception message, or debugger view that
+        // rendered the options. PrintMembers is overridden to prevent that.
+        var options = Valid() with { SubscriptionKey = "super-secret-key-value" };
+
+        var text = options.ToString();
+
+        Assert.DoesNotContain("super-secret-key-value", text, StringComparison.Ordinal);
+        Assert.Contains("(redacted)", text, StringComparison.Ordinal);
+        // The non-sensitive settings stay visible, so the type is still debuggable.
+        Assert.Contains("eastus", text, StringComparison.Ordinal);
+        Assert.Contains("mai-voice-2-flash-en-us", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Options_ToStringDistinguishesAnUnsetKey()
+    {
+        var text = (Valid() with { SubscriptionKey = "" }).ToString();
+
+        Assert.Contains("(unset)", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void OnDeviceProfile_IsFreeOfflineAndFullyCapable()
     {
         var caps = SynthesizerCapabilities.OnDevice;

@@ -14,7 +14,7 @@ namespace Claros.Internal;
 /// each candidate by fully parsing it as a ModelProto, so a byte pattern that
 /// merely resembles the tag inside the header cannot produce a bogus offset.
 /// </summary>
-public static class ModelExtractor
+internal static class ModelExtractor
 {
     private const int MaxHeaderScan = 4096;
 

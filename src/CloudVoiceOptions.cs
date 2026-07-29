@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace Claros;
 
 /// <summary>
@@ -62,5 +64,22 @@ public sealed record CloudVoiceOptions
                 nameof(SampleRate), SampleRate,
                 "Supported output rates are 16000, 24000, and 48000 Hz.");
         }
+    }
+
+    /// <summary>
+    /// Formats this record without its credential. A record's generated
+    /// <see cref="object.ToString"/> prints every property, which would put the
+    /// Speech key into any log line, exception message, or debugger view that
+    /// happened to render the options.
+    /// </summary>
+    private bool PrintMembers(StringBuilder builder)
+    {
+        builder.Append("SubscriptionKey = ")
+            .Append(string.IsNullOrEmpty(SubscriptionKey) ? "(unset)" : "(redacted)")
+            .Append(", Region = ").Append(Region)
+            .Append(", VoiceName = ").Append(VoiceName)
+            .Append(", Locale = ").Append(Locale)
+            .Append(", SampleRate = ").Append(SampleRate);
+        return true;
     }
 }
