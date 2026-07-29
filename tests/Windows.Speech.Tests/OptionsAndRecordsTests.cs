@@ -76,6 +76,126 @@ public class OptionsAndRecordsTests
     }
 
     [Fact]
+    public void VoiceInfo_DefaultsToOnDevice()
+    {
+        var voice = new VoiceInfo(
+            Id: "id@fam",
+            DisplayName: "Microsoft Ava",
+            Locale: "en-US",
+            Gender: "Female",
+            Age: "Adult",
+            Vendor: "Microsoft",
+            Version: "1.0",
+            PackageFamilyName: "fam",
+            PackageFullName: "full",
+            InstalledPath: @"C:\voices\ava");
+
+        Assert.Equal(VoiceSource.Device, voice.Source);
+        Assert.True(voice.IsOnDevice);
+    }
+
+    [Fact]
+    public void VoiceInfo_Cloud_IsNotOnDeviceAndHasNoPackageIdentity()
+    {
+        var voice = VoiceInfo.Cloud("mai-voice-2:ava", "Ava (hosted)", "en-US");
+
+        Assert.Equal(VoiceSource.Cloud, voice.Source);
+        Assert.False(voice.IsOnDevice);
+        Assert.Equal("mai-voice-2:ava", voice.Id);
+        Assert.Equal("Ava (hosted)", voice.DisplayName);
+        Assert.Equal("en-US", voice.Locale);
+        Assert.Empty(voice.PackageFamilyName);
+        Assert.Empty(voice.PackageFullName);
+        Assert.Empty(voice.InstalledPath);
+    }
+
+    [Theory]
+    [InlineData("", "name", "en-US")]
+    [InlineData("id", "", "en-US")]
+    [InlineData("id", "name", "")]
+    public void VoiceInfo_Cloud_RejectsMissingIdentity(string id, string displayName, string locale)
+    {
+        Assert.Throws<ArgumentException>(() => VoiceInfo.Cloud(id, displayName, locale));
+    }
+
+    [Fact]
+    public void EmbeddedVoiceSpeaker_Load_RejectsCloudVoiceLoudly()
+    {
+        var voice = VoiceInfo.Cloud("mai-voice-2:ava", "Ava (hosted)", "en-US");
+
+        // The on-device loader must fail with a clear contract error rather than
+        // probing the empty InstalledPath a cloud voice carries.
+        var ex = Assert.Throws<ArgumentException>(() => EmbeddedVoiceSpeaker.Load(voice));
+        Assert.Equal("voice", ex.ParamName);
+    }
+
+    [Fact]
+    public void VoiceInfo_KeepsTenArgumentPositionalShape()
+    {
+        // Guards the public record surface: the positional constructor and
+        // Deconstruct must stay at ten parameters, so Source is an init property
+        // rather than an eleventh positional parameter.
+        var voice = new VoiceInfo(
+            "id", "Ava", "en-US", "Female", "Adult", "Microsoft", "1.0",
+            "fam", "full", @"C:\voices\ava");
+
+        var (id, _, locale, _, _, _, _, _, _, path) = voice;
+
+        Assert.Equal("id", id);
+        Assert.Equal("en-US", locale);
+        Assert.Equal(@"C:\voices\ava", path);
+        Assert.Equal(VoiceSource.Device, voice.Source);
+    }
+
+    [Fact]
+    public void VoiceInfo_SourceParticipatesInEquality()
+    {
+        var device = new VoiceInfo(
+            "id", "Ava", "en-US", "Female", "Adult", "Microsoft", "1.0", "", "", "");
+        var cloud = device with { Source = VoiceSource.Cloud };
+
+        Assert.NotEqual(device, cloud);
+        Assert.True(device.IsOnDevice);
+        Assert.False(cloud.IsOnDevice);
+    }
+
+    public static TheoryData<string, Func<VoiceInfo, object>> OnDeviceLoaders() => new()
+    {
+        { "NaturalVoiceEngine", v => NaturalVoiceEngine.Load(v) },
+        { "Vocoder", v => Vocoder.Load(v) },
+        { "NaturalVoiceSpeaker", v => NaturalVoiceSpeaker.Load(v) },
+        { "EmbeddedVoiceSpeaker", v => EmbeddedVoiceSpeaker.Load(v) },
+    };
+
+    [Theory]
+    [MemberData(nameof(OnDeviceLoaders))]
+    public void OnDeviceLoaders_RejectCloudVoice(string name, Func<VoiceInfo, object> load)
+    {
+        var voice = VoiceInfo.Cloud("mai-voice-2:ava", "Ava (hosted)", "en-US");
+
+        var ex = Assert.Throws<ArgumentException>(() => load(voice));
+        Assert.Equal("voice", ex.ParamName);
+        Assert.Contains("on-device", ex.Message);
+        Assert.NotNull(name);
+    }
+
+    [Theory]
+    [MemberData(nameof(OnDeviceLoaders))]
+    public void OnDeviceLoaders_RejectDeviceVoiceWithoutInstalledPath(
+        string name, Func<VoiceInfo, object> load)
+    {
+        // A device voice with no InstalledPath would otherwise Path.Combine("", ...)
+        // and silently probe the process working directory.
+        var voice = new VoiceInfo(
+            "id", "Ava", "en-US", "Female", "Adult", "Microsoft", "1.0", "", "", "");
+
+        var ex = Assert.Throws<ArgumentException>(() => load(voice));
+        Assert.Equal("voice", ex.ParamName);
+        Assert.Contains("InstalledPath", ex.Message);
+        Assert.NotNull(name);
+    }
+
+    [Fact]
     public void Vocoder_NativeSampleRateIs26kHz()
     {
         Assert.Equal(26000, Vocoder.NativeSampleRate);

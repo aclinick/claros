@@ -1,4 +1,5 @@
 using System.Runtime.Versioning;
+using Windows.Speech.Internal;
 
 namespace Windows.Speech;
 
@@ -59,6 +60,7 @@ public sealed class NaturalVoiceSpeaker : IDisposable
         NaturalVoiceEngineOptions? engineOptions = null)
     {
         ArgumentNullException.ThrowIfNull(voice);
+        DeviceVoiceGuard.RequireOnDevice(voice, nameof(voice));
 
         var engine = NaturalVoiceEngine.Load(voice, engineOptions);
         Vocoder? vocoder = null;

@@ -37,7 +37,7 @@ namespace Windows.Speech_VideoVoiceover;
 /// re-syncs; whatever line is already speaking finishes first and the change lands
 /// on the following line.
 /// </summary>
-[SupportedOSPlatform("windows")]
+[SupportedOSPlatform("windows10.0.19041.0")]
 public sealed class VoiceoverController : IDisposable
 {
     // Start synthesizing this far ahead of a sentence's timestamp so the first

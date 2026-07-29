@@ -55,6 +55,8 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
         EmbeddedVoiceOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(voice);
+        DeviceVoiceGuard.RequireOnDevice(voice, nameof(voice));
+
         options ??= new EmbeddedVoiceOptions();
 
         license = string.IsNullOrEmpty(license)

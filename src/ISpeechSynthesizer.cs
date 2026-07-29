@@ -1,5 +1,3 @@
-using System.Runtime.Versioning;
-
 namespace Windows.Speech;
 
 /// <summary>
@@ -10,11 +8,21 @@ namespace Windows.Speech;
 /// conversation loop synthesizes through, so any voice engine can be substituted.
 /// </summary>
 /// <remarks>
+/// <para>
 /// Implementations are thread hostile: construct one per voice, keep it warm, and
 /// serialize calls. The engine is bound to a single <see cref="Voice"/> for its
 /// lifetime.
+/// </para>
+/// <para>
+/// The contract itself is deliberately platform-neutral — it describes only
+/// "request in, audio out" — so an engine that is not backed by an installed
+/// Windows voice package can implement it. The shipped on-device implementations
+/// (<see cref="EmbeddedVoiceSpeaker"/>, <see cref="NaturalVoiceSpeaker"/>) carry
+/// their own Windows platform annotations. Implementations must not silently
+/// substitute a different tier than the one their <see cref="Voice"/> declares;
+/// see <see cref="VoiceSource"/>.
+/// </para>
 /// </remarks>
-[SupportedOSPlatform("windows")]
 public interface ISpeechSynthesizer : IDisposable
 {
     /// <summary>The voice this synthesizer speaks with.</summary>

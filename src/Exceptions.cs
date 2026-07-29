@@ -51,7 +51,7 @@ public sealed class VoicePackageFormatException : NaturalVoiceException
 
 /// <summary>
 /// Synthesis failed while running the acoustic model or vocoder. The
-/// <see cref="System.Exception.InnerException"/> carries the underlying ONNX
+/// <see cref="Exception.InnerException"/> carries the underlying ONNX
 /// Runtime or SAPI error when one is available.
 /// </summary>
 public sealed class SpeechSynthesisException : NaturalVoiceException
@@ -67,7 +67,7 @@ public sealed class SpeechSynthesisException : NaturalVoiceException
 
 /// <summary>
 /// Recognition failed while initializing or running the on-device Embedded Speech
-/// runtime. The <see cref="System.Exception.InnerException"/> carries the
+/// runtime. The <see cref="Exception.InnerException"/> carries the
 /// underlying Embedded Speech error when one is available. This is the
 /// speech-to-text counterpart of <see cref="SpeechSynthesisException"/>.
 /// </summary>

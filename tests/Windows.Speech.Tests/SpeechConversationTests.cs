@@ -283,10 +283,30 @@ public class SpeechConversationTests
         await barged.Task.WaitAsync(TimeSpan.FromSeconds(5));
         await synth.Finished.Task.WaitAsync(TimeSpan.FromSeconds(5));
         Assert.True(synth.WasCancelled);
-        Assert.False(convo.IsSpeaking);
+
+        // Finished is signalled from inside the synthesizer's own finally block, so
+        // it fires while the cancellation is still unwinding — before the
+        // conversation's SpeakAsync finally has cleared the speaking flag. Barge-in
+        // cancellation is cooperative and therefore asynchronous, so observe the
+        // transition instead of assuming it is already visible.
+        await WaitUntilAsync(() => !convo.IsSpeaking, TimeSpan.FromSeconds(5));
 
         await cts.CancelAsync();
         await run;
+    }
+
+    // Polls until <paramref name="condition"/> holds, so tests observe an
+    // asynchronous state transition rather than racing it.
+    private static async Task WaitUntilAsync(Func<bool> condition, TimeSpan timeout)
+    {
+        var deadline = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < deadline)
+        {
+            if (condition()) return;
+            await Task.Delay(10);
+        }
+
+        Assert.True(condition(), "Condition was still not satisfied after " + timeout + ".");
     }
 
     [Fact]

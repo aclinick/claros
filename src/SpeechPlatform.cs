@@ -184,26 +184,75 @@ public sealed class SpeechPlatform : IDisposable
     {
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(voice);
+
+        var synth = EmbeddedVoiceSpeaker.Load(voice, synthesisLicense, synthesisOptions);
+        try
+        {
+            var conversation = CreateConversation(
+                synth, model, microphone, speaker, turnHandler,
+                out transcriber, out recognizer, out activityDetector,
+                activityOptions, recognitionLicense, recognitionOptions);
+            synthesizer = synth;
+            return conversation;
+        }
+        catch
+        {
+            // The synthesizer was created here, so it is ours to release when the
+            // rest of the wiring fails.
+            synth.Dispose();
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Wires an end-to-end, barge-in <see cref="SpeechConversation"/> around a
+    /// synthesizer the caller already owns, rather than loading an on-device voice
+    /// internally. This is the tier-agnostic overload: any
+    /// <see cref="ISpeechSynthesizer"/> can drive the loop, so a caller who has
+    /// explicitly opted into a different synthesis tier reuses the same recognition
+    /// and barge-in wiring instead of reimplementing it.
+    /// </summary>
+    /// <remarks>
+    /// The conversation borrows every component. <paramref name="synthesizer"/>
+    /// stays owned by the caller and is never disposed here, including when this
+    /// method fails. The caller still owns and must dispose the returned
+    /// <paramref name="transcriber"/>, <paramref name="recognizer"/>, and
+    /// <paramref name="activityDetector"/>. The recognizer and detector are bound
+    /// to <paramref name="microphone"/>'s sample rate, so all three must agree
+    /// (Live Captions expects 16 kHz mono).
+    /// </remarks>
+    public SpeechConversation CreateConversation(
+        ISpeechSynthesizer synthesizer,
+        TranscriptionModelInfo model,
+        IAudioSource microphone,
+        IAudioSink speaker,
+        ConversationTurnHandler turnHandler,
+        out EmbeddedTranscriber transcriber,
+        out StreamingRecognizer recognizer,
+        out EnergyVoiceActivityDetector activityDetector,
+        VoiceActivityOptions? activityOptions = null,
+        string? recognitionLicense = null,
+        EmbeddedTranscriberOptions? recognitionOptions = null)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(synthesizer);
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(microphone);
         ArgumentNullException.ThrowIfNull(speaker);
         ArgumentNullException.ThrowIfNull(turnHandler);
 
-        EmbeddedVoiceSpeaker? synth = null;
         EmbeddedTranscriber? trans = null;
         StreamingRecognizer? rec = null;
         EnergyVoiceActivityDetector? vad = null;
         try
         {
-            synth = EmbeddedVoiceSpeaker.Load(voice, synthesisLicense, synthesisOptions);
             trans = EmbeddedTranscriber.Load(model, recognitionLicense, recognitionOptions);
             rec = trans.StartRecognizer();
             vad = new EnergyVoiceActivityDetector(microphone.Format, activityOptions);
 
             var conversation = new SpeechConversation(
-                microphone, rec, vad, synth, speaker, turnHandler);
+                microphone, rec, vad, synthesizer, speaker, turnHandler);
 
-            synthesizer = synth;
             transcriber = trans;
             recognizer = rec;
             activityDetector = vad;
@@ -212,11 +261,11 @@ public sealed class SpeechPlatform : IDisposable
         catch
         {
             // Roll back any native resources created before the failure so the
-            // caller is not left with unreachable, undisposed engines.
+            // caller is not left with unreachable, undisposed engines. The
+            // caller-supplied synthesizer is deliberately left alone.
             vad?.Dispose();
             rec?.Dispose();
             trans?.Dispose();
-            synth?.Dispose();
             throw;
         }
     }

@@ -48,6 +48,7 @@ public sealed class NaturalVoiceEngine : IDisposable
     public static NaturalVoiceEngine Load(VoiceInfo voice, NaturalVoiceEngineOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(voice);
+        DeviceVoiceGuard.RequireOnDevice(voice, nameof(voice));
         options ??= new NaturalVoiceEngineOptions();
 
         var encoderBin = Path.Combine(voice.InstalledPath, "hd_am_v5_encoder.bin");

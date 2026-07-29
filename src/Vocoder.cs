@@ -55,6 +55,7 @@ public sealed class Vocoder : IDisposable
     public static Vocoder Load(VoiceInfo voice, NaturalVoiceEngineOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(voice);
+        DeviceVoiceGuard.RequireOnDevice(voice, nameof(voice));
         options ??= new NaturalVoiceEngineOptions();
         var vocoderBin = Path.Combine(voice.InstalledPath, "hd_device_vocoder_v6_streaming.bin");
         if (!File.Exists(vocoderBin))
