@@ -248,10 +248,12 @@ shared OS model with no per-app download, and comes with a paved road to Azure.
 
 ## What's in this repo
 
-- **`Windows.Speech`**: the library, providing a voice catalog and
+- **`Claros`**: the library, providing a voice catalog and
   `EmbeddedVoiceSpeaker` (forced-HD, offline, live playback), on-device
   recognition, and a `SpeechConversation` orchestrator (mic → endpoint →
   recognize → respond → speak, with barge-in and a plug-in-intelligence handler).
+  Claros is the working name of the implementation; it should ship as
+  `Windows.Speech`.
 - **`samples/SpeakWebPage`**: reads any web page aloud live (reader-mode
   extraction).
 - **`samples/SpeakSubtitles`**: turns a subtitle file into a timeline-aligned

@@ -1,8 +1,13 @@
 #!/usr/bin/env python
-"""Generate the 'Local AI on Windows / Subtitles -> Live On-Device Voiceover' pitch deck.
+"""Generate the 'Claros: the speech platform Windows already earned' pitch deck.
 
 Reproducible build: `python build_deck.py` writes live-voiceover.pptx beside it.
-Structure follows WHY -> WHAT -> HOW. Keep in sync with live-voiceover.md.
+Structure follows WHY -> WHAT -> PROOF -> HOW. Keep in sync with live-voiceover.md.
+
+The value slide leaves a shape named "VIDEO_FRAME"; a review-only PowerPoint COM
+step drops the actual mp4 onto it so the deck can play in a slideshow. The
+committed pptx stays lightweight (poster placeholder only) so the ~120 MB demo
+video is never committed.
 """
 from pathlib import Path
 
@@ -95,7 +100,7 @@ def blank(prs):
 
 def footer(slide, n):
     tb = box(slide, Inches(0.55), Inches(7.02), Inches(9), Inches(0.35))
-    para(tb.text_frame, "WindowsNaturalVoices  \u00b7  on-device speech, offline",
+    para(tb.text_frame, "Claros  \u00b7  one on-device speech platform, whole fleet",
          10, GREY, font=FONT, first=True, space_after=0)
     tb2 = box(slide, Inches(12.2), Inches(7.02), Inches(0.7), Inches(0.35))
     para(tb2.text_frame, str(n), 10, GREY, align=PP_ALIGN.RIGHT, first=True, space_after=0)
@@ -145,201 +150,239 @@ prs = Presentation()
 prs.slide_width = SW
 prs.slide_height = SH
 
-# ================================================================ 1 - TITLE
+# ================================================================ 1 - TITLE + WHY hook (merged)
 s = blank(prs)
 rect(s, 0, 0, SW, SH, DEEP)
 rect(s, 0, 0, SW, Inches(0.22), BLUE)
-rect(s, 0, Inches(4.7), SW, Inches(0.05), TEAL)
-tb = box(s, Inches(0.8), Inches(1.55), Inches(11.9), Inches(2.9))
-para(tb.text_frame, "Local AI on Windows:", 44, WHITE, bold=True, font=FONT_SB,
+rect(s, 0, Inches(4.55), SW, Inches(0.05), TEAL)
+tb = box(s, Inches(0.8), Inches(1.35), Inches(11.9), Inches(3.1))
+para(tb.text_frame, "Claros", 46, WHITE, bold=True, font=FONT_SB,
      first=True, space_after=4)
-para(tb.text_frame, "the advantage that's locked away", 44, TEAL, bold=True,
+para(tb.text_frame, "the speech platform Windows already earned", 38, TEAL, bold=True,
      font=FONT_SB, space_after=14)
 para(tb.text_frame,
-     "Local AI unlocks a new class of experiences: offline, private, instant, and "
-     "free. Windows already ships the on-device HD voices, the speech recognition, "
-     "and the hardware to run both. The one thing missing is the public API to build "
-     "on. Here's the proof, and the ask.",
+     "Apple quietly shipped a complete on-device speech platform to every Mac. "
+     "Windows ships speech tech that is as good or better, and comparable to the "
+     "cloud, then locks it away behind a missing, misaligned API that only runs on "
+     "a sliver of the fleet. This is that platform: cohesive, whole-fleet, and "
+     "proven today.",
      20, SKY, font=FONT_L, space_after=0)
-tb2 = box(s, Inches(0.8), Inches(4.95), Inches(11.9), Inches(1.4))
+tb2 = box(s, Inches(0.8), Inches(4.8), Inches(11.9), Inches(1.4))
 para(tb2.text_frame,
-     "A working reference implementation on Windows' on-device speech (HD voices + recognition),",
+     "One cohesive API for the whole Windows 11 fleet: enumerate voices, synthesize, "
+     "recognize, converse, all on-device.",
      16, RGBColor(0x9F, 0xC4, 0xE7), font=FONT, first=True, space_after=2)
-para(tb2.text_frame, "built to show Microsoft the public API it should ship.",
-     16, RGBColor(0x9F, 0xC4, 0xE7), bold=True, font=FONT_SB, space_after=0)
+para(tb2.text_frame, "Local-first and free by default; the same code scales to Azure.",
+     16, RGBColor(0x9F, 0xC4, 0xE7), bold=True, font=FONT_SB, space_after=2)
+para(tb2.text_frame,
+     "Claros is the working name of the implementation. It should ship as Windows.Speech.",
+     16, TEAL, bold=True, font=FONT_SB, space_after=0)
 
-# ================================================================ 2 - WHY divider
-divider(prs, "Why",
-        "Windows is sitting on something groundbreaking",
-        "Local AI models unlock scenarios cloud can't: offline, private, free, "
-        "instant. The capability already ships on Windows. Access does not.")
-
-# ================================================================ 3 - WHY: Mac proves it, Windows can go further
-s = blank(prs)
-rect(s, 0, 0, SW, SH, LIGHT)
-title_block(s, "Why \u00b7 the opportunity", "Mac proves the model; Windows can take it further", TEAL)
-two_cards(
-    s,
-    ("APPLE \u00b7 proven, but capped", TEAL, [
-        "On-device speech recognition (SpeechAnalyzer) and neural TTS ship to apps.",
-        "It proves local-first speech, in and out, is real, shipped, and wanted.",
-        "But there is no cloud to graduate to: Apple cannot scale you past the device.",
-    ]),
-    ("WINDOWS + AZURE \u00b7 the bigger story", BLUE, [
-        "The same on-device HD voices AND Live Captions recognition already ship, free.",
-        "One API can scale from local to Azure with your credentials, no rewrite.",
-        "First-party reach (Edge, Office, Teams, PowerPoint, Clipchamp) no rival matches.",
-    ]),
-)
-tb = box(s, Inches(0.72), Inches(6.0), Inches(11.9), Inches(0.7))
-para(tb.text_frame,
-     "Mac already has almost the equivalent on-device. Only Microsoft can pair it "
-     "with Azure and its own product suite, turning a proven idea into a platform "
-     "advantage.",
-     16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
-footer(s, 3)
-
-# ================================================================ 4 - WHY: Windows has the tech
+# ================================================================ 2 - WHY: two Whispers, two APIs
 s = blank(prs)
 rect(s, 0, 0, SW, SH, WHITE)
-title_block(s, "Why \u00b7 the tech exists", "The voice is already on the device", BLUE)
-tb = box(s, Inches(0.7), Inches(2.05), Inches(11.9), Inches(2.0))
-for i, t in enumerate([
-    ("Already installed \u00b7 shared", "One system-wide model, already offline on every machine that added a voice, so apps rely on Windows instead of bundling or downloading their own."),
-    ("Near-cloud quality", "Forced-HD on-device output is near-identical to Microsoft's cloud neural voices, not the old robotic local voices."),
-    ("Runs anywhere", "Synthesis is far faster than real time on an ordinary CPU, needs no NPU, and is fast enough to generate speech live on virtually any modern PC."),
-]):
-    rect(s, Inches(0.7), Inches(2.05 + i * 1.15), Inches(0.12), Inches(0.95), BLUE)
-    tbb = box(s, Inches(1.0), Inches(2.05 + i * 1.15), Inches(11.4), Inches(0.95))
-    para(tbb.text_frame, t[0], 19, INK, bold=True, font=FONT_SB, first=True, space_after=2)
-    para(tbb.text_frame, t[1], 15, GREY, font=FONT, space_after=0)
-rect(s, Inches(0.7), Inches(5.7), Inches(11.9), Inches(0.95), CARD)
-tb = box(s, Inches(1.0), Inches(5.88), Inches(11.3), Inches(0.7))
-tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+title_block(s, "Why \u00b7 no cohesive platform",
+            "Windows ships Whisper twice: two APIs, one engine", AMBER)
+tb = box(s, Inches(0.7), Inches(1.95), Inches(11.9), Inches(0.7))
 para(tb.text_frame,
-     "The capability ships on every Windows machine. The public API to enumerate, load, "
-     "and drive it does not, so no app can build on it.",
+     "Where Windows does push on-device speech, it ships the very same Whisper model "
+     "behind two different, unrelated APIs, and neither is a platform:",
+     16, INK, font=FONT, first=True, space_after=0)
+two_cards(
+    s,
+    ("WINDOWS AI APIs", BLUE, [
+        "On-device speech-to-text via the Windows AI / Windows App SDK surface.",
+        "Its engine under the hood: Whisper (Large v3 Turbo).",
+        "Its own object model, gated to Copilot+ PCs with an NPU.",
+    ]),
+    ("FOUNDRY LOCAL", DEEP, [
+        "A separate local-model runtime and API, with its own SDK and CLI.",
+        "Ships the same Whisper family again, a different way in.",
+        "Same engine, different shape: two doors, no shared platform.",
+    ]),
+    y=Inches(2.75), h=Inches(2.75),
+)
+tb = box(s, Inches(0.7), Inches(5.75), Inches(11.9), Inches(0.9))
+para(tb.text_frame,
+     "Same model, two API shapes, and both inherit Whisper's real problem: it doesn't "
+     "run well on the machines people actually have.",
+     18, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
+footer(s, 2)
+
+# ================================================================ 3 - WHY: not optimized for Windows
+s = blank(prs)
+rect(s, 0, 0, SW, SH, WHITE)
+title_block(s, "Why \u00b7 not optimized for the fleet",
+            "Even ignore the API mess: the tech is too heavy", AMBER)
+rect(s, Inches(0.7), Inches(2.0), Inches(5.7), Inches(3.35), RGBColor(0xFB, 0xF0, 0xE6))
+tb = box(s, Inches(1.0), Inches(2.25), Inches(5.2), Inches(2.9))
+para(tb.text_frame, "Whisper isn't built for Windows", 20, AMBER, bold=True, font=FONT_SB,
+     first=True, space_after=8)
+para(tb.text_frame,
+     "The model that's being pushed simply isn't optimized for the platform. It's "
+     "multiple gigabytes on disk and in RAM, and it runs slowly even on an NPU, so "
+     "you need a very high-end PC, which we know most people do not run.",
+     16, INK, font=FONT, space_after=0)
+facts = [
+    "Multiple GB on disk, just to install the speech model.",
+    "Multiple GB of RAM at runtime, on a fleet where 16 GB is common.",
+    "Slow even on an NPU; real-time is a struggle without top-tier silicon.",
+    "So it only lands on a sliver of high-end, Copilot+ machines.",
+    "Result: extremely limited adoption. Developers can't target it.",
+]
+tb = box(s, Inches(6.7), Inches(2.0), Inches(6.0), Inches(3.6))
+for i, f in enumerate(facts):
+    para(tb.text_frame, f, 16.5, INK, font=FONT, bullet=True, first=(i == 0), space_after=13)
+tb = box(s, Inches(0.7), Inches(5.7), Inches(11.9), Inches(0.9))
+para(tb.text_frame,
+     "A platform only counts if it runs on the fleet you actually have. Today's path "
+     "doesn't, on hardware, on disk, or on memory.",
+     18, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
+footer(s, 3)
+
+# ================================================================ 4 - WHY: Apple shipped it
+s = blank(prs)
+rect(s, 0, 0, SW, SH, LIGHT)
+title_block(s, "Why \u00b7 Apple already did it",
+            "Apple quietly shipped the complete platform, to every Mac", TEAL)
+tb = box(s, Inches(0.7), Inches(1.95), Inches(11.9), Inches(0.7))
+para(tb.text_frame,
+     "While Windows debated, Apple shipped a cohesive on-device speech platform and "
+     "put it on every Mac in use, not just the newest:",
+     16, INK, font=FONT, first=True, space_after=0)
+tiles = [
+    ("SpeechAnalyzer (STT)", "On-device recognition with ITN, punctuation, per-speaker attribution.", TEAL),
+    ("Neural TTS", "High-quality on-device voices, one shared system model.", TEAL),
+    ("Runs on every Mac", "Not gated to the latest silicon; the whole fleet is the target.", BLUE),
+    ("~900 MB, real-time", "Efficient enough to be practical: ships in real apps today.", BLUE),
+]
+positions = [(0.72, 2.75), (6.86, 2.75), (0.72, 4.55), (6.86, 4.55)]
+for (tx, ty), (h, d, col) in zip(positions, tiles):
+    rect(s, Inches(tx), Inches(ty), Inches(5.75), Inches(1.55), WHITE, line=RGBColor(0xDD, 0xE6, 0xF1))
+    rect(s, Inches(tx), Inches(ty), Inches(0.12), Inches(1.55), col)
+    tb = box(s, Inches(tx + 0.35), Inches(ty + 0.22), Inches(5.15), Inches(1.15))
+    para(tb.text_frame, h, 17, INK, bold=True, font=FONT_SB, first=True, space_after=6)
+    para(tb.text_frame, d, 14, GREY, font=FONT, space_after=0)
+tb = box(s, Inches(0.7), Inches(6.35), Inches(11.9), Inches(0.6))
+para(tb.text_frame,
+     "The model is proven and wanted: cohesive, on-device, fleet-wide speech. The "
+     "only question is whether Windows will answer it.",
      16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 4)
 
-# ================================================================ 5 - WHY: even Edge won't use it
+# ================================================================ 5 - WHY: the face-palm
 s = blank(prs)
 rect(s, 0, 0, SW, SH, WHITE)
-title_block(s, "Why \u00b7 the cost of the gap",
-            "Microsoft won't even use its own local tech", AMBER)
-rect(s, Inches(0.7), Inches(2.05), Inches(5.7), Inches(2.9), RGBColor(0xFB, 0xF0, 0xE6))
-tb = box(s, Inches(1.0), Inches(2.3), Inches(5.2), Inches(2.5))
-para(tb.text_frame, "Edge \u201cRead Aloud\u201d", 20, AMBER, bold=True, font=FONT_SB,
-     first=True, space_after=8)
+title_block(s, "Why \u00b7 the face-palm",
+            "Windows already ships tech that matches or beats it", AMBER)
+tb = box(s, Inches(0.7), Inches(1.95), Inches(11.9), Inches(0.9))
 para(tb.text_frame,
-     "Its natural voices stream from the CLOUD (a network round-trip and server cost "
-     "on every play), even though a same-class Natural HD voice now runs on the very "
-     "same device, offline.",
-     16, INK, font=FONT, space_after=0)
-facts = [
-    "Needs a connection, with no offline read-aloud at natural quality.",
-    "A privacy boundary: text leaves the device to be spoken.",
-    "A recurring cloud bill for something the local device could do for free.",
-    "If Microsoft's own browser can't build on the local voice, no ISV can.",
+     "Here is the frustrating part. Windows doesn't need to invent anything. The "
+     "tech already ships in the box, and it's as good or better than the Mac, with "
+     "results comparable to the cloud:",
+     16, INK, font=FONT, first=True, space_after=0)
+rows = [
+    ("Natural HD voices", "The same neural voices as Microsoft's cloud, running offline on the device."),
+    ("Live Captions recognizer", "On-device STT that runs great on the CPU, at ~500 MB, no NPU required."),
+    ("Efficient by design", "Light on disk and RAM, fast on an ordinary CPU, and better with an NPU."),
 ]
-tb = box(s, Inches(6.7), Inches(2.1), Inches(6.0), Inches(4.0))
-for i, f in enumerate(facts):
-    para(tb.text_frame, f, 16.5, INK, font=FONT, bullet=True, first=(i == 0), space_after=14)
-tb = box(s, Inches(0.7), Inches(5.4), Inches(11.9), Inches(1.0))
+y = 2.95
+for i, (a, b) in enumerate(rows):
+    rect(s, Inches(0.7), Inches(y + i * 1.0), Inches(0.12), Inches(0.82), BLUE)
+    tbb = box(s, Inches(1.0), Inches(y + i * 1.0), Inches(11.4), Inches(0.82))
+    para(tbb.text_frame, a, 19, INK, bold=True, font=FONT_SB, first=True, space_after=2)
+    para(tbb.text_frame, b, 15, GREY, font=FONT, space_after=0)
+rect(s, Inches(0.7), Inches(6.0), Inches(11.9), Inches(0.9), RGBColor(0xFB, 0xF0, 0xE6))
+tb = box(s, Inches(1.0), Inches(6.15), Inches(11.3), Inches(0.65))
+tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
-     "The tech is sitting idle behind a missing API. Innovation is blocked at the source.",
-     18, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
+     "Microsoft has the winning tech on the device, and simply doesn't hand it to "
+     "developers. That is the whole problem, and it is entirely fixable.",
+     16, AMBER, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 5)
 
 # ================================================================ 6 - WHAT divider
 divider(prs, "What",
-        "What local voices unlock",
-        "Open the API and the same on-device voice powers new products, and fixes "
-        "ones Microsoft already ships.", color=TEAL)
+        "Claros: one platform, the whole fleet",
+        "A complete, cohesive speech API that runs beautifully on every Windows 11 "
+        "PC, Copilot+ or not, because the models are that efficient.", color=TEAL)
 
-# ================================================================ 7 - WHAT: flagship demo
+# ================================================================ 7 - WHAT: introduce Claros
 s = blank(prs)
 rect(s, 0, 0, SW, SH, WHITE)
-title_block(s, "What \u00b7 flagship", "Subtitles \u2192 live, multilingual voiceover", BLUE)
-tb = box(s, Inches(0.7), Inches(1.95), Inches(11.9), Inches(1.9))
-for i, t in enumerate([
-    ("Every video already ships subtitles. Turn that track into an on-device spoken voiceover, in the viewer's language, in sync with the video.", True),
-    ("Proof: \u201cZava Dental\u201d product video, voiced in English (Ava) and French (Remy), Natural HD, fully offline. Same pipeline, only the subtitle language differs.", False),
-    ("A WinUI app plays the muted video and switches voiceover language LIVE, mid-play, on the device.", False),
-]):
-    para(tb.text_frame, t[0], 17, INK if not t[1] else DEEP, bold=t[1],
-         font=FONT_SB if t[1] else FONT, bullet=(not t[1]), first=(i == 0), space_after=12)
-rect(s, Inches(0.7), Inches(4.35), Inches(11.9), Inches(1.55), CARD)
-tb = box(s, Inches(1.0), Inches(4.55), Inches(11.3), Inches(1.2))
-para(tb.text_frame, "Honest boundary", 15, AMBER, bold=True, font=FONT_SB, first=True, space_after=4)
+title_block(s, "What \u00b7 the platform",
+            "One cohesive API: speak, listen, converse", BLUE)
+tb = box(s, Inches(0.7), Inches(1.9), Inches(11.9), Inches(0.7))
 para(tb.text_frame,
-     "No lip-sync, one voice per language, neutral delivery. This complements studio "
-     "dubbing; it doesn't replace it. It's transformative for the vast middle: training, docs, "
-     "demos, news, corporate comms, education, UGC, accessibility.",
-     14.5, INK, font=FONT, space_after=0)
+     "Claros unifies the scattered pieces into a single, consistent surface, "
+     "and it targets the fleet, not just Copilot+ PCs:",
+     16, INK, font=FONT, first=True, space_after=0)
+tiles = [
+    ("Speak", "Enumerate installed Natural HD voices and synthesize offline, live, with word-boundary events.", TEAL),
+    ("Listen", "Recognize on-device with the Live Captions engine, one recognizer per source, clean finals.", BLUE),
+    ("Converse", "A full round-trip loop, capture to reply, with barge-in and a place to plug in intelligence.", DEEP),
+    ("Fleet-wide & efficient", "Runs great on CPU, better on NPU. Local-first and free; same code scales to Azure.", AMBER),
+]
+positions = [(0.72, 2.65), (6.86, 2.65), (0.72, 4.5), (6.86, 4.5)]
+for (tx, ty), (h, d, col) in zip(positions, tiles):
+    rect(s, Inches(tx), Inches(ty), Inches(5.75), Inches(1.65), WHITE, line=RGBColor(0xDD, 0xE6, 0xF1))
+    rect(s, Inches(tx), Inches(ty), Inches(0.12), Inches(1.65), col)
+    tb = box(s, Inches(tx + 0.35), Inches(ty + 0.24), Inches(5.15), Inches(1.2))
+    para(tb.text_frame, h, 19, INK, bold=True, font=FONT_SB, first=True, space_after=6)
+    para(tb.text_frame, d, 14, GREY, font=FONT, space_after=0)
+tb = box(s, Inches(0.7), Inches(6.35), Inches(11.9), Inches(0.6))
+para(tb.text_frame,
+     "One name, one shape, whole fleet. Claros is what \u2018Windows.Speech\u2019 should "
+     "be: a platform a developer can just pick up, and their customers can actually run.",
+     16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 7)
 
-# ================================================================ 8 - WHAT: bandwidth + a11y
-s = blank(prs)
-rect(s, 0, 0, SW, SH, DEEP)
-rect(s, 0, 0, SW, Inches(0.16), BLUE)
-tb = box(s, Inches(0.55), Inches(0.45), Inches(12), Inches(0.4))
-para(tb.text_frame, "WHAT \u00b7 IT SCALES THE RIGHT WAY", 13, RGBColor(0x8F, 0xC4, 0xF0),
-     bold=True, font=FONT_SB, first=True, space_after=0)
-tt = box(s, Inches(0.55), Inches(0.85), Inches(12.2), Inches(0.9))
-para(tt.text_frame, "One track. Every language. Almost no bytes.", 30, WHITE, bold=True,
-     font=FONT_SB, first=True, space_after=0)
-rect(s, Inches(0.7), Inches(2.15), Inches(5.6), Inches(2.4), STEEL)
-tb = box(s, Inches(0.95), Inches(2.4), Inches(5.1), Inches(2.0))
-para(tb.text_frame, "\u2248 400\u00d7", 60, TEAL, bold=True, font=FONT_SB, first=True, space_after=0)
-para(tb.text_frame,
-     "smaller as a subtitle (~2.6 KB) than as pre-rendered dub audio (~1.0 MB), per language.",
-     16, SKY, font=FONT, space_after=0)
-facts = [
-    "Subtitles are ALREADY on the wire for captions \u2192 the voiceover is effectively free bandwidth.",
-    "7 languages: ~18 KB of subtitles vs ~7 MB of dub audio, versus ~812 MB of duplicate dubbed videos.",
-    "One asset serves BOTH captions (deaf/HoH) and spoken narration (low-vision, dyslexic, eyes-busy, learners).",
-    "Instant reach into the long tail of languages no studio would fund a voice cast for.",
-]
-tb = box(s, Inches(6.7), Inches(2.15), Inches(6.0), Inches(4.2))
-for i, f in enumerate(facts):
-    para(tb.text_frame, f, 16, WHITE, font=FONT, bullet=True, first=(i == 0), space_after=14)
-footer(s, 8)
-
-# ================================================================ 9 - WHAT: fix MSFT's own products
-s = blank(prs)
-rect(s, 0, 0, SW, SH, LIGHT)
-title_block(s, "What \u00b7 fix what already ships", "The same voice, in every app", TEAL)
-tiles = [
-    ("Edge Read Aloud \u2192 local", "Same HD quality with zero cloud cost, offline, private, and instant, with no round-trip.", BLUE),
-    ("Teams & Office", "On-device narration, captions read aloud, and accessible documents, with no per-minute bill.", DEEP),
-    ("Clipchamp voiceover \u2192 local", "Its text-to-speech voiceover runs on Azure today; on-device HD voices cut that cloud bill to zero and work offline.", TEAL),
-    ("Accessibility tools", "Private, offline screen narration in the user's language, so nothing leaves the machine.", AMBER),
-]
-positions = [(0.72, 2.15), (6.86, 2.15), (0.72, 4.55), (6.86, 4.55)]
-for (tx, ty), (h, d, col) in zip(positions, tiles):
-    rect(s, Inches(tx), Inches(ty), Inches(5.75), Inches(2.1), WHITE, line=RGBColor(0xDD, 0xE6, 0xF1))
-    rect(s, Inches(tx), Inches(ty), Inches(0.12), Inches(2.1), col)
-    tb = box(s, Inches(tx + 0.35), Inches(ty + 0.28), Inches(5.15), Inches(1.6))
-    para(tb.text_frame, h, 19, INK, bold=True, font=FONT_SB, first=True, space_after=8)
-    para(tb.text_frame, d, 14.5, GREY, font=FONT, space_after=0)
-footer(s, 9)
-
-# ================================================================ 10 - WHAT: PowerPoint as a studio
+# ================================================================ 8 - WHAT: the value it unlocks (demo)
 s = blank(prs)
 rect(s, 0, 0, SW, SH, WHITE)
-title_block(s, "What \u00b7 a new creative surface", "Make every PowerPoint a video studio", TEAL)
+title_block(s, "What it enables \u00b7 the payoff",
+            "Amazing quality, generated in real time", TEAL)
+# video frame (COM drops the mp4 here for review; poster placeholder otherwise)
+vf = rect(s, Inches(0.7), Inches(1.95), Inches(7.7), Inches(4.35), RGBColor(0x0B, 0x24, 0x3B))
+vf.name = "VIDEO_FRAME"
+pb = rect(s, Inches(4.15), Inches(3.75), Inches(0.8), Inches(0.8), TEAL, MSO_SHAPE.OVAL)
+pb.name = "VIDEO_PLAY"
+tri = rect(s, Inches(4.42), Inches(3.95), Inches(0.32), Inches(0.4), WHITE, MSO_SHAPE.ISOSCELES_TRIANGLE)
+tri.rotation = 90
+tri.name = "VIDEO_PLAY_TRI"
+cap = box(s, Inches(0.9), Inches(5.75), Inches(7.3), Inches(0.4))
+para(cap.text_frame, "WinUI sample \u00b7 live on-device voiceover from a subtitle track",
+     13, SKY, font=FONT, first=True, space_after=0)
+# side narrative
+tb = box(s, Inches(8.75), Inches(2.0), Inches(3.95), Inches(4.3))
+para(tb.text_frame,
+     "This is the value it unlocks: studio-grade speech, generated live on the "
+     "device, for free.",
+     16, DEEP, bold=True, font=FONT_SB, first=True, space_after=12)
+for t in [
+    "Indistinguishable from cloud neural voices, running fully offline.",
+    "Generated in real time on an ordinary CPU, no NPU, no wait.",
+    "Delivers the modern Microsoft mission: unmetered intelligence on every desk and in every home.",
+]:
+    para(tb.text_frame, t, 14.5, INK, font=FONT, bullet=True, space_after=12)
+footer(s, 8)
+
+# ================================================================ 9 - WHAT: PowerPoint voiceover, zero cloud
+s = blank(prs)
+rect(s, 0, 0, SW, SH, WHITE)
+title_block(s, "What it enables \u00b7 PowerPoint",
+            "Narrate every deck, with zero cloud cost", TEAL)
 two_cards(
     s,
-    ("POWERPOINT + LOCAL VOICES", TEAL, [
+    ("POWERPOINT + CLAROS", TEAL, [
         "Speaker notes become the narration script, one per slide.",
         "Render the deck to a fully narrated MP4, on the device.",
-        "One deck \u2192 many languages, no re-recording.",
-        "Offline, private, and free, with an Azure upsell for avatars & premium.",
+        "One deck, many languages, no re-recording.",
+        "Zero cloud cost: nothing is metered, nothing leaves the machine.",
     ]),
     ("CLOUD VIDEO TOOLS (e.g. Synthesia)", GREY, [
-        "Per-minute / subscription cloud cost.",
-        "Script and content leave the org to render.",
+        "Per-minute or subscription cloud cost.",
+        "Script and slides leave the org to render.",
         "Online-only; a separate tool and export step.",
         "No on-device, private, or free tier.",
     ]),
@@ -347,82 +390,71 @@ two_cards(
 )
 tb = box(s, Inches(0.72), Inches(5.95), Inches(11.9), Inches(0.8))
 para(tb.text_frame,
-     "Turn every deck into a narrated, multilingual video, built into the tool and running on the "
-     "device. Even this deck could narrate itself.",
+     "Clipchamp and PowerPoint voiceover run on Azure today; Claros makes the "
+     "same narration local and free. Even this deck could narrate itself, on-device.",
      16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
-footer(s, 10)
+footer(s, 9)
 
-# ================================================================ 11 - WHAT: performance proof
+# ================================================================ 10 - PROOF divider
+divider(prs, "Proof",
+        "Efficient enough to change what teams can build",
+        "The clearest proof isn't a benchmark, it's a real product that couldn't ship "
+        "until the speech got this light.", color=BLUE)
+
+# ================================================================ 11 - PROOF: Contoso Finance
 s = blank(prs)
 rect(s, 0, 0, SW, SH, WHITE)
-title_block(s, "What \u00b7 proof it's real", "Fast enough to switch language mid-video", BLUE)
-rows = [
-    ("Real-time factor (synthesis)", "\u2248 0.025\u20130.05", "~20\u201340\u00d7 faster than playback"),
-    ("Steady-state synth (\u22484 s speech)", "~100 ms", "per sentence"),
-    ("Time-to-first-audio (cold)", "~1.9 s", "one-time on load"),
-    ("Load a 2nd voice (staging cached)", "~23 ms", "essentially free"),
-    ("First synth per voice (warm-up)", "~1.1\u20131.4 s", "one-time per voice"),
-]
-y = 2.05
-for i, (a, b, c) in enumerate(rows):
-    bg = LIGHT if i % 2 == 0 else WHITE
-    rect(s, Inches(0.7), Inches(y), Inches(11.9), Inches(0.7), bg)
-    tb = box(s, Inches(0.95), Inches(y), Inches(6.0), Inches(0.7))
-    tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
-    para(tb.text_frame, a, 16, INK, font=FONT, first=True, space_after=0)
-    vb = box(s, Inches(7.0), Inches(y), Inches(2.6), Inches(0.7))
-    vb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
-    para(vb.text_frame, b, 18, BLUE, bold=True, font=FONT_SB, first=True, space_after=0)
-    cb = box(s, Inches(9.7), Inches(y), Inches(2.9), Inches(0.7))
-    cb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
-    para(cb.text_frame, c, 13, GREY, font=FONT, first=True, space_after=0)
-    y += 0.72
-tb = box(s, Inches(0.7), Inches(y + 0.08), Inches(11.9), Inches(0.7))
+title_block(s, "Proof \u00b7 Contoso Finance",
+            "From \u2018barely runs\u2019 to \u2018room for a local LLM\u2019", BLUE)
+tb = box(s, Inches(0.7), Inches(1.9), Inches(11.9), Inches(0.65))
 para(tb.text_frame,
-     "Pre-load the offered languages once \u2192 switching is instant: change the dropdown "
-     "and the next line speaks in the new language.",
-     15, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
+     "Contoso Finance transcribes two-party advisor calls on the analyst's own PC. "
+     "On a 16 GB machine, the speech engine decided whether the app could exist:",
+     16, INK, font=FONT, first=True, space_after=0)
+rect(s, Inches(0.72), Inches(2.7), Inches(5.75), Inches(2.3), RGBColor(0xFB, 0xF0, 0xE6))
+rect(s, Inches(0.72), Inches(2.7), Inches(5.75), Inches(0.6), AMBER)
+tb = box(s, Inches(1.02), Inches(2.81), Inches(5.15), Inches(0.5))
+para(tb.text_frame, "BEFORE \u00b7 Whisper (NPU or CPU)", 15, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
+tb = box(s, Inches(1.02), Inches(3.45), Inches(5.15), Inches(1.45))
+para(tb.text_frame, "\u2248 4 GB", 38, AMBER, bold=True, font=FONT_SB, first=True, space_after=2)
+para(tb.text_frame,
+     "just for speech, on a 16 GB PC. Almost no headroom left, and ~4\u00d7 the memory "
+     "of the Mac doing the same job.",
+     14.5, INK, font=FONT, space_after=0)
+rect(s, Inches(6.86), Inches(2.7), Inches(5.75), Inches(2.3), RGBColor(0xE4, 0xF3, 0xF0))
+rect(s, Inches(6.86), Inches(2.7), Inches(5.75), Inches(0.6), TEAL)
+tb = box(s, Inches(7.16), Inches(2.81), Inches(5.15), Inches(0.5))
+para(tb.text_frame, "AFTER \u00b7 Claros", 15, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
+tb = box(s, Inches(7.16), Inches(3.45), Inches(5.15), Inches(1.45))
+para(tb.text_frame, "\u2248 500 MB", 38, TEAL, bold=True, font=FONT_SB, first=True, space_after=2)
+para(tb.text_frame,
+     "same transcription, same accuracy, at roughly the Mac's footprint, freeing "
+     "gigabytes back to the machine.",
+     14.5, INK, font=FONT, space_after=0)
+rect(s, Inches(6.4), Inches(3.7), Inches(0.55), Inches(0.4), BLUE, MSO_SHAPE.RIGHT_ARROW)
+rect(s, Inches(0.7), Inches(5.3), Inches(11.9), Inches(1.25), CARD)
+tb = box(s, Inches(1.0), Inches(5.48), Inches(11.3), Inches(0.9))
+tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+para(tb.text_frame,
+     "That freed memory does two things: it lets the app ship on a normal 16 GB PC at "
+     "all, and it leaves room to run a local LLM alongside the transcription, "
+     "impossible today under Whisper's memory pressure. Efficiency is what makes "
+     "on-device intelligence practical.",
+     16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 11)
 
-# ================================================================ 12 - WHAT: the listening half (STT)
+# ================================================================ 12 - PROOF: STT benchmark table
 s = blank(prs)
 rect(s, 0, 0, SW, SH, WHITE)
-title_block(s, "What \u00b7 the complete platform", "TTS is only half. Windows already listens, too.", TEAL)
-tb = box(s, Inches(0.7), Inches(1.9), Inches(11.9), Inches(2.9))
-for i, t in enumerate([
-    ("The same story runs on the input side: Windows ships the on-device Live Captions recognizer, offline, on the CPU, with no NPU.", True),
-    ("A call listener: one recognizer per speaker, finals-only punctuated sentences, merged into a single two-party transcript, the pattern Contoso-Finance uses on Mac.", False),
-    ("And it closes the loop: a conversation orchestrator captures the mic, endpoints each turn, recognizes it, and speaks the reply, with barge-in, and one place to plug in intelligence (an on-device LLM).", False),
-    ("Pair it with the HD voices for a complete round-trip platform, speech-in and speech-out, both on-device, both already in Windows, free, private, and offline.", False),
-]):
-    para(tb.text_frame, t[0], 14.5, DEEP if t[1] else INK, bold=t[1],
-         font=FONT_SB if t[1] else FONT, bullet=(not t[1]), first=(i == 0), space_after=8)
-rect(s, Inches(0.7), Inches(5.1), Inches(11.9), Inches(1.5), CARD)
-tb = box(s, Inches(1.0), Inches(5.28), Inches(11.3), Inches(1.15))
-tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
-para(tb.text_frame, "Speak \u2192 transcribe \u2192 understand \u2192 respond \u2192 speak",
-     20, TEAL, bold=True, font=FONT_SB, first=True, space_after=6)
-para(tb.text_frame,
-     "Every stage runs on the device, on hardware already in Windows. The "
-     "\u2018understand\u2019 step is a drop-in AI extensibility point where you add "
-     "on-device intelligence. Microsoft can deliver a full speech platform out of "
-     "technology that already ships, no NPU and no cloud required.",
-     15, DEEP, font=FONT, space_after=0)
-footer(s, 12)
-
-# ================================================================ 13 - WHAT: STT benchmark table
-s = blank(prs)
-rect(s, 0, 0, SW, SH, WHITE)
-title_block(s, "What \u00b7 proof (listening)",
-            "On-device transcription at the quality tier, on the CPU", BLUE)
+title_block(s, "Proof \u00b7 the numbers",
+            "Mac-class accuracy at a fraction of the memory", BLUE)
 tb = box(s, Inches(0.7), Inches(1.75), Inches(11.9), Inches(0.5))
 para(tb.text_frame,
      "Real 58 s two-party mortgage call, normalized to a 2-leg call (one recognizer "
      "per speaker); single-stream engines doubled.",
      13.5, GREY, font=FONT, first=True, space_after=0)
-# columns: engine | first sentence | peak RAM | hardware | quality
 cols = [(0.7, 3.7), (4.5, 1.35), (5.95, 2.0), (8.05, 1.55), (9.65, 2.95)]
-heads = ["Engine", "First final", "Peak RAM (2 legs)", "Hardware", "Quality (numbers / ITN)"]
+heads = ["Engine", "First final", "Peak RAM (2 legs)", "Hardware", "Numbers / ITN"]
 hy = 2.2
 rect(s, Inches(0.7), Inches(hy), Inches(11.9), Inches(0.5), DEEP)
 for (cx, cw), h in zip(cols, heads):
@@ -430,9 +462,9 @@ for (cx, cw), h in zip(cols, heads):
     hb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
     para(hb.text_frame, h, 12.5, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
 rows = [
-    ("Live Captions (this library)", "~4 s", "~500 MB", "CPU", "ITN tier ($ / % / currency)", "ours"),
-    ("Apple SpeechAnalyzer (macOS)", "~4 s", "~440 MB", "Apple ANE", "Reference: $610,000, 6.2%", "peer"),
-    ("WinAI Speech Preview", "3.5 s", "~6,400 MB", "Hexagon NPU", "Best ITN (Whisper Turbo)", "peer"),
+    ("Claros (Live Captions)", "~4 s", "~500 MB", "CPU", "Words yes; ITN off today (fixable)", "ours"),
+    ("Apple SpeechAnalyzer (macOS)", "~4 s", "~440 MB", "Apple ANE", "Full ITN: $610,000, 6.2%", "peer"),
+    ("WinAI Speech Preview", "3.5 s", "~6,400 MB", "Hexagon NPU", "Full ITN (Whisper Turbo)", "peer"),
     ("Nemotron 0.6B (Foundry Local)", "1.2 s", "~1,750 MB", "CPU", "No clean sentence breaks", "out"),
     ("Whisper small (CPU ONNX)", "2.3 s", "~1,200 MB", "CPU", "Low: hallucinates numbers", "out"),
 ]
@@ -454,50 +486,27 @@ for cells in rows:
              font=FONT_SB if bold else FONT, first=True, space_after=0)
     ry += 0.56
 rect(s, Inches(0.7), Inches(ry + 0.12), Inches(11.9), Inches(1.05), CARD)
-tb = box(s, Inches(1.0), Inches(ry + 0.28), Inches(11.3), Inches(0.75))
+tb = box(s, Inches(1.0), Inches(ry + 0.24), Inches(11.3), Inches(0.85))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
-     "The quality peers are Apple and NPU Whisper Turbo. This library matches that "
-     "ITN tier on the CPU at ~500 MB for two legs: ~13\u00d7 less RAM than the NPU path, "
-     "no NPU. Nemotron and Whisper small are ruled out on quality, not memory.",
-     14.5, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
-footer(s, 13)
+     "Claros matches the peers on word accuracy at ~500 MB for two legs, "
+     "~13\u00d7 less RAM than the NPU path, no NPU. One honest gap: it emits spelled-out "
+     "numbers today because the shipping ITN model sits behind a native finalizer we "
+     "disable for ARM64 stability, fixable in-box. Nemotron and Whisper small are out "
+     "on quality, not memory.",
+     14, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
+footer(s, 12)
+
+# ================================================================ 13 - HOW divider
 divider(prs, "How",
-        "Make the POC real: remove the hack, ship the API",
-        "One API surface. Local-first and free by default, and the same code scales "
-        "to Azure with your creds.", color=AMBER)
+        "Make this implementation real",
+        "It works today. The only thing between this hack and a real platform is a "
+        "decision Microsoft already owns.", color=AMBER)
 
-# ================================================================ 13 - HOW: today it's a hack
-s = blank(prs)
-rect(s, 0, 0, SW, SH, WHITE)
-title_block(s, "How \u00b7 the friction today", "It works, but only as a hack", AMBER)
-tb = box(s, Inches(0.7), Inches(2.0), Inches(11.9), Inches(1.4))
-para(tb.text_frame,
-     "To reach the on-device HD voice and Live Captions runtimes with no public API, "
-     "this reference implementation has to:",
-     17, INK, font=FONT, first=True, space_after=10)
-hacks = [
-    "Pass an undocumented Embedded Speech license string to unlock synthesis.",
-    "Load gated extension DLLs out of a first-party SystemApps folder.",
-    "Resolve native dependencies by walking the package graph by hand.",
-]
-tb = box(s, Inches(1.0), Inches(3.15), Inches(11.4), Inches(1.9))
-for i, t in enumerate(hacks):
-    para(tb.text_frame, t, 17, INK, font=FONT, bullet=True, first=(i == 0), space_after=10)
-rect(s, Inches(0.7), Inches(5.35), Inches(11.9), Inches(1.05), RGBColor(0xFB, 0xF0, 0xE6))
-tb = box(s, Inches(1.0), Inches(5.55), Inches(11.3), Inches(0.75))
-tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
-para(tb.text_frame,
-     "Unsupported and fragile, exactly the friction that stops real products from "
-     "shipping on the capability. That's what the API removes.",
-     16, AMBER, bold=True, font=FONT_SB, first=True, space_after=0)
-footer(s, 15)
-
-# ================================================================ 14 - HOW: one API, local + cloud upsell
+# ================================================================ 14 - HOW: local-first, Azure-optional
 s = blank(prs)
 rect(s, 0, 0, SW, SH, LIGHT)
-title_block(s, "How \u00b7 the design", "One API. Local by default. Cloud when you want it.", BLUE)
-# Local card
+title_block(s, "How \u00b7 the design", "Local by default. The same SDK scales to Azure.", BLUE)
 rect(s, Inches(0.72), Inches(2.05), Inches(5.75), Inches(3.0), WHITE, line=RGBColor(0xD9, 0xE4, 0xF0))
 rect(s, Inches(0.72), Inches(2.05), Inches(5.75), Inches(0.62), TEAL)
 tb = box(s, Inches(1.04), Inches(2.17), Inches(5.1), Inches(0.5))
@@ -505,66 +514,66 @@ para(tb.text_frame, "DEFAULT: on-device", 16, WHITE, bold=True, font=FONT_SB, fi
 tb = box(s, Inches(1.04), Inches(2.9), Inches(5.1), Inches(2.0))
 for i, t in enumerate([
     "Offline, private, free, instant.",
-    "Runs on the installed Natural HD voice.",
-    "No key, no bill, nothing leaves the device.",
+    "Runs on the whole fleet, no NPU required.",
+    "EmbeddedSpeechConfig on the installed voice + Live Captions model.",
 ]):
     para(tb.text_frame, t, 15, INK, font=FONT, bullet=True, first=(i == 0), space_after=9)
-# Cloud card
 rect(s, Inches(6.86), Inches(2.05), Inches(5.75), Inches(3.0), WHITE, line=RGBColor(0xD9, 0xE4, 0xF0))
 rect(s, Inches(6.86), Inches(2.05), Inches(5.75), Inches(0.62), BLUE)
 tb = box(s, Inches(7.18), Inches(2.17), Inches(5.1), Inches(0.5))
-para(tb.text_frame, "UPSELL: same API + your Azure creds", 16, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
+para(tb.text_frame, "UPSELL: same code + your Azure creds", 16, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
 tb = box(s, Inches(7.18), Inches(2.9), Inches(5.1), Inches(2.0))
 for i, t in enumerate([
+    "Swap in a cloud SpeechConfig(key, region).",
+    "Same SpeechSynthesizer / SpeechRecognizer calls, same voices.",
     "More voices, more languages, server-side scale.",
-    "Batch, streaming, and cross-device workloads.",
-    "Same code path; credentials switch the backend.",
 ]):
     para(tb.text_frame, t, 15, INK, font=FONT, bullet=True, first=(i == 0), space_after=9)
-# arrow between
 rect(s, Inches(6.4), Inches(3.35), Inches(0.55), Inches(0.4), AMBER, MSO_SHAPE.RIGHT_ARROW)
 rect(s, Inches(0.72), Inches(5.35), Inches(11.9), Inches(1.05), CARD)
-tb = box(s, Inches(1.02), Inches(5.55), Inches(11.3), Inches(0.75))
+tb = box(s, Inches(1.02), Inches(5.5), Inches(11.3), Inches(0.8))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
-     "Local is the free on-ramp; Azure is the paid upsell. Apple stops at the "
-     "device, with no cloud to graduate to. Windows plus Azure plus Microsoft's "
-     "own apps is a funnel no competitor can match.",
-     16, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
-footer(s, 16)
+     "This isn't hand-waving: the reference implementation is the Azure Speech SDK in "
+     "embedded mode. The upgrade to Azure is a config swap, not a rewrite. Local is "
+     "the free on-ramp; Azure plus Microsoft's own apps is a funnel no rival can match.",
+     15, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
+footer(s, 14)
 
-# ================================================================ 15 - HOW: the ask / close
+# ================================================================ 15 - HOW: the ask / CTA
 s = blank(prs)
 rect(s, 0, 0, SW, SH, DEEP)
 rect(s, 0, 0, SW, Inches(0.16), BLUE)
-tb = box(s, Inches(0.7), Inches(0.65), Inches(12), Inches(1.2))
+tb = box(s, Inches(0.7), Inches(0.6), Inches(12), Inches(1.2))
 para(tb.text_frame, "THE ASK TO MICROSOFT", 14, RGBColor(0x8F, 0xC4, 0xF0), bold=True,
      font=FONT_SB, first=True, space_after=6)
-para(tb.text_frame, "Ship this as a first-class Windows speech API", 30, WHITE, bold=True,
+para(tb.text_frame, "Make this implementation real", 32, WHITE, bold=True,
      font=FONT_SB, space_after=0)
-tb = box(s, Inches(0.7), Inches(2.0), Inches(11.9), Inches(1.1))
+tb = box(s, Inches(0.7), Inches(1.95), Inches(11.9), Inches(1.0))
 para(tb.text_frame,
-     "This repo is a working reference implementation of what it should look like. "
-     "Take the hack out; make it supported:",
+     "This repo is a complete, working reference implementation. It runs today only "
+     "by hacking around the on-device licensing, and that hack was trivial to bypass. "
+     "There is no technical barrier left, only a decision:",
      16, SKY, font=FONT, first=True, space_after=0)
-bl = [
-    "Enumerate installed Natural voices and synthesize offline through the on-device HD runtime.",
-    "Stream synthesis and recognition live, with word-boundary events and immutable finals.",
-    "Recognize speech on-device with the same Live Captions model, one recognizer per audio source.",
-    "Drive a full on-device conversation loop: capture, endpoint, recognize, respond, speak, with barge-in and a place to plug in intelligence.",
-    "Same surface scales to Azure with credentials, so it's local-first and cloud-optional.",
-]
-tb = box(s, Inches(1.0), Inches(3.1), Inches(11.4), Inches(2.4))
-for i, t in enumerate(bl):
-    para(tb.text_frame, t, 16, WHITE, font=FONT, bullet=True, first=(i == 0), space_after=8)
-rect(s, Inches(0.7), Inches(5.65), Inches(11.9), Inches(1.05), STEEL)
-tb = box(s, Inches(1.0), Inches(5.82), Inches(11.3), Inches(0.75))
+rect(s, Inches(0.7), Inches(3.05), Inches(11.9), Inches(1.05), STEEL)
+tb = box(s, Inches(1.0), Inches(3.2), Inches(11.3), Inches(0.75))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
-     "Then every app (Edge, Teams, Office, media players, accessibility tools) gets "
-     "instant, private, multilingual, on-device narration and transcription for free, "
-     "with a paved road to Azure.",
-     16, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
+     "The only blocker is a licensing key, and Microsoft controls it.",
+     22, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
+bl = [
+    "Bless the license so any app can reach the on-device runtime, no hack.",
+    "Unite the scattered efforts (WinAI, Foundry, HD voices, Live Captions) behind one platform.",
+    "Ship it as Windows.Speech: cohesive, fleet-wide, on-device, with a paved road to Azure.",
+]
+tb = box(s, Inches(1.0), Inches(4.4), Inches(11.4), Inches(1.6))
+for i, t in enumerate(bl):
+    para(tb.text_frame, t, 16, WHITE, font=FONT, bullet=True, first=(i == 0), space_after=9)
+tb = box(s, Inches(0.7), Inches(6.35), Inches(11.9), Inches(0.7))
+para(tb.text_frame,
+     "The tech is done, and Claros proves it. Get the company together, unite behind "
+     "one platform, and compete with macOS: ship it as Windows.Speech.",
+     16, TEAL, bold=True, font=FONT_SB, first=True, space_after=0)
 
 out = Path(__file__).with_name("live-voiceover.pptx")
 prs.save(out)
