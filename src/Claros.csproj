@@ -16,8 +16,8 @@
     <Description>End-to-end offline TTS on Windows. Enumerates installed Windows Natural Voices, runs their on-device ONNX acoustic model and vocoder via stock ONNX Runtime, and uses the shipped Windows SAPI text preprocessor for grapheme-to-phoneme conversion. No cloud, no separate G2P engine.</Description>
     <PackageTags>tts;speech;onnx;natural-voices;windows;sapi;offline</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/aclinick/ttslib</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/aclinick/ttslib</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/aclinick/claros</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/aclinick/claros</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <IncludeSymbols>true</IncludeSymbols>

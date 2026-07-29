@@ -1,6 +1,6 @@
 # Roadmap
 
-ttslib works end-to-end today: it enumerates installed Windows Natural Voices,
+Claros works end-to-end today: it enumerates installed Windows Natural Voices,
 runs their acoustic model and vocoder, and produces offline audio. Nothing
 structural is missing for basic TTS. The items below cover quality, coverage,
 and packaging improvements and, above all, make the case for a first-party API.

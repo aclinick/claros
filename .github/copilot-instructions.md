@@ -1,4 +1,4 @@
-# Copilot instructions: ttslib (Claros)
+# Copilot instructions: Claros
 
 Offline text-to-speech for .NET that drives the **Natural Voices already installed
 on a Windows machine**. No cloud, no bundled models, no third-party G2P engine.

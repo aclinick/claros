@@ -57,7 +57,7 @@ string[] sourceLabels = { "Anna (advisor)", "Mark (customer)" };
 string[] sourceIds = { "advisor", "customer" };
 
 Console.WriteLine("Decoding call to two per-source 16 kHz mono streams (ffmpeg, one stereo capture)...");
-var work = Path.Combine(Path.GetTempPath(), "ttslib-bench-" + Guid.NewGuid().ToString("N"));
+var work = Path.Combine(Path.GetTempPath(), "claros-bench-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(work);
 var stereoPcm = Path.Combine(work, "stereo.pcm");
 try

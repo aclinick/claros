@@ -1,4 +1,4 @@
-# ttslib: Windows Natural Voices for .NET
+# Claros: Windows Natural Voices for .NET
 
 A .NET library for offline text-to-speech on Windows, built entirely on the neural
 voice models that ship with the operating system. It turns text into audio using
@@ -10,7 +10,7 @@ engine, no vendor SDK.
 - Uses the shipped **Windows SAPI** text preprocessor for grapheme-to-phoneme.
 
 The models already ship in Windows and sound like Microsoft's cloud voices, but
-there is no supported API to reach them. ttslib fills that gap, and doubles as a
+there is no supported API to reach them. Claros fills that gap, and doubles as a
 reference implementation of the public API Microsoft should ship. See
 [`docs/BACKGROUND.md`](docs/BACKGROUND.md).
 
@@ -100,7 +100,7 @@ inference, SAPI) require a real installed voice and are exercised via the Demo.
 ## Legal
 
 The voice model binaries themselves are shipped by Microsoft with a plaintext EULA
-that forbids redistribution. ttslib reads them at runtime from the installed
+that forbids redistribution. Claros reads them at runtime from the installed
 AppExtension package. It never bundles or ships them.
 
 ## License

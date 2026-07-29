@@ -2,7 +2,7 @@
 
 ## The goal
 
-**ttslib is a reference implementation that shows Microsoft how a public API for
+**Claros is a reference implementation that shows Microsoft how a public API for
 the on-device Windows Natural Voices should look.** The models already ship in
 Windows and sound like the cloud, but there is no supported way to use them.
 This library demonstrates, in a few hundred lines of ordinary .NET, that the
@@ -47,7 +47,7 @@ streaming operators are rewritten to their standard ONNX equivalents.
 
 ## What this library is
 
-**ttslib (`Claros`) fills that hole in the Windows API.** It is a
+**Claros fills that hole in the Windows API.** It is a
 small .NET library that:
 
 - discovers the Natural Voices installed on the machine,

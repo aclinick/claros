@@ -5,7 +5,7 @@ the operating system. This site is the generated API reference for the
 `Claros` library.
 
 - **[API reference](api/index.md)**: every public type and member.
-- **[Project README](https://github.com/aclinick/ttslib/blob/master/src/README.md)**: why the library exists and what it does.
+- **[Project README](https://github.com/aclinick/claros/blob/master/src/README.md)**: why the library exists and what it does.
 
 ## Quick start
 

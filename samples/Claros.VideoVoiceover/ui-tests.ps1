@@ -3,9 +3,12 @@ param([Parameter(Mandatory)][int]$AppPid)
 # NOTE: do NOT name the param $Pid (read-only in PowerShell).
 
 $ErrorActionPreference = 'Continue'
-$logDir = "D:\source\ttslib-extract\samples\Claros.VideoVoiceover\bin\Release\net10.0-windows10.0.26100.0\win-arm64"
+# Resolve paths relative to this script and the host architecture, so the tests
+# run from any clone location and on both win-x64 and win-arm64.
+$arch = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant()
+$logDir = Join-Path $PSScriptRoot "bin\Release\net10.0-windows10.0.26100.0\win-$arch"
 $log = Join-Path $logDir 'voiceover.log'
-$shotDir = "D:\source\ttslib-extract\samples\Claros.VideoVoiceover\screenshots"
+$shotDir = Join-Path $PSScriptRoot 'screenshots'
 New-Item -ItemType Directory -Force -Path $shotDir | Out-Null
 $pass = 0; $fail = 0; $results = @()
 
