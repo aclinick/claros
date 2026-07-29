@@ -1,0 +1,64 @@
+[ITHarness] chunkMs=100 chunkBytes=3200
+[ITHarness] engine=foundry-nemotron variant=nemotron-speech-streaming-en-0.6b
+[FoundryNemotron] ready: nemotron-speech-streaming-en-0.6b-generic-cpu:3
+[ITHarness] initialized in 16755ms
+[+  1226ms partial] Hi Mark, good
+[+  1720ms partial] to see you
+[+  2822ms partial] . What's on your mind
+[+ 10126ms partial] ? I hear you
+[+ 11822ms partial] . Let's check the num
+[+ 12424ms partial] bers
+[+ 14027ms partial] . You have
+[+ 14623ms partial] six hundred
+[+ 15721ms partial] ten thousand
+[+ 16331ms partial] dollars
+[+ 16820ms partial] in stocks
+[+ 17428ms partial] averaging
+[+ 18014ms partial] six point two
+[+ 18522ms partial] percent ret
+[+ 19132ms partial] urn
+[+ 20225ms partial] and a three hundred
+[+ 20826ms partial] twenty thousand
+[+ 21321ms partial] dollar
+[+ 21922ms partial] mortgage
+[+ 22418ms partial] at
+[+ 23623ms partial] five point five
+[+ 24129ms partial] percent
+[+ 24725ms partial] interest.
+[+ 25822ms partial] Fixed until
+[+ 26426ms partial] January
+[+ 26921ms partial] when it res
+[+ 27518ms partial] ets
+[+ 30318ms partial] understandable
+[+ 31437ms partial] if you
+[+ 32029ms partial] paid it off
+[+ 32526ms partial] , you'd elim
+[+ 33130ms partial] inate that
+[+ 33618ms partial] risk
+[+ 34827ms partial] . But remember
+[+ 35326ms partial] your investment
+[+ 35925ms partial] s are earning
+[+ 36418ms partial] more than the
+[+ 37029ms partial] loan is cost
+[+ 37618ms partial] ing you
+[+ 38720ms partial] and mortgage
+[+ 39223ms partial] interest is
+[+ 39824ms partial] often tax
+[+ 40417ms partial] deductible
+[+ 41514ms partial] , which
+[+ 42027ms partial] lowers the real
+[+ 42624ms partial] cost
+[+ 46538ms partial] that's okay
+[+ 48300ms partial] . Peace of
+[+ 48818ms partial] mind is
+[+ 49319ms partial] priceless
+[+ 51030ms partial] . We'll model
+[+ 51627ms partial] both options
+[+ 52718ms partial] , but the right
+[+ 53233ms partial] choice is the
+[+ 53822ms partial] one that lets
+[+ 54419ms partial] you feel
+[+ 54922ms partial] secure
+[ITHarness] feed complete at 58104ms, draining...
+[+ 60720ms FINAL  ] Hi Mark, good to see you. What's on your mind? I hear you. Let's check the numbers. You have six hundred ten thousand dollars in stocks averaging six point two percent return and a three hundred twenty thousand dollar mortgage at five point five percent interest. Fixed until January when it resets understandable if you paid it off, you'd eliminate that risk. But remember your investments are earning more than the loan is costing you and mortgage interest is often tax deductible, which lowers the real cost that's okay. Peace of mind is priceless. We'll model both options, but the right choice is the one that lets you feel secure
+[ITHarness] done. total 60720ms

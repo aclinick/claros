@@ -8,8 +8,10 @@ artifacts/
 hello*.wav
 *.wav
 
-# Session throwaway spike and forced-HD voice package copies
-spike-embedded/
+# Throwaway spikes and forced-HD voice package copies. Spikes are local
+# experiments only - some carry multi-hundred-megabyte ONNX models - so the
+# pattern covers every spike rather than naming them one at a time.
+spike-*/
 voicepkg-*/
 
 
@@ -18,5 +20,8 @@ docs/_site/
 api/.manifest
 docs/api/*.yml
 docs/api/.manifest
-# STT spike (not shipped)
-spike-sr/
+
+# Pitch deck media. The committed live-voiceover.pptx is the lightweight deck;
+# the review copy embeds the demo video and both are far too large for git.
+docs/pitch/*.mp4
+docs/pitch/*.review.pptx

@@ -1,0 +1,27 @@
+[ITHarness] chunkMs=100 chunkBytes=3200
+[ITHarness] engine=live-captions variant=en-US
+[LiveCaptions] model=Microsoft Speech Recognizer en-US FP Model V11 locale=en-US path=C:\Program Files\WindowsApps\MicrosoftWindows.Speech.en-US.1_1.0.29.0_x64__cw5n1h2txyewy
+[LiveCaptions] recognition runtime ready
+[ITHarness] initialized in 373ms
+2026-07-20 15:57:19.1381451 [W:onnxruntime:SpeechRuntime, cpuid_uarch.cc:300 onnxruntime::decodeMIDR] unknown Qualcomm CPU part 0x1 ignored
+2026-07-20 15:57:19.1382543 [W:onnxruntime:SpeechRuntime, cpuid_uarch.cc:300 onnxruntime::decodeMIDR] unknown Qualcomm CPU part 0x1 ignored
+2026-07-20 15:57:19.1383287 [W:onnxruntime:SpeechRuntime, cpuid_uarch.cc:300 onnxruntime::decodeMIDR] unknown Qualcomm CPU part 0x1 ignored
+2026-07-20 15:57:19.1385037 [W:onnxruntime:SpeechRuntime, cpuid_uarch.cc:300 onnxruntime::decodeMIDR] unknown Qualcomm CPU part 0x1 ignored
+2026-07-20 15:57:19.1386684 [W:onnxruntime:SpeechRuntime, cpuid_uarch.cc:300 onnxruntime::decodeMIDR] unknown Qualcomm CPU part 0x1 ignored
+2026-07-20 15:57:19.1387734 [W:onnxruntime:SpeechRuntime, cpuid_uarch.cc:300 onnxruntime::decodeMIDR] unknown Qualcomm CPU part 0x1 ignored
+2026-07-20 15:57:19.1388535 [W:onnxruntime:SpeechRuntime, cpuid_uarch.cc:300 onnxruntime::decodeMIDR] unknown Qualcomm CPU part 0x1 ignored
+2026-07-20 15:57:19.1389423 [W:onnxruntime:SpeechRuntime, cpuid_uarch.cc:300 onnxruntime::decodeMIDR] unknown Qualcomm CPU part 0x1 ignored
+2026-07-20 15:57:19.1390214 [W:onnxruntime:SpeechRuntime, cpuid_uarch.cc:300 onnxruntime::decodeMIDR] unknown Qualcomm CPU part 0x1 ignored
+2026-07-20 15:57:19.1390951 [W:onnxruntime:SpeechRuntime, cpuid_uarch.cc:300 onnxruntime::decodeMIDR] unknown Qualcomm CPU part 0x1 ignored
+[+  2708ms FINAL  ] Hi, Mark.
+[+  2709ms FINAL  ] Good to see you.
+[+ 12002ms FINAL  ] I hear you.
+[+ 14600ms FINAL  ] I hear you.
+[+ 14600ms FINAL  ] Let's check the numbers.
+[+ 32816ms FINAL  ] Understandable.
+[+ 39510ms FINAL  ] If you paid it off, you'd eliminate that risk.
+[+ 52303ms FINAL  ] But remember your investments are earning more than the loan is costing you and mortgage interest is often tax deductible which lowers the real cost and that's OK.
+[+ 52303ms FINAL  ] Peace of mind is priceless.
+[ITHarness] feed complete at 58104ms, draining...
+[+ 61261ms FINAL  ] Will model both options, but the right choice is the one that lets you feel secure
+[ITHarness] done. total 61263ms

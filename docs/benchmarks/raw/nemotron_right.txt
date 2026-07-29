@@ -1,0 +1,28 @@
+[ITHarness] chunkMs=100 chunkBytes=3200
+[ITHarness] engine=foundry-nemotron variant=nemotron-speech-streaming-en-0.6b
+[FoundryNemotron] ready: nemotron-speech-streaming-en-0.6b-generic-cpu:3
+[ITHarness] initialized in 5448ms
+[+  4021ms partial] I've been thinking
+[+  5143ms partial] I should sell my
+[+  5619ms partial] stock
+[+  6262ms partial] and pay off the
+[+  6834ms partial] mortgage
+[+  7917ms partial] . I just want
+[+  8426ms partial] to
+[+  9036ms partial] sleep better at
+[+  9623ms partial] night
+[+ 28623ms partial] . That reset is
+[+ 29224ms partial] what scares
+[+ 29709ms partial] me
+[+ 43720ms partial] still. I
+[+ 44325ms partial] hate the
+[+ 44811ms partial] idea of
+[+ 45415ms partial] carrying the
+[+ 46019ms partial] debt
+[+ 55527ms partial] thanks
+[+ 56020ms partial] , Anna
+[+ 57225ms partial] . That's exactly
+[+ 57724ms partial] what I
+[ITHarness] feed complete at 58101ms, draining...
+[+ 60724ms FINAL  ] I've been thinking I should sell my stock and pay off the mortgage. I just want to sleep better at night. That reset is what scares me still. I hate the idea of carrying the debt thanks, Anna. That's exactly what I needed
+[ITHarness] done. total 60725ms

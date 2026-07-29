@@ -1,0 +1,27 @@
+[ITHarness] chunkMs=100 chunkBytes=3200
+[ITHarness] engine=windows-ai-speech variant=npu
+[WinAI] initial ready state: Ready
+[WinAI] TryCreateAsync...
+DSP_INFO UNSUPPORTED_KEY: 49
+DSP_INFO UNSUPPORTED_KEY: 50
+DSP_INFO UNSUPPORTED_KEY: 49
+DSP_INFO UNSUPPORTED_KEY: 50
+DSP_INFO UNSUPPORTED_KEY: 49
+DSP_INFO UNSUPPORTED_KEY: 50
+DSP_INFO UNSUPPORTED_KEY: 49
+DSP_INFO UNSUPPORTED_KEY: 50
+[WinAI] model ready
+[ITHarness] initialized in 16956ms
+[+  6812ms partial] I've been thinking I should sell my stock and pay off the
+[+  9847ms partial]  mortgage. I just want to sleep better
+[+ 12126ms partial]  at night.
+[+ 30574ms partial]  That reset is what scares me.
+[+ 46023ms partial]  Still, I hate the idea of carrying
+[+ 49013ms partial]  the debt
+[ITHarness] feed complete at 58107ms, draining...
+[+ 58333ms partial]  Thanks Anna, that's exactly what
+[WinAI] continuous task end: TimeoutException: The operation has timed out.
+[ITHarness] done. total 65625ms
+ <W> Destroying graph env with 1 registered graph envs
+ <E> Error 0x200: failed to close queue 000002848D8B7D50 for priority 100
+
