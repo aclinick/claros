@@ -96,6 +96,7 @@ var chat = new List<(TranscriptChunk Chunk, int Channel)>();
 var chatLock = new object();
 
 long firstCaptionTicks = 0;   // Stopwatch ticks of the first finalized line, 0 = none
+long firstPartialTicks = 0;   // ... and of the first in-progress hypothesis
 var runClock = Stopwatch.StartNew();
 
 // Memory sampler.
@@ -131,6 +132,14 @@ var legs = new[]
 for (var c = 0; c < legs.Length; c++)
 {
     var channel = c;
+    legs[c].PartialUpdated += _ =>
+    {
+        // What a caption UI would paint. It arrives well before any sentence
+        // can be finalized, since finalizing needs the NEXT sentence to begin.
+        if (firstPartialTicks == 0)
+            Interlocked.CompareExchange(ref firstPartialTicks, runClock.ElapsedTicks, 0);
+    };
+
     legs[c].TranscriptFinalized += chunk =>
     {
         if (firstCaptionTicks == 0)
@@ -246,6 +255,9 @@ double wallSeconds = runClock.Elapsed.TotalSeconds;
 double firstCaptionS = firstCaptionTicks == 0
     ? double.NaN
     : (double)firstCaptionTicks / Stopwatch.Frequency;
+double firstPartialS = firstPartialTicks == 0
+    ? double.NaN
+    : (double)firstPartialTicks / Stopwatch.Frequency;
 double peakMb = peakBytes / (1024.0 * 1024.0);
 double baselineMb = baselineBytes / (1024.0 * 1024.0);
 double deltaMb = peakMb - baselineMb;
@@ -254,6 +266,7 @@ double avgMb = memSamples > 0 ? sumBytes / memSamples / (1024.0 * 1024.0) : peak
 Console.WriteLine("\n===== METRICS (this run, on-device Live Captions) =====");
 Console.WriteLine($"  Audio duration        : {audioSeconds,7:0.0} s");
 Console.WriteLine($"  Live wall-clock time  : {wallSeconds,7:0.0} s (real-time paced, 2 legs)");
+Console.WriteLine($"  First partial latency : {firstPartialS,7:0.00} s (first on-screen text)");
 Console.WriteLine($"  First caption latency : {firstCaptionS,7:0.00} s (first finalized sentence)");
 Console.WriteLine($"  Raw throughput        : {throughputRtf,7:0.1}x real time (un-paced, 1 leg)");
 Console.WriteLine($"  Peak working set      : {peakMb,7:0.0} MB");

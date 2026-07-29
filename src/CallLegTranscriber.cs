@@ -57,6 +57,22 @@ public sealed class CallLegTranscriber : IDisposable
     /// </summary>
     public event Action<TranscriptChunk>? TranscriptFinalized;
 
+    /// <summary>
+    /// Raised with this leg's in-progress hypothesis each time the recognizer
+    /// revises it. The text is volatile: it grows, and words already shown can be
+    /// rewritten, so treat it as something to repaint rather than to append.
+    /// </summary>
+    /// <remarks>
+    /// This is what makes a caption feel instant. The first partial arrives about
+    /// a second into speech, whereas a sentence is only <em>finalized</em> once the
+    /// speaker has started the next one, which is necessarily later. Windows' own
+    /// Live Captions paints this stream, which is why it appears to transcribe the
+    /// moment someone speaks. Show partials for immediacy and
+    /// <see cref="TranscriptFinalized"/> for the stable record; they are the same
+    /// speech at two different confidence points, not two transcripts.
+    /// </remarks>
+    public event Action<string>? PartialUpdated;
+
     internal CallLegTranscriber(
         string sourceId,
         string sourceLabel,
@@ -68,6 +84,13 @@ public sealed class CallLegTranscriber : IDisposable
         _session = session;
         _log = new CallLegTranscript(sourceId, sourceLabel);
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
+        _session.PartialUpdated += OnPartialUpdated;
+    }
+
+    private void OnPartialUpdated(string text)
+    {
+        if (_disposed) return;
+        PartialUpdated?.Invoke(text);
     }
 
     /// <summary>
@@ -202,6 +225,7 @@ public sealed class CallLegTranscriber : IDisposable
     {
         if (_disposed) return;
         _disposed = true;
+        _session.PartialUpdated -= OnPartialUpdated;
         try { _session.Dispose(); } catch { /* native teardown may fault */ }
     }
 }
