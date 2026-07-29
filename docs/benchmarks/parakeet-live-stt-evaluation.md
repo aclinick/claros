@@ -478,3 +478,65 @@ Parakeet is a better *transcriber* than the conclusion above might suggest, and 
 Windows app that shows settling text is right to use it. It remains the wrong
 engine for this library's live-listener contract, and the reason is the contract -
 not a benchmark we could re-run our way out of.
+
+---
+
+## 12. Retest (2026-07-29): the real-time claim was wrong
+
+Prompted by the observation that third-party Windows apps run Parakeet live on
+CPU, the harness was rebuilt and re-run on the same 58 s call, same machine, same
+stateless INT8 ONNX export. The only variables swept were the two knobs §11
+identified as ours: how much left context is re-encoded (`CONTEXT`) and how often
+(`EVAL`).
+
+| Context | Cadence | Compute for 58 s | Real time | Duplicate finals | ITN |
+| --- | --- | --- | --- | --- | --- |
+| 10 s | 1.0 s | 36.2 s | 1.6x | 7 | yes |
+| 10 s | 2.0 s | 16.0 s | 3.6x | 4 | yes |
+| 5 s | 2.0 s | 14.6 s | **4.0x** | 3 | yes |
+| 3 s | 2.0 s | 8.7 s | 6.7x | 2 | yes |
+| 5 s | 4.0 s | 6.0 s | **9.7x** | 2 | yes |
+| 2 s | 2.0 s | 9.5 s | 6.1x | 4 | yes |
+
+Peak working set stayed between 1517 MB and 1789 MB per leg across every setting.
+
+### Two claims in this document were wrong
+
+**"Cannot hold real time" is wrong.** At the original 1 s cadence this rebuild
+measured 1.6x real time, not the 0.7x recorded in §4, and simply halving the
+cadence reached 3.6x. With a 5 s context evaluated every 4 s it runs at **9.7x
+real time** - nearly an order of magnitude of headroom on CPU, with the plain
+stateless export and no cache-aware model at all. The original figure reflected a
+pathological configuration (re-encoding ten seconds of audio every second), not
+the model.
+
+**"Small windows collapse ITN" (failure mode A) did not reproduce.** ITN survived
+at every setting tested, down to a 2 s context: `$610,000` and `6.2%` were still
+produced. Whatever caused the original collapse, it was not window size alone on
+this audio.
+
+### One claim held, and it is the one that matters
+
+**Duplicate finals never reached zero.** Best case was 2 and worst was 7, at every
+point on the frontier including the fastest. Under this contract a sentence is
+emitted the moment it is committed, and re-transcribing overlapping context makes
+the model produce that sentence again. Faster settings reduce duplicates only
+because they re-transcribe less often, never because the conflict goes away.
+
+The memory gap also held: ~1.5-1.8 GB per leg against the streaming recognizer's
+507 MB for two, so a two-leg call is roughly 6x the working set.
+
+### The honest, narrower verdict
+
+Parakeet is **fast enough for live transcription on CPU by a wide margin**, and
+this document was wrong to imply otherwise. It remains unsuitable for *this*
+library's listener for two narrower reasons: it re-emits sentences it has already
+committed, and it costs several times the memory of the streaming recognizer.
+
+One caveat kept deliberately open: some of the duplication is plausibly the
+harness's naive re-emission rather than the model's, and a committer that
+suppressed exact repeats would cut it further. What such a layer cannot fix is a
+*revised* final - the model changing a sentence it already emitted - because under
+an immutable contract the revision can never be applied. Establishing how much of
+the residue is revision rather than repetition is the next measurement, and it
+should be done before this table is used to argue against Parakeet anywhere.

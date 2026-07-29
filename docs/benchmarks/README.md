@@ -56,18 +56,25 @@ limitation.
 
 ## A scoping note on the Parakeet result
 
-Third-party Windows apps do run Parakeet live, including on CPU, and the
-evaluation carries an addendum (§11) explaining precisely why their result and
-ours differ. Two of the reasons were our own configuration — we used the stateless
-ONNX export and re-encoded a 10 s window every second, rather than a cache-aware
-export chunked on silence — so the "cannot hold real time" figure measures our
-harness, not the model's ceiling.
+Third-party Windows apps do run Parakeet live on CPU, so the evaluation was
+re-run on 2026-07-29 and **two of its conclusions turned out to be wrong**. See
+§11 and §12 of the evaluation for the full retest.
 
-What survives that correction is the part that matters here: a captioning UI is
-free to repaint text as context arrives, and this library's listener is not,
-because a sentence handed to a reasoning model cannot be unsent. Parakeet's
-wide-window ITN needs audio that has not arrived when an immutable final must be
-committed. That conflict is architectural, and so is the memory gap.
+- **Wrong: "cannot hold real time."** The original 0.7x figure came from a
+  pathological configuration — re-encoding a 10 s window every second. Re-measured
+  on the same audio and machine, Parakeet reaches **9.7x real time** on CPU with
+  the plain stateless ONNX export.
+- **Wrong: "small windows collapse its number formatting."** ITN survived every
+  setting tested, down to a 2 s context.
+- **Held: it re-emits sentences it has already committed.** Duplicate finals never
+  reached zero at any point on the frontier — 2 in the best case, 7 in the worst.
+- **Held: memory.** ~1.5–1.8 GB per leg against 507 MB for two legs of the
+  streaming recognizer.
+
+So the reason this library uses the streaming recognizer is narrower than the
+original document implied: not speed, but that a captioning UI may repaint text as
+context arrives and a listener feeding a reasoning model may not, plus the memory
+gap. The Parakeet row in the pitch deck reflects the corrected position.
 
 ## Reproducing
 

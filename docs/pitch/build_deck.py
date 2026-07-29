@@ -466,7 +466,7 @@ rows = [
     ("Apple SpeechAnalyzer (macOS)", "~4 s", "~440 MB", "Apple ANE", "Full ITN: $610,000, 6.2%", "peer"),
     ("WinAI Speech Preview", "3.5 s", "~6,400 MB", "Hexagon NPU", "Full ITN (Whisper Turbo)", "peer"),
     ("Nemotron 0.6B (Foundry Local)", "1.2 s", "~1,750 MB", "CPU", "No clean sentence breaks", "out"),
-    ("Parakeet TDT 0.6b", "1.4 s", "~1,780 MB / leg", "CPU", "Good ITN, but duplicates finals", "out"),
+    ("Parakeet TDT 0.6b", "1.4 s", "~1,550 MB / leg", "CPU", "Good ITN; re-emits committed lines", "out"),
     ("Whisper small (CPU ONNX)", "2.3 s", "~1,200 MB", "CPU", "Low: hallucinates numbers", "out"),
 ]
 ry = hy + 0.5
@@ -490,11 +490,11 @@ rect(s, Inches(0.7), Inches(ry + 0.12), Inches(11.9), Inches(1.05), CARD)
 tb = box(s, Inches(1.0), Inches(ry + 0.24), Inches(11.3), Inches(0.85))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
-     "Claros matches the peers on word accuracy at ~500 MB for two legs, "
-     "~13\u00d7 less RAM than the NPU path, no NPU. One honest gap: it emits spelled-out "
-     "numbers today because the shipping ITN model sits behind a native finalizer we "
-     "disable for ARM64 stability, fixable in-box. The rest are out on quality or, for "
-     "Parakeet, on being unable to hold real time once finals must be immutable.",
+     "Claros matches the peers on word accuracy at ~500 MB for two legs \u2014 ~13\u00d7 less "
+     "RAM than the NPU path, and no NPU. One honest gap: numbers arrive spelled out today, "
+     "because the shipping ITN model sits behind a native finalizer we disable for ARM64 "
+     "stability. Fixable in-box. The rest are out on quality, or on memory and re-emitting "
+     "lines they already committed.",
      13.5, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 12)
 
