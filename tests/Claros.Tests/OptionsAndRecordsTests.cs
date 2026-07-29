@@ -196,6 +196,39 @@ public class OptionsAndRecordsTests
     }
 
     [Fact]
+    public void CodecTokens_RejectsA20HzStreamThatIsNotTwoPerStep()
+    {
+        // The vocoder reshapes the 20 Hz stream to [1, 2, steps], so a length
+        // that is not steps*2 would silently produce a misaligned tensor.
+        var ex = Assert.Throws<ArgumentException>(
+            () => new CodecTokens(new long[] { 1, 2, 3 }, new long[] { 9 }, 1, false));
+
+        Assert.Contains("two-per-step", ex.Message);
+    }
+
+    [Fact]
+    public void CodecTokens_AllowsAnIndependent40HzStreamWidth()
+    {
+        // The 40 Hz stream is consumed as a flat [1, 1, length] tensor, so its
+        // width per step is a model detail and must not be constrained.
+        var tokens = new CodecTokens(new long[] { 1, 2 }, new long[] { 9 }, 1, true);
+
+        Assert.Equal(1, tokens.Steps);
+        Assert.Single(tokens.C40Hz);
+    }
+
+    [Fact]
+    public void CodecTokens_RejectsNegativeStepsAndNullStreams()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => new CodecTokens([], [], -1, false));
+        Assert.Throws<ArgumentNullException>(
+            () => new CodecTokens(null!, [], 0, false));
+        Assert.Throws<ArgumentNullException>(
+            () => new CodecTokens([], null!, 0, false));
+    }
+
+    [Fact]
     public void Vocoder_NativeSampleRateIs26kHz()
     {
         Assert.Equal(26000, Vocoder.NativeSampleRate);
