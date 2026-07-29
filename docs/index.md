@@ -15,11 +15,11 @@ using Claros;
 using var catalog = new VoiceCatalog();
 var voices = await catalog.ListVoicesAsync();
 
-using var speaker = NaturalVoiceSpeaker.Load(voices[0]);
-var waveform = await speaker.SynthesizeAsync("The quick brown fox, jumps over the lazy dog.");
+using var synthesizer = NaturalVoiceSynthesizer.Load(voices[0]);
+var waveform = await synthesizer.SynthesizeAsync("The quick brown fox, jumps over the lazy dog.");
 
 WaveFile.WriteMono16("hello.wav", waveform.Samples, waveform.SampleRate);
 ```
 
 For the highest-fidelity path that reuses the on-device Azure Embedded Speech
-runtime directly, see <xref:Claros.EmbeddedVoiceSpeaker>.
+runtime directly, see <xref:Claros.EmbeddedSpeechSynthesizer>.

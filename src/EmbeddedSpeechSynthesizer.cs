@@ -8,8 +8,8 @@ namespace Claros;
 /// <summary>
 /// Flagship offline text-to-speech engine: drives a Windows Natural Voice
 /// through Microsoft's own on-device Azure Embedded Speech runtime. Unlike
-/// <see cref="NaturalVoiceSpeaker"/> (which reconstructs the pipeline from the
-/// raw ONNX models and the SAPI text preprocessor), this speaker hands text to
+/// <see cref="NaturalVoiceSynthesizer"/> (which reconstructs the pipeline from the
+/// raw ONNX models and the SAPI text preprocessor), this synthesizer hands text to
 /// Microsoft's exact neural front end and acoustic engine, so cadence,
 /// punctuation, and pronunciation match what the OS itself produces.
 ///
@@ -23,7 +23,7 @@ namespace Claros;
 /// to <see cref="SynthesizeAsync(SpeechSynthesisRequest, CancellationToken)"/>.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
+public sealed class EmbeddedSpeechSynthesizer : ISpeechSynthesizer
 {
     private readonly EmbeddedSpeechConfig _config;
     private readonly SpeechSynthesizer _synth;
@@ -31,10 +31,10 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
     private Task<SpeechSynthesisResult>? _pending;
     private bool _disposed;
 
-    /// <summary>The Natural Voice this speaker is bound to.</summary>
+    /// <summary>The Natural Voice this synthesizer is bound to.</summary>
     public VoiceInfo Voice { get; }
 
-    private EmbeddedVoiceSpeaker(
+    private EmbeddedSpeechSynthesizer(
         VoiceInfo voice, EmbeddedSpeechConfig config, SpeechSynthesizer synth, AudioFormat outputFormat)
     {
         Voice = voice;
@@ -45,7 +45,7 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
 
     /// <summary>
     /// The audio this voice produces: mono 16-bit PCM at
-    /// <see cref="EmbeddedVoiceOptions.SampleRate"/>, fixed when the speaker is
+    /// <see cref="EmbeddedVoiceOptions.SampleRate"/>, fixed when the synthesizer is
     /// loaded.
     /// </summary>
     public AudioFormat OutputFormat { get; }
@@ -59,7 +59,7 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
     /// threshold-patched overlay of the voice package is materialized so every
     /// utterance uses the HD model.
     /// </summary>
-    public static EmbeddedVoiceSpeaker Load(
+    public static EmbeddedSpeechSynthesizer Load(
         VoiceInfo voice,
         string? license = null,
         EmbeddedVoiceOptions? options = null)
@@ -94,7 +94,7 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
             config.SetSpeechSynthesisOutputFormat(format);
             config.SetSpeechSynthesisVoice(voice.DisplayName, license);
             synth = new SpeechSynthesizer(config, (AudioConfig?)null);
-            return new EmbeddedVoiceSpeaker(
+            return new EmbeddedSpeechSynthesizer(
                 voice, config, synth, AudioFormat.Pcm16Mono(options.SampleRate));
         }
         catch (Exception ex) when (ex is not NaturalVoiceException)
@@ -187,7 +187,7 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
         // The _pending drain below sequences one call after another, but only if
         // the calls are actually sequential. This catches genuine concurrency,
         // which would otherwise race the native engine.
-        _gate.Enter(nameof(EmbeddedVoiceSpeaker), "a synthesis request");
+        _gate.Enter(nameof(EmbeddedSpeechSynthesizer), "a synthesis request");
         try
         {
             return await SpeakAndReadAsync(speak, cancellationToken).ConfigureAwait(false);

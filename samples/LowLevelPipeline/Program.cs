@@ -1,6 +1,6 @@
 // LowLevelPipeline — drive each stage of the pipeline by hand.
 //
-// NaturalVoiceSpeaker is a facade over three components. This sample wires them
+// NaturalVoiceSynthesizer is a facade over three components. This sample wires them
 // up directly so you can see (and instrument) each stage: SAPI grapheme-to-
 // phoneme, the acoustic model that emits discrete codec tokens, and the vocoder
 // that turns those tokens into audio. Use this pattern when you need access to

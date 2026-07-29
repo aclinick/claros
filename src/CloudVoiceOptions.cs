@@ -3,7 +3,7 @@ using System.Text;
 namespace Claros;
 
 /// <summary>
-/// Connection and voice settings for <see cref="CloudVoiceSpeaker"/>. Supplying
+/// Connection and voice settings for <see cref="CloudSpeechSynthesizer"/>. Supplying
 /// these is the explicit opt-in that moves synthesis off this machine; nothing in
 /// the library creates them on a caller's behalf.
 /// </summary>

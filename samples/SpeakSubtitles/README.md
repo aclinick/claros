@@ -2,7 +2,7 @@
 
 Turn a subtitle file (`.srt` or `.vtt`) into a **voiceover track whose audio is
 aligned to the subtitle timings**, using the flagship, fully-offline
-**`EmbeddedVoiceSpeaker`** (forced HD).
+**`EmbeddedSpeechSynthesizer`** (forced HD).
 
 Because the narration follows the cue timestamps, you can drive the talkover for
 a video entirely from its subtitles: **edit the subtitle text or timings, re-run,

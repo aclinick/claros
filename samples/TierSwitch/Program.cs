@@ -37,7 +37,7 @@ if (cloudVoice is null)
     }
 
     Console.WriteLine($"Tier:  on-device ({voice.DisplayName}, {voice.Locale})");
-    synthesizer = platform.CreateSpeaker(voice);
+    synthesizer = platform.CreateSynthesizer(voice);
 }
 else
 {
@@ -52,7 +52,7 @@ else
     }
 
     Console.WriteLine($"Tier:  hosted ({cloudVoice}, {region}) - this request is billed");
-    synthesizer = CloudVoiceSpeaker.Connect(new CloudVoiceOptions
+    synthesizer = CloudSpeechSynthesizer.Connect(new CloudVoiceOptions
     {
         SubscriptionKey = key,
         Region = region,

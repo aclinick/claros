@@ -14,7 +14,7 @@ SapiPhonemizer ──▶ phoneme ids ──▶ NaturalVoiceEngine ──▶ code
  (G2P via SAPI)                     (encoder + decoder)     (C20Hz/C40Hz)   (ONNX)      (26 kHz mono)
 ```
 
-`NaturalVoiceSpeaker` is the one-call facade that wires the three components
+`NaturalVoiceSynthesizer` is the one-call facade that wires the three components
 together and disposes them as a unit. `VoiceCatalog` sits in front to enumerate
 the voices a machine has installed.
 
@@ -100,14 +100,14 @@ peak-normalizes the result to 0.9. Output is mono PCM at **26000 Hz**.
 - **26 kHz vs 24 kHz.** The vocoder natively emits 26000 Hz. Rewrapping the same
   samples with a 24000 Hz WAV header slows and lowers pitch ~8% to match the
   Azure Ava reference timing; it is a deliberate playback choice, not a bug.
-- **Thread-hostile, kept warm.** `NaturalVoiceSpeaker`, `NaturalVoiceEngine`,
+- **Thread-hostile, kept warm.** `NaturalVoiceSynthesizer`, `NaturalVoiceEngine`,
   and `SapiPhonemizer` are single-threaded; construct one per voice, serialize
   calls, and reuse across phrases because model load dominates first-call latency.
 
 ## Namespaces
 
 - `Claros`: the public API (`VoiceCatalog`, `VoiceInfo`,
-  `NaturalVoiceSpeaker`, `NaturalVoiceEngine`, `Vocoder`, `SapiPhonemizer`,
+  `NaturalVoiceSynthesizer`, `NaturalVoiceEngine`, `Vocoder`, `SapiPhonemizer`,
   `PhonemeTable`, `CodecTokens`, `WaveformResult`, `WaveFile`, option records).
 - `Claros.Internal`: implementation shims (`ModelExtractor`,
   `StreamingOpRewriter`, `IpaPhonemeMap`, `TokensXmlParser`). Exposed to the test

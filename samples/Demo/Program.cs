@@ -22,15 +22,15 @@ for (var i = 0; i < voices.Count; i++)
 
 var pick = voices[0];
 Console.WriteLine($"Loading: {pick.DisplayName}");
-using var speaker = NaturalVoiceSpeaker.Load(pick);
-Console.WriteLine($"SAPI preprocessor: {speaker.Phonemizer.VoiceName}");
-Console.WriteLine($"Vocoder: rewrote {speaker.Vocoder.RewrittenNodes} streaming nodes to stock ONNX ops\n");
+using var synthesizer = NaturalVoiceSynthesizer.Load(pick);
+Console.WriteLine($"SAPI preprocessor: {synthesizer.SapiVoiceName}");
+Console.WriteLine($"Vocoder: rewrote {synthesizer.RewrittenVocoderNodes} streaming nodes to stock ONNX ops\n");
 
 var text = args.Length > 0 ? string.Join(' ', args) : "The quick brown fox, jumps over the lazy dog.";
 Console.WriteLine($"Text: {text}");
 Console.WriteLine("Speaking...");
 
-var waveform = await speaker.SynthesizeAsync(text);
+var waveform = await synthesizer.SynthesizeAsync(text);
 Console.WriteLine($"Waveform: {waveform.Samples.Length} samples at {waveform.SampleRate} Hz ({waveform.Samples.Length / (double)waveform.SampleRate:F2}s)");
 
 var outPath = Path.Combine(Environment.CurrentDirectory, "hello.wav");

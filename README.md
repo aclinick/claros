@@ -32,12 +32,12 @@ Not yet published to NuGet. Consume via `ProjectReference` or a submodule until 
 using Claros;
 
 // SpeechPlatform is the single entry point: it discovers installed voices and
-// recognition models and creates warm speakers/transcribers for both halves.
+// recognition models and creates warm synthesizers/transcribers for both halves.
 using var platform = new SpeechPlatform();
 var voices = await platform.ListVoicesAsync();
 
-using var speaker = NaturalVoiceSpeaker.Load(voices[0]);
-var waveform = await speaker.SynthesizeAsync("The quick brown fox, jumps over the lazy dog.");
+using var synthesizer = NaturalVoiceSynthesizer.Load(voices[0]);
+var waveform = await synthesizer.SynthesizeAsync("The quick brown fox, jumps over the lazy dog.");
 
 WaveFile.WriteMono16("hello.wav", waveform.Samples, waveform.SampleRate);
 ```

@@ -1,8 +1,8 @@
-// BatchSynthesis — synthesize many phrases with one warm speaker.
+// BatchSynthesis — synthesize many phrases with one warm synthesizer.
 //
 // Model load dominates first-call latency, so the recommended pattern is to
-// load a NaturalVoiceSpeaker once and reuse it for every phrase. This sample
-// loads one speaker, then writes each phrase to its own WAV file, and shows
+// load a NaturalVoiceSynthesizer once and reuse it for every phrase. This sample
+// loads one synthesizer, then writes each phrase to its own WAV file, and shows
 // how SynthesisOptions can be tuned per call.
 using System.Diagnostics;
 using Claros;
@@ -41,17 +41,17 @@ Directory.CreateDirectory(outputDir);
 var options = new SynthesisOptions { MaxDecoderSteps = 600 };
 
 // Load once, reuse for every phrase — the sessions stay warm for the lifetime
-// of the speaker.
+// of the synthesizer.
 var loadTimer = Stopwatch.StartNew();
-using var speaker = NaturalVoiceSpeaker.Load(voice);
+using var synthesizer = NaturalVoiceSynthesizer.Load(voice);
 loadTimer.Stop();
-Console.WriteLine($"Loaded speaker in {loadTimer.ElapsedMilliseconds} ms " +
-                  $"(SAPI: {speaker.Phonemizer.VoiceName})\n");
+Console.WriteLine($"Loaded synthesizer in {loadTimer.ElapsedMilliseconds} ms " +
+                  $"(SAPI: {synthesizer.SapiVoiceName})\n");
 
 for (var i = 0; i < phrases.Length; i++)
 {
     var timer = Stopwatch.StartNew();
-    var waveform = await speaker.SynthesizeAsync(phrases[i], options);
+    var waveform = await synthesizer.SynthesizeAsync(phrases[i], options);
     timer.Stop();
 
     var path = Path.Combine(outputDir, $"phrase{i + 1}.wav");

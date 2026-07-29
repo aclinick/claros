@@ -9,7 +9,7 @@
     <RootNamespace>Claros.SpeakWebPage</RootNamespace>
 
     <!--
-      EmbeddedVoiceSpeaker loads the native Azure Embedded Speech core next to
+      EmbeddedSpeechSynthesizer loads the native Azure Embedded Speech core next to
       the app and stages the gated OS extensions beside it, so the app must be
       built for a concrete runtime (the native core lands in the output root
       instead of a runtimes\ subfolder). Run with an explicit RID, e.g.

@@ -106,7 +106,7 @@ public class CloudTierTests
     [Fact]
     public void OutputFormat_MatchesTheRateACloudVoiceWasConfiguredWith()
     {
-        // CloudVoiceSpeaker cannot be constructed without a Speech resource, so
+        // CloudSpeechSynthesizer cannot be constructed without a Speech resource, so
         // pin the option that feeds OutputFormat instead: it is fixed at creation
         // and never discovered from a response.
         var options = Valid() with { SampleRate = 48_000 };
@@ -125,6 +125,8 @@ public class CloudTierTests
         Assert.True(caps.Offline);
         Assert.False(caps.Metered);
         Assert.True(caps.WordBoundaries);
+        Assert.True(caps.RawSsml);
+        Assert.True(caps.Prosody);
     }
 
     [Fact]
@@ -134,8 +136,10 @@ public class CloudTierTests
 
         Assert.False(caps.Offline);
         Assert.True(caps.Metered);
-        // Still capable enough for caption highlighting.
+        // Still capable enough for caption highlighting and prosody.
         Assert.True(caps.WordBoundaries);
+        Assert.True(caps.RawSsml);
+        Assert.True(caps.Prosody);
     }
 
     // An implementation written before capabilities existed, which does not

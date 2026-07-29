@@ -75,10 +75,10 @@ if (opt.DryRun)
 
 var license = Environment.GetEnvironmentVariable("NATURAL_VOICE_LICENSE"); // null => resolved from the package
 
-EmbeddedVoiceSpeaker speaker;
+EmbeddedSpeechSynthesizer synthesizer;
 try
 {
-    speaker = platform.CreateSpeaker(voice, license);
+    synthesizer = platform.CreateSynthesizer(voice, license);
 }
 catch (NaturalVoiceException ex)
 {
@@ -90,9 +90,9 @@ catch (NaturalVoiceException ex)
 // synthesizes each sentence and mixes it in at the cue's start time. The cues are
 // already grouped into sentences above, so skip the narrator's own grouping.
 WaveformResult track;
-using (speaker)
+using (synthesizer)
 {
-    var narrator = new TimedNarrator(speaker);
+    var narrator = new TimedNarrator(synthesizer);
     track = await narrator.RenderAsync(groups, new TimedNarrationOptions { GroupIntoSentences = false });
 }
 

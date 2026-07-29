@@ -22,6 +22,30 @@ public sealed record SynthesizerCapabilities
     public required bool WordBoundaries { get; init; }
 
     /// <summary>
+    /// Whether the engine accepts a complete SSML document
+    /// (<see cref="SpeechSynthesisRequest.ForSsml"/>).
+    /// </summary>
+    /// <remarks>
+    /// <c>false</c> means such a request is refused, not spoken as literal text
+    /// or stripped to its content: silently dropping markup yields audio that
+    /// does not match what was asked for, with nothing to tell the caller. A
+    /// consumer that emits requests it does not author —
+    /// <see cref="SpeechConversation"/> hands a turn handler's reply straight to
+    /// the synthesizer — should check this before choosing to emit markup.
+    /// </remarks>
+    public required bool RawSsml { get; init; }
+
+    /// <summary>
+    /// Whether the engine honors <see cref="SpeechProsody"/> shaping on plain
+    /// text. Tracked separately from <see cref="RawSsml"/> because the two are
+    /// only coupled by implementation, not by contract: the shipped
+    /// <see cref="EmbeddedSpeechSynthesizer"/> applies prosody by generating
+    /// SSML, but an engine with native rate and pitch controls could honor
+    /// prosody while refusing arbitrary markup.
+    /// </summary>
+    public required bool Prosody { get; init; }
+
+    /// <summary>
     /// Whether synthesis completes with no network access. <c>false</c> means the
     /// caller has explicitly opted into a hosted tier and inherits its latency,
     /// availability, and privacy characteristics.
@@ -37,24 +61,28 @@ public sealed record SynthesizerCapabilities
 
     /// <summary>
     /// The profile of an engine running entirely on this machine from installed
-    /// models: word boundaries, no network, and no cost. This is what every
+    /// models: word boundaries, SSML and prosody, no network, and no cost. This is what every
     /// synthesizer in the library was before a second tier existed, and it is the
     /// default an implementation inherits if it does not declare otherwise.
     /// </summary>
     public static SynthesizerCapabilities OnDevice { get; } = new()
     {
         WordBoundaries = true,
+        RawSsml = true,
+        Prosody = true,
         Offline = true,
         Metered = false,
     };
 
     /// <summary>
     /// The profile of a hosted engine the caller explicitly opted into: still
-    /// word-boundary capable, but networked and billed.
+    /// word-boundary, SSML, and prosody capable, but networked and billed.
     /// </summary>
     public static SynthesizerCapabilities Hosted { get; } = new()
     {
         WordBoundaries = true,
+        RawSsml = true,
+        Prosody = true,
         Offline = false,
         Metered = true,
     };

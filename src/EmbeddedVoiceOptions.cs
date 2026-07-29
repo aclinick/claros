@@ -3,7 +3,7 @@ using System.Runtime.Versioning;
 namespace Claros;
 
 /// <summary>
-/// Configuration for <see cref="EmbeddedVoiceSpeaker"/>, the flagship engine
+/// Configuration for <see cref="EmbeddedSpeechSynthesizer"/>, the flagship engine
 /// that drives a Windows Natural Voice through Microsoft's own on-device
 /// Azure Embedded Speech runtime.
 /// </summary>

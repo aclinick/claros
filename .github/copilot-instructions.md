@@ -36,7 +36,7 @@ dotnet run --project samples\Demo\Claros.Demo.csproj -- "text to speak"
 
 ## Pipeline architecture (the big picture)
 
-Text becomes audio through three stages, chained by the `NaturalVoiceSpeaker`
+Text becomes audio through three stages, chained by the `NaturalVoiceSynthesizer`
 facade (`SynthesizeAsync` → phonemize → acoustic model → vocoder):
 
 1. **`SapiPhonemizer`**: grapheme-to-phoneme. Drives the shipped Windows SAPI
@@ -77,7 +77,7 @@ facade (`SynthesizeAsync` → phonemize → acoustic model → vocoder):
 - **26 kHz vs 24 kHz.** The vocoder natively emits 26000 Hz. Rewrapping the same
   samples with a 24000 Hz WAV header (see the Demo) slows/lowers pitch ~8% to
   match the Azure Ava reference. This is a deliberate playback trick, not a bug.
-- **Threading:** `NaturalVoiceSpeaker`, `NaturalVoiceEngine`, and `SapiPhonemizer`
+- **Threading:** `NaturalVoiceSynthesizer`, `NaturalVoiceEngine`, and `SapiPhonemizer`
   are thread-hostile. Construct one per voice, keep it warm across phrases (model
   load dominates first-call latency), and serialize calls.
 - **Namespacing:** public API in `Claros`; helpers in

@@ -56,7 +56,7 @@ ConversationTurnHandler echo = (utterance, _) =>
 // The synthesizer knows its output format up front, so the sink can be sized
 // without synthesizing a throwaway phrase first. That matters beyond tidiness:
 // against a hosted voice, a probe request would be billed.
-using var synthesizer = platform.CreateSpeaker(voice);
+using var synthesizer = platform.CreateSynthesizer(voice);
 var speaker = new BufferedAudioSink(synthesizer.OutputFormat);
 
 using var transcriber = platform.CreateTranscriber(model);

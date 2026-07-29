@@ -1,12 +1,12 @@
 # SpeakWebPage
 
 Fetch a web page, extract its readable text, and narrate it to a WAV file using
-the flagship, fully-offline **`EmbeddedVoiceSpeaker`** (forced HD): Microsoft's
+the flagship, fully-offline **`EmbeddedSpeechSynthesizer`** (forced HD): Microsoft's
 own on-device neural voice, no cloud call.
 
 ## Run
 
-`EmbeddedVoiceSpeaker` drives the gated on-device Embedded Speech runtime. The
+`EmbeddedSpeechSynthesizer` drives the gated on-device Embedded Speech runtime. The
 required on-device model license is read automatically from the installed voice
 package, so no configuration is needed. Run with an explicit runtime identifier
 so the native runtime is placed correctly:
@@ -38,5 +38,5 @@ override the license read from the package.
   strips scripts, styles, and markup and collapses whitespace. It is not a full
   readability engine, so navigation chrome may leak in on complex pages.
 - Forced HD renders every utterance through the high-fidelity acoustic model (see
-  [`EmbeddedVoiceSpeaker`](../../src/EmbeddedVoiceSpeaker.cs)), so output is close
+  [`EmbeddedSpeechSynthesizer`](../../src/EmbeddedSpeechSynthesizer.cs)), so output is close
   to Microsoft's cloud voices.

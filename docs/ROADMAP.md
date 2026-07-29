@@ -12,12 +12,12 @@ and packaging improvements and, above all, make the case for a first-party API.
 - Acoustic model load + autoregressive decode → codec tokens.
 - Vocoder load via streaming-op rewrite → mono PCM at 26 kHz.
 - Offline G2P through the shipped SAPI frontend for supported locales.
-- **Flagship `EmbeddedVoiceSpeaker`**: drives the installed voice through
+- **Flagship `EmbeddedSpeechSynthesizer`**: drives the installed voice through
   Microsoft's own on-device Azure Embedded Speech runtime, fully offline, with
   the high-fidelity HD acoustic model forced on for every utterance (see the
   front-end section). This is Microsoft's exact frontend + engine, so cadence,
   punctuation, and pronunciation match the OS itself.
-- One-call `NaturalVoiceSpeaker` facade and a runnable Demo.
+- One-call `NaturalVoiceSynthesizer` facade and a runnable Demo.
 - Unit-tested pure-logic core (extraction, op-rewrite, phoneme table, IPA map,
   Tokens.xml, WAV, vocoder helpers).
 
@@ -37,7 +37,7 @@ and packaging improvements and, above all, make the case for a first-party API.
   already carries the frontend's `SPVFEATURE_STRESSED` bit; use it instead of the
   `atWordStart` guess (which stresses only a word-initial vowel and never fires
   for consonant-initial words).
-- **Locale-correct frontend selection.** `NaturalVoiceSpeaker` currently drives
+- **Locale-correct frontend selection.** `NaturalVoiceSynthesizer` currently drives
   en-US Zira regardless of the target voice's locale, then relabels its phones;
   that causes wrong pronunciation for non-English voices. Select a SAPI voice
   whose culture matches, and fail loudly when none exists.
@@ -50,7 +50,7 @@ and packaging improvements and, above all, make the case for a first-party API.
 hosted by the **Azure Embedded Speech runtime that ships in Windows**
 (`Microsoft.CognitiveServices.Speech.extension.embedded.tts.dll` under
 `SystemApps`), and the installed `MicrosoftWindows.Voice.*` package runs
-**fully offline** via `EmbeddedSpeechConfig.FromPath`. `EmbeddedVoiceSpeaker`
+**fully offline** via `EmbeddedSpeechConfig.FromPath`. `EmbeddedSpeechSynthesizer`
 does exactly this end-to-end, so Microsoft's exact text frontend (lexicon,
 neural letter-to-sound, polyphony tagger, phone converter, prosody) and acoustic
 engine produce the audio; no lossy IPA→ARPABET re-implementation is required.
@@ -65,7 +65,7 @@ Narrator snippets, chat replies), the shipped default *never* engages the HD
 model the user downloaded. There is **no public runtime override**: the config
 property bag accepts `Pipeline.HDVoiceThreshold` and round-trips it, but the
 engine only reads the value from the package INI at `FromPath` time and ignores
-the property. `EmbeddedVoiceSpeaker` therefore forces HD by materializing a
+the property. `EmbeddedSpeechSynthesizer` therefore forces HD by materializing a
 writable **overlay** of the package (symlinks for the multi-hundred-megabyte
 models, plus a patched INI with `HDVoiceThreshold=0`), falling back to a copy
 when symlink privilege is unavailable. Two hack-free alternatives were validated

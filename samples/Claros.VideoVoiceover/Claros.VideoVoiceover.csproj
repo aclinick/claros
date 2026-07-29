@@ -13,7 +13,7 @@
     <Nullable>enable</Nullable>
 
     <!--
-      UNPACKAGED app. EmbeddedVoiceSpeaker.Load stages the native Azure Embedded
+      UNPACKAGED app. EmbeddedSpeechSynthesizer.Load stages the native Azure Embedded
       Speech runtime next to the executable in the (writable) output folder. A
       packaged app installs to the read-only WindowsApps location where that
       staging would fail, so this sample must run without package identity.

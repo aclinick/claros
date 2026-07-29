@@ -15,7 +15,7 @@ namespace Claros_VideoVoiceover;
 /// clock, so pausing and seeking the video automatically pause and re-sync the
 /// narration. A ~50 ms <see cref="DispatcherQueueTimer"/> polls that clock and,
 /// when the playhead reaches the next sentence (minus a small lead to cover
-/// first-audio latency), fires <see cref="EmbeddedVoiceSpeaker.SpeakToDefaultOutputAsync"/>
+/// first-audio latency), fires <see cref="EmbeddedSpeechSynthesizer.SpeakToDefaultOutputAsync"/>
 /// for that whole sentence. Only one utterance plays at a time.
 ///
 /// Every offered language is <b>pre-loaded and pre-warmed up front</b> (see
@@ -25,7 +25,7 @@ namespace Claros_VideoVoiceover;
 /// is then a pure pointer swap (<see cref="SetActiveLanguage"/>) with no loading, so
 /// the next line renders in the new voice in ~100 ms, instantly, even mid-playback.
 ///
-/// <see cref="EmbeddedVoiceSpeaker"/> is thread hostile, so every native call
+/// <see cref="EmbeddedSpeechSynthesizer"/> is thread hostile, so every native call
 /// (load, pre-warm, speak, dispose) is marshalled onto the one dedicated worker
 /// thread <see cref="_worker"/> and serialized.
 ///
@@ -49,26 +49,26 @@ public sealed class VoiceoverController : IDisposable
     private readonly MediaPlayer _player;
     private readonly DispatcherQueue _dispatcher;
     private readonly DispatcherQueueTimer _timer;
-    private readonly SerialWorker _worker = new("VoiceoverSpeaker");
+    private readonly SerialWorker _worker = new("VoiceoverSynthesizer");
 
     // Serializes ResetAsync/PreloadAsync so only one reset-or-preload runs at a
     // time (a second video or a VoicesChanged echo can't interleave with an
     // in-flight preload and repopulate the tracks with the wrong subtitles).
     private readonly SemaphoreSlim _gate = new(1, 1);
 
-    // One speaker per voice, loaded once and kept resident for the whole session
+    // One synthesizer per voice, loaded once and kept resident for the whole session
     // (each HD model is ~100+ MB; holding a handful on a dev box is fine).
-    // Mutated ONLY on the worker thread (see GetOrLoadSpeaker) and disposed on the
-    // worker thread, so a created speaker can never escape disposal.
-    private readonly Dictionary<string, EmbeddedVoiceSpeaker> _speakersByVoiceId = [];
+    // Mutated ONLY on the worker thread (see GetOrLoadSynthesizer) and disposed on the
+    // worker thread, so a created synthesizer can never escape disposal.
+    private readonly Dictionary<string, EmbeddedSpeechSynthesizer> _synthesizersByVoiceId = [];
 
-    // Per-language track (parsed+grouped subtitles + the voice's speaker), rebuilt
+    // Per-language track (parsed+grouped subtitles + the voice's synthesizer), rebuilt
     // for the current video. Keyed by language code ("en", "fr", …).
     private readonly Dictionary<string, LangTrack> _tracks =
         new(StringComparer.OrdinalIgnoreCase);
 
     private IReadOnlyList<TimedCue> _groups = [];
-    private EmbeddedVoiceSpeaker? _speaker;
+    private EmbeddedSpeechSynthesizer? _synthesizer;
     private Task? _utteranceTask;
     private int _nextIndex;
     private int _speakingIndex = -1;
@@ -114,7 +114,7 @@ public sealed class VoiceoverController : IDisposable
     public event Action<string>? StatusChanged;
 
     /// <summary>True once a language is active and the scheduler is live.</summary>
-    public bool IsActive => _speaker is not null;
+    public bool IsActive => _synthesizer is not null;
 
     /// <summary>Language codes that are pre-loaded and ready to narrate.</summary>
     public IReadOnlyCollection<string> ReadyLanguages => _tracks.Keys;
@@ -146,7 +146,7 @@ public sealed class VoiceoverController : IDisposable
             _timer.Stop();
             await WaitForUtteranceAsync();
             _tracks.Clear();
-            _speaker = null;
+            _synthesizer = null;
             _groups = [];
             _nextIndex = 0;
 
@@ -176,14 +176,14 @@ public sealed class VoiceoverController : IDisposable
                     continue;
                 }
 
-                EmbeddedVoiceSpeaker? speaker;
+                EmbeddedSpeechSynthesizer? synthesizer;
                 try
                 {
                     // Get-or-load-and-register runs entirely on the worker thread, so
-                    // the speaker is placed in _speakersByVoiceId on the same thread
+                    // the synthesizer is placed in _synthesizersByVoiceId on the same thread
                     // that Dispose uses, so it can never be created-but-untracked.
                     var voice = opt.Voice;
-                    speaker = await _worker.RunAsync(() => GetOrLoadSpeaker(voice));
+                    synthesizer = await _worker.RunAsync(() => GetOrLoadSynthesizer(voice));
                 }
                 catch (Exception ex)
                 {
@@ -191,9 +191,9 @@ public sealed class VoiceoverController : IDisposable
                     continue;
                 }
 
-                if (speaker is null) continue; // disposed while loading
+                if (synthesizer is null) continue; // disposed while loading
 
-                localTracks[opt.Lang] = new LangTrack(opt.Lang, opt.Label, opt.Voice, groups, speaker);
+                localTracks[opt.Lang] = new LangTrack(opt.Lang, opt.Label, opt.Voice, groups, synthesizer);
                 Logger.Log($"Preloaded {opt.Lang} voice={opt.Voice.DisplayName} groups={groups.Count}");
             }
 
@@ -215,19 +215,19 @@ public sealed class VoiceoverController : IDisposable
     }
 
     /// <summary>
-    /// Worker-thread only. Returns the resident speaker for <paramref name="voice"/>,
+    /// Worker-thread only. Returns the resident synthesizer for <paramref name="voice"/>,
     /// loading + pre-warming + registering it on first use. Registering here (not on
-    /// the UI thread after the await) means a speaker is always tracked in
-    /// <see cref="_speakersByVoiceId"/> before this call returns, so Dispose (which
+    /// the UI thread after the await) means a synthesizer is always tracked in
+    /// <see cref="_synthesizersByVoiceId"/> before this call returns, so Dispose (which
     /// also runs on this worker) can never miss one. If disposal happened while
-    /// loading, the freshly-created speaker is torn down here and null returned.
+    /// loading, the freshly-created synthesizer is torn down here and null returned.
     /// </summary>
-    private EmbeddedVoiceSpeaker? GetOrLoadSpeaker(VoiceInfo voice)
+    private EmbeddedSpeechSynthesizer? GetOrLoadSynthesizer(VoiceInfo voice)
     {
         if (_disposed) return null;
-        if (_speakersByVoiceId.TryGetValue(voice.Id, out var existing)) return existing;
+        if (_synthesizersByVoiceId.TryGetValue(voice.Id, out var existing)) return existing;
 
-        var s = EmbeddedVoiceSpeaker.Load(voice, license: null);
+        var s = EmbeddedSpeechSynthesizer.Load(voice, license: null);
         // Pre-warm: pay the one-time ~1.3 s first-synth cost now so the first real
         // line for this voice renders in ~100 ms.
         try { _ = s.SynthesizeAsync(".").GetAwaiter().GetResult(); }
@@ -235,11 +235,11 @@ public sealed class VoiceoverController : IDisposable
 
         if (_disposed)
         {
-            try { s.Dispose(); } catch (Exception ex) { Logger.Log("Speaker dispose (post-load)", ex); }
+            try { s.Dispose(); } catch (Exception ex) { Logger.Log("Synthesizer dispose (post-load)", ex); }
             return null;
         }
 
-        _speakersByVoiceId[voice.Id] = s;
+        _synthesizersByVoiceId[voice.Id] = s;
         return s;
     }
 
@@ -258,7 +258,7 @@ public sealed class VoiceoverController : IDisposable
             return false;
         }
 
-        _speaker = track.Speaker;
+        _synthesizer = track.Synthesizer;
         _groups = track.Groups;
 
         var pos = _player.PlaybackSession.Position;
@@ -282,7 +282,7 @@ public sealed class VoiceoverController : IDisposable
             _tracks.Clear();
             _groups = [];
             _nextIndex = 0;
-            _speaker = null; // resident speakers stay loaded for reuse
+            _synthesizer = null; // resident synthesizers stay loaded for reuse
         }
         finally
         {
@@ -292,7 +292,7 @@ public sealed class VoiceoverController : IDisposable
 
     private void OnTick(DispatcherQueueTimer sender, object args)
     {
-        if (_speaker is null || _disposed) return;
+        if (_synthesizer is null || _disposed) return;
         var session = _player.PlaybackSession;
         if (session is null) return;
 
@@ -322,8 +322,8 @@ public sealed class VoiceoverController : IDisposable
 
     private void StartUtterance(TimedCue group)
     {
-        var speaker = _speaker;
-        if (speaker is null) return;
+        var synthesizer = _synthesizer;
+        if (synthesizer is null) return;
 
         _speaking = true;
         var indexSpoken = _nextIndex;
@@ -339,7 +339,7 @@ public sealed class VoiceoverController : IDisposable
             {
                 // No cancellation token: cancelling triggers a cross-thread native
                 // StopSpeakingAsync that crashes the runtime. Utterances finish.
-                speaker.SpeakToDefaultOutputAsync(group.Text, OnWord, CancellationToken.None)
+                synthesizer.SpeakToDefaultOutputAsync(group.Text, OnWord, CancellationToken.None)
                     .GetAwaiter().GetResult();
                 Logger.Log($"Utterance done idx={indexSpoken}");
                 _dispatcher.TryEnqueue(() =>
@@ -428,13 +428,13 @@ public sealed class VoiceoverController : IDisposable
             _worker.RunAsync(() =>
             {
                 // Let a sentence in progress drain, then dispose every resident
-                // speaker on the same thread that created it (thread affinity).
+                // synthesizer on the same thread that created it (thread affinity).
                 try { inFlight?.Wait(TimeSpan.FromSeconds(6)); } catch { }
-                foreach (var s in _speakersByVoiceId.Values)
+                foreach (var s in _synthesizersByVoiceId.Values)
                 {
-                    try { s.Dispose(); } catch (Exception ex) { Logger.Log("Speaker dispose", ex); }
+                    try { s.Dispose(); } catch (Exception ex) { Logger.Log("Synthesizer dispose", ex); }
                 }
-                _speakersByVoiceId.Clear();
+                _synthesizersByVoiceId.Clear();
                 _tracks.Clear();
             }).Wait(TimeSpan.FromSeconds(8));
         }
@@ -450,11 +450,11 @@ public sealed class VoiceoverController : IDisposable
         string Label,
         VoiceInfo Voice,
         IReadOnlyList<TimedCue> Groups,
-        EmbeddedVoiceSpeaker Speaker);
+        EmbeddedSpeechSynthesizer Synthesizer);
 
     /// <summary>
     /// A single dedicated background thread that runs queued work items in order.
-    /// Gives the thread-hostile speaker a stable thread affinity and serializes
+    /// Gives the thread-hostile synthesizer a stable thread affinity and serializes
     /// every native call.
     /// </summary>
     private sealed class SerialWorker : IDisposable

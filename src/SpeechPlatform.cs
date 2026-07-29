@@ -7,9 +7,9 @@ namespace Claros;
 /// text-to-speech (synthesis) and offline speech-to-text (recognition) — behind
 /// one discoverable, consistent facade. Rather than reaching for
 /// <see cref="VoiceCatalog"/>, <see cref="TranscriptionModelCatalog"/>,
-/// <see cref="EmbeddedVoiceSpeaker"/>, and <see cref="EmbeddedTranscriber"/>
+/// <see cref="EmbeddedSpeechSynthesizer"/>, and <see cref="EmbeddedTranscriber"/>
 /// separately, a caller opens one <see cref="SpeechPlatform"/> and discovers
-/// installed voices and recognition models, then creates warm speakers and
+/// installed voices and recognition models, then creates warm synthesizers and
 /// transcribers from it.
 /// </summary>
 /// <remarks>
@@ -18,13 +18,13 @@ namespace Claros;
 /// discovery is delegated to an owned <see cref="VoiceCatalog"/> (whose
 /// <see cref="VoiceCatalog.VoicesChanged"/> event is re-raised as
 /// <see cref="VoicesChanged"/>), recognition-model discovery to the static
-/// <see cref="TranscriptionModelCatalog"/>, and speaker/transcriber creation to
+/// <see cref="TranscriptionModelCatalog"/>, and synthesizer/transcriber creation to
 /// the respective <c>Load</c> factories. It adds no new synthesis or recognition
 /// behavior; it exists purely to make both halves reachable and named
 /// consistently from one place.
 /// </para>
 /// <para>
-/// The speakers and transcribers it creates are themselves thread hostile and
+/// The synthesizers and transcribers it creates are themselves thread hostile and
 /// must be kept warm and called serially (model load dominates first-call
 /// latency). The platform itself is cheap to construct; dispose it to release the
 /// owned voice catalog's package-change subscription.
@@ -119,18 +119,18 @@ public sealed class SpeechPlatform : IDisposable
     }
 
     /// <summary>
-    /// Creates a warm <see cref="EmbeddedVoiceSpeaker"/> bound to
+    /// Creates a warm <see cref="EmbeddedSpeechSynthesizer"/> bound to
     /// <paramref name="voice"/> for offline synthesis. Delegates to
-    /// <see cref="EmbeddedVoiceSpeaker.Load"/>; see it for the license and options
-    /// contract. The returned speaker is owned by the caller and must be disposed.
+    /// <see cref="EmbeddedSpeechSynthesizer.Load"/>; see it for the license and options
+    /// contract. The returned synthesizer is owned by the caller and must be disposed.
     /// </summary>
-    public EmbeddedVoiceSpeaker CreateSpeaker(
+    public EmbeddedSpeechSynthesizer CreateSynthesizer(
         VoiceInfo voice,
         string? license = null,
         EmbeddedVoiceOptions? options = null)
     {
         ThrowIfDisposed();
-        return EmbeddedVoiceSpeaker.Load(voice, license, options);
+        return EmbeddedSpeechSynthesizer.Load(voice, license, options);
     }
 
     /// <summary>
@@ -150,9 +150,9 @@ public sealed class SpeechPlatform : IDisposable
     }
 
     /// <summary>
-    /// Creates a warm <see cref="EmbeddedVoiceSpeaker"/> bound to
+    /// Creates a warm <see cref="EmbeddedSpeechSynthesizer"/> bound to
     /// <paramref name="voice"/> and wraps it in a <see cref="TimedNarrator"/> for
-    /// subtitle- and cue-timed narration. The narrator <em>owns</em> the speaker
+    /// subtitle- and cue-timed narration. The narrator <em>owns</em> the synthesizer
     /// it creates, so disposing the narrator releases it; there is nothing else
     /// for the caller to track.
     /// </summary>
@@ -162,14 +162,14 @@ public sealed class SpeechPlatform : IDisposable
         EmbeddedVoiceOptions? options = null)
     {
         ThrowIfDisposed();
-        var speaker = EmbeddedVoiceSpeaker.Load(voice, license, options);
+        var synthesizer = EmbeddedSpeechSynthesizer.Load(voice, license, options);
         try
         {
-            return new TimedNarrator(speaker, owned: speaker);
+            return new TimedNarrator(synthesizer, owned: synthesizer);
         }
         catch
         {
-            speaker.Dispose();
+            synthesizer.Dispose();
             throw;
         }
     }
@@ -207,7 +207,7 @@ public sealed class SpeechPlatform : IDisposable
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(voice);
 
-        var synth = EmbeddedVoiceSpeaker.Load(voice, synthesisLicense, synthesisOptions);
+        var synth = EmbeddedSpeechSynthesizer.Load(voice, synthesisLicense, synthesisOptions);
         try
         {
             return CreateConversationCore(
@@ -330,7 +330,7 @@ public sealed class SpeechPlatform : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
 
     /// <summary>
-    /// Releases the owned voice catalog's package-change subscription. Speakers
+    /// Releases the owned voice catalog's package-change subscription. Synthesizers
     /// and transcribers created by this platform are independently owned and are
     /// not disposed here. Safe to call more than once.
     /// </summary>

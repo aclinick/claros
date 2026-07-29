@@ -119,13 +119,13 @@ public class OptionsAndRecordsTests
     }
 
     [Fact]
-    public void EmbeddedVoiceSpeaker_Load_RejectsCloudVoiceLoudly()
+    public void EmbeddedSpeechSynthesizer_Load_RejectsCloudVoiceLoudly()
     {
         var voice = VoiceInfo.Cloud("mai-voice-2:ava", "Ava (hosted)", "en-US");
 
         // The on-device loader must fail with a clear contract error rather than
         // probing the empty InstalledPath a cloud voice carries.
-        var ex = Assert.Throws<ArgumentException>(() => EmbeddedVoiceSpeaker.Load(voice));
+        var ex = Assert.Throws<ArgumentException>(() => EmbeddedSpeechSynthesizer.Load(voice));
         Assert.Equal("voice", ex.ParamName);
     }
 
@@ -163,8 +163,8 @@ public class OptionsAndRecordsTests
     {
         { "NaturalVoiceEngine", v => NaturalVoiceEngine.Load(v) },
         { "Vocoder", v => Vocoder.Load(v) },
-        { "NaturalVoiceSpeaker", v => NaturalVoiceSpeaker.Load(v) },
-        { "EmbeddedVoiceSpeaker", v => EmbeddedVoiceSpeaker.Load(v) },
+        { "NaturalVoiceSynthesizer", v => NaturalVoiceSynthesizer.Load(v) },
+        { "EmbeddedSpeechSynthesizer", v => EmbeddedSpeechSynthesizer.Load(v) },
     };
 
     [Theory]

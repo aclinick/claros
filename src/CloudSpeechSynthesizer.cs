@@ -31,7 +31,7 @@ namespace Claros;
 /// serialize calls.
 /// </para>
 /// </remarks>
-public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
+public sealed class CloudSpeechSynthesizer : ISpeechSynthesizer
 {
     private readonly SpeechConfig _config;
     private readonly SpeechSynthesizer _synth;
@@ -39,7 +39,7 @@ public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
     private readonly SingleFlightGate _gate = new();
     private bool _disposed;
 
-    /// <summary>The hosted voice this speaker is bound to.</summary>
+    /// <summary>The hosted voice this synthesizer is bound to.</summary>
     public VoiceInfo Voice { get; }
 
     /// <summary>
@@ -48,7 +48,7 @@ public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
     /// </summary>
     public SynthesizerCapabilities Capabilities => SynthesizerCapabilities.Hosted;
 
-    private CloudVoiceSpeaker(
+    private CloudSpeechSynthesizer(
         VoiceInfo voice, SpeechConfig config, SpeechSynthesizer synth, string locale, AudioFormat outputFormat)
     {
         Voice = voice;
@@ -60,7 +60,7 @@ public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
 
     /// <summary>
     /// The audio this engine returns: mono 16-bit PCM at
-    /// <see cref="CloudVoiceOptions.SampleRate"/>, fixed when the speaker is
+    /// <see cref="CloudVoiceOptions.SampleRate"/>, fixed when the synthesizer is
     /// created. Knowing this without a request matters more here than on-device,
     /// because probing would be billed.
     /// </summary>
@@ -71,7 +71,7 @@ public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
     /// validates the settings but does not contact the service, so the first
     /// request is where credentials are actually proven.
     /// </summary>
-    public static CloudVoiceSpeaker Connect(CloudVoiceOptions options)
+    public static CloudSpeechSynthesizer Connect(CloudVoiceOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
         options.Validate();
@@ -93,7 +93,7 @@ public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
                 id: options.VoiceName,
                 displayName: options.VoiceName,
                 locale: options.Locale);
-            return new CloudVoiceSpeaker(
+            return new CloudSpeechSynthesizer(
                 voice, config, synth, options.Locale, AudioFormat.Pcm16Mono(options.SampleRate));
         }
         catch (Exception ex)
@@ -166,7 +166,7 @@ public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        _gate.Enter(nameof(CloudVoiceSpeaker), "a synthesis request");
+        _gate.Enter(nameof(CloudSpeechSynthesizer), "a synthesis request");
         try
         {
             return await SpeakAndReadAsync(ssml, cancellationToken).ConfigureAwait(false);

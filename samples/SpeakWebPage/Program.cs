@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 using Claros;
 
 // SpeakWebPage: fetch a web page, extract its readable text, and read it aloud in
-// real time with the flagship, fully-offline EmbeddedVoiceSpeaker (forced HD).
+// real time with the flagship, fully-offline EmbeddedSpeechSynthesizer (forced HD).
 // By default it streams narration to the speakers as it is synthesized and echoes
 // each word as it is spoken; pass --out to write a WAV file instead.
 //
@@ -82,10 +82,10 @@ if (voice is null)
 
 Console.WriteLine($"Voice: {voice.DisplayName} (forced HD)");
 
-EmbeddedVoiceSpeaker speaker;
+EmbeddedSpeechSynthesizer synthesizer;
 try
 {
-    speaker = platform.CreateSpeaker(voice, license); // null license => resolved from the package
+    synthesizer = platform.CreateSynthesizer(voice, license); // null license => resolved from the package
 }
 catch (NaturalVoiceException ex)
 {
@@ -93,12 +93,12 @@ catch (NaturalVoiceException ex)
     return 8;
 }
 
-using (speaker)
+using (synthesizer)
 {
     if (parsed.OutPath is not null)
     {
         Console.WriteLine($"Narrating {text.Length} characters ...");
-        var waveform = await speaker.SynthesizeAsync(text);
+        var waveform = await synthesizer.SynthesizeAsync(text);
         var outPath = Path.GetFullPath(parsed.OutPath);
         WaveFile.WriteMono16(outPath, waveform.Samples, waveform.SampleRate);
         var seconds = waveform.Samples.Length / (double)waveform.SampleRate;
@@ -113,7 +113,7 @@ using (speaker)
         var column = 0;
         try
         {
-            await speaker.SpeakToDefaultOutputAsync(text, word =>
+            await synthesizer.SpeakToDefaultOutputAsync(text, word =>
             {
                 if (column + word.Text.Length + 1 > 100) { Console.WriteLine(); column = 0; }
                 Console.Write(word.Text);

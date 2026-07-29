@@ -129,7 +129,7 @@ public sealed class NaturalVoiceEngine : IDisposable
 
     /// <summary>
     /// Synchronous counterpart of <see cref="SynthesizeAsync"/>, for callers that
-    /// are already running on a pool thread. It exists so an owning speaker can
+    /// are already running on a pool thread. It exists so an owning synthesizer can
     /// run the whole text-to-waveform chain inside a single <c>Task.Run</c>
     /// instead of starting a second one and blocking a pool thread waiting on it.
     /// </summary>

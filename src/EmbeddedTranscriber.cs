@@ -9,7 +9,7 @@ namespace Claros;
 /// Offline speech-to-text: transcribes audio with the same on-device recognition
 /// model that powers Windows Live Captions, through Microsoft's own Azure
 /// Embedded Speech runtime. This is the recognition counterpart to
-/// <see cref="EmbeddedVoiceSpeaker"/>: it hands audio to Microsoft's exact
+/// <see cref="EmbeddedSpeechSynthesizer"/>: it hands audio to Microsoft's exact
 /// streaming conformer-transducer engine, so the text, punctuation,
 /// capitalization, and inverse text normalization match what Live Captions
 /// produces. Everything runs locally; no network call is made.

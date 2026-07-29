@@ -23,7 +23,7 @@ namespace Claros;
 /// The narrator <em>borrows</em> a synthesizer passed to its constructor — it
 /// neither owns nor disposes it, so one warm synthesizer can be reused across
 /// renders. A narrator obtained from <see cref="SpeechPlatform.CreateNarrator"/>
-/// instead owns the speaker created for it and releases it on
+/// instead owns the synthesizer created for it and releases it on
 /// <see cref="Dispose"/>. Like the synthesizer, it is thread-hostile: serialize
 /// calls.
 /// </summary>

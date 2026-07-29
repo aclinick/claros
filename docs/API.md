@@ -26,15 +26,22 @@ hand-written landing pages (`docs/index.md`, `docs/api/index.md`) are committed.
 
 ## 3. Naming conventions
 
-Two rules run through the whole surface:
+Three rules run through the whole surface:
 
-- **`Synthesize*` produces audio; `Speak*` plays it.** On the speakers and on
+- **A "synthesizer" makes audio; a "speaker" plays it.** Types that turn text
+  into samples are named `*SpeechSynthesizer` and are built by
+  `SpeechPlatform.CreateSynthesizer`. The word *speaker* is reserved for an
+  actual output device — `AudioGraphSpeakerSink`, and the `speaker` parameter
+  of `CreateConversation`, both of which are `IAudioSink`. Previously both
+  meanings were in play at once, so `CreateSpeaker` returned something quite
+  different from the `speaker` a conversation takes.
+- **`Synthesize*` produces audio; `Speak*` plays it.** On the synthesizers and on
   `ISpeechSynthesizer`, `SynthesizeAsync` returns a `WaveformResult` and
   `SynthesizeToSinkAsync` streams into an `IAudioSink`;
-  `EmbeddedVoiceSpeaker.SpeakToDefaultOutputAsync` is the only member that reaches
+  `EmbeddedSpeechSynthesizer.SpeakToDefaultOutputAsync` is the only member that reaches
   the speakers. (One level down, `NaturalVoiceEngine.SynthesizeAsync` returns the
   raw `CodecTokens` a vocoder still has to turn into a waveform — it is a stage of
-  the pipeline, not a speaker.) A plain `string` converts implicitly to a
+  the pipeline, not a synthesizer.) A plain `string` converts implicitly to a
   `SpeechSynthesisRequest`, so `SynthesizeAsync("hello")` is the simple case;
   empty content is rejected, because synthesizing nothing is a caller bug.
 - **Factories own, constructors borrow.** Anything you pass into a constructor
@@ -48,9 +55,9 @@ Two rules run through the whole surface:
 | --- | --- |
 | `VoiceCatalog` | Enumerate installed Windows Natural Voices; raises `VoicesChanged` on install/update/removal. |
 | `VoiceInfo` | Metadata for one installed voice (name, locale, gender, age, vendor, version, package paths). |
-| `NaturalVoiceSpeaker` | Transparent, license-free pipeline: SAPI frontend plus on-device ONNX acoustic model and vocoder. |
-| `EmbeddedVoiceSpeaker` | Highest-fidelity path; reuses the on-device Azure Embedded Speech runtime, with live streaming to the default output. |
-| `EmbeddedVoiceOptions` | Configuration for `EmbeddedVoiceSpeaker` (voice, output format, forced-HD threshold). |
+| `NaturalVoiceSynthesizer` | Transparent, license-free pipeline: SAPI frontend plus on-device ONNX acoustic model and vocoder. An `ISpeechSynthesizer`, so it drives `TimedNarrator` and `SpeechConversation` too; reports no word boundaries and rejects SSML/prosody rather than dropping them. |
+| `EmbeddedSpeechSynthesizer` | Highest-fidelity path; reuses the on-device Azure Embedded Speech runtime, with live streaming to the default output. |
+| `EmbeddedVoiceOptions` | Configuration for `EmbeddedSpeechSynthesizer` (voice, output format, forced-HD threshold). |
 | `SpokenWord` | Word-boundary event data raised during live streaming. |
 | `EmbeddedTranscriber` | Offline speech-to-text: drives the on-device Live Captions recognition model through the Azure Embedded Speech runtime. |
 | `LiveTranscriptionSession` | Push-driven live transcription primitive; write PCM as it arrives, read growing text, commit a turn per speaker/channel. |
@@ -71,10 +78,10 @@ Two rules run through the whole surface:
 
 | Type | Purpose |
 | --- | --- |
-| `SpeechPlatform` | Single entry point over both halves: discover voices and recognition models, then create warm speakers, transcribers, narrators, and conversations. |
+| `SpeechPlatform` | Single entry point over both halves: discover voices and recognition models, then create warm synthesizers, transcribers, narrators, and conversations. |
 | `VoiceSource` | Which tier produces a voice's audio. `Device` is the default; `Cloud` only ever comes from an explicit opt-in. |
-| `SynthesizerCapabilities` | What an engine guarantees: word boundaries, offline, metered. Check it instead of assuming. (The audio format is stated exactly by `ISpeechSynthesizer.OutputFormat`, not described here.) |
-| `CloudVoiceSpeaker`, `CloudVoiceOptions` | Opt-in hosted tier (Azure neural / HD / MAI-Voice) behind the same `ISpeechSynthesizer`. Requires a key and region; never used unless you construct it. |
+| `SynthesizerCapabilities` | What an engine guarantees: word boundaries, raw SSML, prosody, offline, metered. Check it instead of assuming. (The audio format is stated exactly by `ISpeechSynthesizer.OutputFormat`, not described here.) |
+| `CloudSpeechSynthesizer`, `CloudVoiceOptions` | Opt-in hosted tier (Azure neural / HD / MAI-Voice) behind the same `ISpeechSynthesizer`. Requires a key and region; never used unless you construct it. |
 | `ISpeechSynthesizer` | Request-in/audio-out synthesis contract, buffered or streamed to an `IAudioSink`. Exposes `OutputFormat` so a sink can be sized without a (possibly billed) probe request. Deliberately platform-neutral so another tier can implement it. |
 | `ISpeechRecognizer`, `RecognitionEvent` | Streaming recognition contract and its partial/final events. |
 | `ISpeechActivityDetector`, `EnergyVoiceActivityDetector` | Voice-activity detection used to endpoint a turn and trigger barge-in. |

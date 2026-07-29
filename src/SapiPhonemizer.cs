@@ -12,7 +12,7 @@ namespace Claros;
 /// frontend, not the frontend itself. The Natural voices appear to be driven
 /// on-device by the Azure Embedded Speech runtime shipped in Windows (a
 /// community-observed finding, not officially documented). The flagship
-/// <see cref="EmbeddedVoiceSpeaker"/> reuses that runtime directly for the
+/// <see cref="EmbeddedSpeechSynthesizer"/> reuses that runtime directly for the
 /// highest fidelity; this class is the transparent, license-free fallback that
 /// scrapes the SAPI frontend's IPA output from <c>PhonemeReached</c> and maps
 /// it to the acoustic model's ARPABET keys — usable for supported locales, but
