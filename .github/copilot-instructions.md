@@ -37,7 +37,7 @@ dotnet run --project samples\Demo\Claros.Demo.csproj -- "text to speak"
 ## Pipeline architecture (the big picture)
 
 Text becomes audio through three stages, chained by the `NaturalVoiceSpeaker`
-facade (`SpeakAsync` → phonemize → acoustic model → vocoder):
+facade (`SynthesizeAsync` → phonemize → acoustic model → vocoder):
 
 1. **`SapiPhonemizer`**: grapheme-to-phoneme. Drives the shipped Windows SAPI
    text preprocessor (`MSTTSLoc_OneCore.dll`, the same frontend Azure Speech uses)

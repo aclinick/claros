@@ -51,7 +51,7 @@ Console.WriteLine($"Loaded speaker in {loadTimer.ElapsedMilliseconds} ms " +
 for (var i = 0; i < phrases.Length; i++)
 {
     var timer = Stopwatch.StartNew();
-    var waveform = await speaker.SpeakAsync(phrases[i], options);
+    var waveform = await speaker.SynthesizeAsync(phrases[i], options);
     timer.Stop();
 
     var path = Path.Combine(outputDir, $"phrase{i + 1}.wav");

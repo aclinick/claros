@@ -229,6 +229,30 @@ public class OptionsAndRecordsTests
     }
 
     [Fact]
+    public void WithSampleRate_RelabelsWithoutResampling()
+    {
+        var samples = new[] { 0.1f, 0.2f, 0.3f };
+        var native = new WaveformResult(samples, 26000);
+
+        var relabelled = native.WithSampleRate(24000);
+
+        // Same audio data, re-pitched purely by declaring a different rate.
+        Assert.Equal(24000, relabelled.SampleRate);
+        Assert.Same(samples, relabelled.Samples);
+        Assert.Equal(26000, native.SampleRate);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void WithSampleRate_RejectsNonPositiveRates(int rate)
+    {
+        var native = new WaveformResult([0.1f], 26000);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => native.WithSampleRate(rate));
+    }
+
+    [Fact]
     public void Vocoder_NativeSampleRateIs26kHz()
     {
         Assert.Equal(26000, Vocoder.NativeSampleRate);

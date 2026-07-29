@@ -23,7 +23,7 @@ using var platform = new SpeechPlatform();
 var voices = await platform.ListVoicesAsync();
 
 using var speaker = NaturalVoiceSpeaker.Load(voices[0]);
-var waveform = await speaker.SpeakAsync("The quick brown fox, jumps over the lazy dog.");
+var waveform = await speaker.SynthesizeAsync("The quick brown fox, jumps over the lazy dog.");
 
 WaveFile.WriteMono16("hello.wav", waveform.Samples, waveform.SampleRate);
 ```

@@ -230,7 +230,7 @@ public sealed class VoiceoverController : IDisposable
         var s = EmbeddedVoiceSpeaker.Load(voice, license: null);
         // Pre-warm: pay the one-time ~1.3 s first-synth cost now so the first real
         // line for this voice renders in ~100 ms.
-        try { _ = s.SpeakAsync(".").GetAwaiter().GetResult(); }
+        try { _ = s.SynthesizeAsync(".").GetAwaiter().GetResult(); }
         catch { /* pre-warm is best-effort */ }
 
         if (_disposed)

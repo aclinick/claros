@@ -59,6 +59,19 @@ public class SpeechSynthesisRequestTests
     }
 
     [Fact]
+    public void ImplicitFromString_RejectsEmpty()
+    {
+        // Deliberate: passing a bare "" to SynthesizeAsync is a caller bug, and the
+        // conversion is how that reaches every speaker uniformly. This is the one
+        // behaviour that changed when the redundant SpeakAsync(string) overload,
+        // which forwarded empty text to the runtime, was removed.
+        Assert.Throws<ArgumentException>(() =>
+        {
+            SpeechSynthesisRequest _ = "";
+        });
+    }
+
+    [Fact]
     public void Validate_RejectsSsmlCombinedWithProsody()
     {
         var request = new SpeechSynthesisRequest

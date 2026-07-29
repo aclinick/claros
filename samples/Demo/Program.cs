@@ -30,17 +30,19 @@ var text = args.Length > 0 ? string.Join(' ', args) : "The quick brown fox, jump
 Console.WriteLine($"Text: {text}");
 Console.WriteLine("Speaking...");
 
-var waveform = await speaker.SpeakAsync(text);
+var waveform = await speaker.SynthesizeAsync(text);
 Console.WriteLine($"Waveform: {waveform.Samples.Length} samples at {waveform.SampleRate} Hz ({waveform.Samples.Length / (double)waveform.SampleRate:F2}s)");
 
 var outPath = Path.Combine(Environment.CurrentDirectory, "hello.wav");
 WaveFile.WriteMono16(outPath, waveform.Samples, waveform.SampleRate);
 Console.WriteLine($"Wrote native {waveform.SampleRate} Hz WAV: {outPath}");
 
-// Rewrapping the same samples with a 24000 Hz header slows and lowers pitch
-// by roughly 8 percent and matches the Azure Ava reference more closely.
+// Relabel the same samples at 24000 Hz. Nothing is resampled, so playback
+// slows and the pitch drops by roughly 8 percent, matching the Azure Ava
+// reference timing more closely.
+var reWrapped = waveform.WithSampleRate(24000);
 var reWrappedPath = Path.Combine(Environment.CurrentDirectory, "hello_24000.wav");
-WaveFile.WriteMono16(reWrappedPath, waveform.Samples, 24000);
+WaveFile.WriteMono16(reWrappedPath, reWrapped.Samples, reWrapped.SampleRate);
 Console.WriteLine($"Wrote 24000 Hz rewrap:            {reWrappedPath}");
 
 return 0;

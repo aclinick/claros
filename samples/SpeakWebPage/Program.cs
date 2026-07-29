@@ -98,7 +98,7 @@ using (speaker)
     if (parsed.OutPath is not null)
     {
         Console.WriteLine($"Narrating {text.Length} characters ...");
-        var waveform = await speaker.SpeakAsync(text);
+        var waveform = await speaker.SynthesizeAsync(text);
         var outPath = Path.GetFullPath(parsed.OutPath);
         WaveFile.WriteMono16(outPath, waveform.Samples, waveform.SampleRate);
         var seconds = waveform.Samples.Length / (double)waveform.SampleRate;

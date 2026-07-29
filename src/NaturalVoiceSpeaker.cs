@@ -10,7 +10,7 @@ namespace Claros;
 /// together.
 ///
 /// Instances are thread hostile; construct one per voice and serialize calls
-/// to <see cref="SpeakAsync"/>. Reuse across many phrases: model load times
+/// to <see cref="SynthesizeAsync"/>. Reuse across many phrases: model load times
 /// dominate a first-call latency budget, and this facade keeps the sessions
 /// warm for the lifetime of the speaker.
 /// </summary>
@@ -82,18 +82,19 @@ public sealed class NaturalVoiceSpeaker : IDisposable
 
     /// <summary>
     /// Convert <paramref name="text"/> to a waveform. Runs SAPI, the acoustic
-    /// model, and the vocoder in sequence on the caller's task pool.
+    /// model, and the vocoder in sequence on the caller's task pool. This produces
+    /// audio but does not play it.
     /// </summary>
-    public Task<WaveformResult> SpeakAsync(
+    public Task<WaveformResult> SynthesizeAsync(
         string text,
         SynthesisOptions? synthesisOptions = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(text);
-        return Task.Run(() => SpeakCore(text, synthesisOptions, cancellationToken), cancellationToken);
+        return Task.Run(() => SynthesizeCore(text, synthesisOptions, cancellationToken), cancellationToken);
     }
 
-    private WaveformResult SpeakCore(
+    private WaveformResult SynthesizeCore(
         string text,
         SynthesisOptions? synthesisOptions,
         CancellationToken cancellationToken)

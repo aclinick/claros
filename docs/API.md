@@ -24,7 +24,25 @@ Output lands in `docs/_site/` (git-ignored). The API metadata under
 `docs/api/*.yml` is regenerated each run and is git-ignored as well; only the
 hand-written landing pages (`docs/index.md`, `docs/api/index.md`) are committed.
 
-## 3. Public type index
+## 3. Naming conventions
+
+Two rules run through the whole surface:
+
+- **`Synthesize*` produces audio; `Speak*` plays it.** On the speakers and on
+  `ISpeechSynthesizer`, `SynthesizeAsync` returns a `WaveformResult` and
+  `SynthesizeToSinkAsync` streams into an `IAudioSink`;
+  `EmbeddedVoiceSpeaker.SpeakToDefaultOutputAsync` is the only member that reaches
+  the speakers. (One level down, `NaturalVoiceEngine.SynthesizeAsync` returns the
+  raw `CodecTokens` a vocoder still has to turn into a waveform — it is a stage of
+  the pipeline, not a speaker.) A plain `string` converts implicitly to a
+  `SpeechSynthesisRequest`, so `SynthesizeAsync("hello")` is the simple case;
+  empty content is rejected, because synthesizing nothing is a caller bug.
+- **Factories own, constructors borrow.** Anything you pass into a constructor
+  stays yours and is never disposed, so a warm engine can be shared. Anything a
+  `SpeechPlatform.Create*` factory builds for you is owned by the object it
+  returns, so a single `using` (or `await using`) covers the whole lifetime.
+
+## 4. Public type index
 
 | Type | Purpose |
 | --- | --- |

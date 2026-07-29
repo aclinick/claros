@@ -6,7 +6,7 @@ namespace Claros;
 
 /// <summary>
 /// Waveform samples returned by <see cref="Vocoder.Synthesize"/> and
-/// <see cref="NaturalVoiceSpeaker.SpeakAsync"/>.
+/// <see cref="NaturalVoiceSpeaker.SynthesizeAsync"/>.
 /// </summary>
 /// <param name="Samples">
 /// Mono PCM samples in the range roughly <c>[-1, 1]</c>. Callers that need
@@ -14,12 +14,35 @@ namespace Claros;
 /// </param>
 /// <param name="SampleRate">
 /// The native sample rate the vocoder produced. The Microsoft HD vocoder
-/// emits audio at 26000 Hz. Playing this buffer back at 24000 Hz (write a
-/// WAV header claiming 24000 Hz over the same samples) slows and lowers
-/// the pitch by roughly 8 percent and matches the Azure Ava reference
-/// timing more closely.
+/// emits audio at 26000 Hz. Use <see cref="WaveformResult.WithSampleRate"/> to
+/// relabel the same samples at another rate, which re-pitches rather than
+/// resamples; relabelling to 24000 Hz slows and lowers the audio by roughly 8
+/// percent and matches the Azure Ava reference timing more closely.
 /// </param>
-public sealed record WaveformResult(float[] Samples, int SampleRate);
+public sealed record WaveformResult(float[] Samples, int SampleRate)
+{
+    /// <summary>
+    /// Reinterprets the same samples as though they had been recorded at
+    /// <paramref name="sampleRate"/>, without resampling. Because no audio data
+    /// changes, playback speed and pitch shift by the ratio between the rates:
+    /// declaring a lower rate stretches and lowers the audio, a higher rate
+    /// compresses and raises it.
+    /// </summary>
+    /// <remarks>
+    /// This is a deliberate re-pitch, not a format conversion — nothing is
+    /// interpolated and no quality is gained or lost. Its intended use is the
+    /// known 26000 Hz to 24000 Hz relabel that slows the HD vocoder's output by
+    /// roughly 8 percent to match the Azure reference timing. If you need audio
+    /// that genuinely plays at a different rate <em>without</em> changing pitch,
+    /// this is the wrong operation; resample the samples instead.
+    /// </remarks>
+    /// <param name="sampleRate">The rate to declare, in Hz. Must be positive.</param>
+    public WaveformResult WithSampleRate(int sampleRate)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sampleRate);
+        return this with { SampleRate = sampleRate };
+    }
+}
 
 /// <summary>
 /// Loads a Natural Voice vocoder and converts codec tokens from

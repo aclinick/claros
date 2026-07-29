@@ -20,7 +20,7 @@ namespace Claros;
 /// license string for the on-device models.
 ///
 /// Instances are thread hostile; construct one per voice and serialize calls
-/// to <see cref="SpeakAsync"/>.
+/// to <see cref="SynthesizeAsync(SpeechSynthesisRequest, CancellationToken)"/>.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
@@ -96,23 +96,16 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
     }
 
     /// <summary>
-    /// Convert <paramref name="text"/> to a waveform. Cancellation stops the
-    /// in-flight synthesis. Throws <see cref="SpeechSynthesisException"/> when
-    /// the runtime cancels the request. Equivalent to
-    /// <see cref="SynthesizeAsync"/> with a plain-text request.
-    /// </summary>
-    public Task<WaveformResult> SpeakAsync(string text, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(text);
-        return RunAsync(s => s.SpeakTextAsync(text), cancellationToken);
-    }
-
-    /// <summary>
     /// Synthesizes <paramref name="request"/> — plain text, prosody-shaped text,
     /// or raw SSML — into a complete waveform. Prosody-shaped text is rendered
     /// through generated SSML (the on-device runtime applies prosody only via
     /// SSML). Cancellation stops the in-flight synthesis.
     /// </summary>
+    /// <remarks>
+    /// A plain <see cref="string"/> converts implicitly to a text request, so
+    /// <c>SynthesizeAsync("hello")</c> is the simple case. This produces audio but
+    /// does not play it; use <see cref="SpeakToDefaultOutputAsync"/> to play.
+    /// </remarks>
     public Task<WaveformResult> SynthesizeAsync(
         SpeechSynthesisRequest request, CancellationToken cancellationToken = default)
     {
