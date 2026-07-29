@@ -20,6 +20,7 @@ or add a language with Live Captions / Voice Typing support).
 | [TranscriptionBenchmark](TranscriptionBenchmark) | Live two-party call transcription: split a stereo recording per caller, transcribe both channels in real time, and report memory/latency against Foundry Local and NPU engines. | `dotnet run -r win-arm64 --project samples\TranscriptionBenchmark\Claros.TranscriptionBenchmark.csproj -- <stereo.mp4>` |
 | [ConversationLoop](ConversationLoop) | End-to-end barge-in conversation: a recorded WAV stands in for the mic, the Live Captions recognizer + energy VAD endpoint each turn, and a natural voice speaks an echo reply to a WAV. Swap the echo handler for an LLM. | `dotnet run -r win-arm64 --project samples\ConversationLoop\Claros.ConversationLoop.csproj -- <16kHz-mono.wav> [out.wav] [locale]` |
 | [LowLevelPipeline](LowLevelPipeline) | Drive `SapiPhonemizer`, `NaturalVoiceEngine`, and `Vocoder` directly to inspect phoneme ids and codec tokens. | `dotnet run --project samples\LowLevelPipeline\Claros.LowLevelPipeline.csproj -- "your text"` |
+| [TierSwitch](TierSwitch) | Explicit on-device vs hosted tier: the same `ISpeechSynthesizer` code path, switched only by which synthesizer you construct. Prints the tier's `SynthesizerCapabilities`. | `dotnet run -r win-arm64 --project samples\TierSwitch\Claros.TierSwitch.csproj -- "your text" [--cloud <voice-name>]` |
 
 All samples are part of `Claros.slnx`, so `dotnet build
 Claros.slnx` builds them together. If no voice is installed, each

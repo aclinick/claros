@@ -65,6 +65,49 @@ public class TimedNarratorRenderTests
         Assert.Equal(synth.Voice, narrator.Voice);
     }
 
+    // An engine that cannot promise one sample rate across calls - the shape a
+    // hosted tier could take.
+    private sealed class UnstableRateSynthesizer : ISpeechSynthesizer
+    {
+        public int Calls { get; private set; }
+
+        public SynthesizerCapabilities Capabilities => SynthesizerCapabilities.Hosted
+            with { StableSampleRate = false };
+
+        public VoiceInfo Voice { get; } = VoiceInfo.Cloud("hosted", "Hosted", "en-US");
+
+        public Task<WaveformResult> SynthesizeAsync(
+            SpeechSynthesisRequest request, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            return Task.FromResult(new WaveformResult(new float[10], 100));
+        }
+
+        public Task SynthesizeToSinkAsync(
+            SpeechSynthesisRequest request, IAudioSink sink,
+            Action<SpokenWord>? onWord = null, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public void Dispose() { }
+    }
+
+    [Fact]
+    public async Task RenderAsync_RefusesAnEngineWithoutAStableSampleRate()
+    {
+        // Mixing onto one track computes offsets in samples, so a varying rate
+        // cannot be placed. The refusal must come BEFORE any synthesis: on a
+        // metered engine, failing mid-render means having already paid for it.
+        var synth = new UnstableRateSynthesizer();
+        var narrator = new TimedNarrator(synth);
+        var cues = new[] { new TimedCue(0, TimeSpan.Zero, TimeSpan.FromSeconds(1), "hello") };
+
+        var ex = await Assert.ThrowsAsync<NotSupportedException>(
+            () => narrator.RenderAsync(cues));
+
+        Assert.Contains("stable sample rate", ex.Message);
+        Assert.Equal(0, synth.Calls);
+    }
+
     [Fact]
     public async Task RenderAsync_NoCues_ReturnsEmptyWaveform()
     {

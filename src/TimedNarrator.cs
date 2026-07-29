@@ -82,6 +82,18 @@ public sealed class TimedNarrator : IDisposable
         ArgumentNullException.ThrowIfNull(cues);
         options ??= TimedNarrationOptions.Default;
 
+        // Every clip is mixed onto one shared track at a sample-computed offset, so
+        // a synthesizer whose rate can change between calls cannot be rendered at
+        // all. Refuse before synthesizing anything: on a metered engine the
+        // mid-render failure below would already have been paid for.
+        if (!_synthesizer.Capabilities.StableSampleRate)
+        {
+            throw new NotSupportedException(
+                $"Voice '{_synthesizer.Voice.DisplayName}' does not guarantee a stable sample " +
+                "rate across calls, so its clips cannot be mixed onto a single timeline. Use " +
+                "NarrateAsync to speak cues one at a time instead of RenderAsync.");
+        }
+
         var utterances = options.GroupIntoSentences
             ? CueSentenceGrouper.GroupIntoSentences(cues, options.MaxGap)
             : cues;

@@ -73,6 +73,8 @@ Two rules run through the whole surface:
 | --- | --- |
 | `SpeechPlatform` | Single entry point over both halves: discover voices and recognition models, then create warm speakers, transcribers, narrators, and conversations. |
 | `VoiceSource` | Which tier produces a voice's audio. `Device` is the default; `Cloud` only ever comes from an explicit opt-in. |
+| `SynthesizerCapabilities` | What an engine guarantees: word boundaries, stable sample rate, offline, metered. Check it instead of assuming. |
+| `CloudVoiceSpeaker`, `CloudVoiceOptions` | Opt-in hosted tier (Azure neural / HD / MAI-Voice) behind the same `ISpeechSynthesizer`. Requires a key and region; never used unless you construct it. |
 | `ISpeechSynthesizer` | Request-in/audio-out synthesis contract, buffered or streamed to an `IAudioSink`. Deliberately platform-neutral so another tier can implement it. |
 | `ISpeechRecognizer`, `RecognitionEvent` | Streaming recognition contract and its partial/final events. |
 | `ISpeechActivityDetector`, `EnergyVoiceActivityDetector` | Voice-activity detection used to endpoint a turn and trigger barge-in. |

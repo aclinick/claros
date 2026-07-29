@@ -29,6 +29,23 @@ public interface ISpeechSynthesizer : IDisposable
     VoiceInfo Voice { get; }
 
     /// <summary>
+    /// What this engine can and cannot guarantee. Callers that depend on a
+    /// specific behaviour — word boundaries for caption highlighting, or one
+    /// stable sample rate for timeline mixing — should check here and refuse up
+    /// front rather than discover the gap mid-render.
+    /// </summary>
+    /// <remarks>
+    /// Defaults to the profile implied by <see cref="Voice"/>'s
+    /// <see cref="VoiceSource"/>: <see cref="SynthesizerCapabilities.OnDevice"/> for
+    /// a device voice, <see cref="SynthesizerCapabilities.Hosted"/> otherwise. That
+    /// derivation matters — a hosted engine that forgot to override this must not
+    /// be able to claim it is offline and free, which would defeat the negotiation
+    /// entirely. Override whenever the engine differs from its tier's profile.
+    /// </remarks>
+    SynthesizerCapabilities Capabilities =>
+        Voice.IsOnDevice ? SynthesizerCapabilities.OnDevice : SynthesizerCapabilities.Hosted;
+
+    /// <summary>
     /// Synthesizes <paramref name="request"/> and returns the complete waveform.
     /// Cancellation stops the in-flight synthesis.
     /// </summary>

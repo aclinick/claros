@@ -24,6 +24,9 @@
   <Folder Name="/samples/TranscribeFile/">
     <Project Path="samples/TranscribeFile/Claros.TranscribeFile.csproj" />
   </Folder>
+  <Folder Name="/samples/TierSwitch/">
+    <Project Path="samples/TierSwitch/Claros.TierSwitch.csproj" />
+  </Folder>
   <Folder Name="/samples/TranscriptionBenchmark/">
     <Project Path="samples/TranscriptionBenchmark/Claros.TranscriptionBenchmark.csproj" />
   </Folder>

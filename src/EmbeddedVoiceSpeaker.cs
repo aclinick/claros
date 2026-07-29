@@ -75,7 +75,7 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
                 $"Voice package for '{voice.DisplayName}' was not found at '{packagePath}'.");
         }
 
-        var format = ResolveFormat(options.SampleRate);
+        var format = OutputFormats.Resolve(options.SampleRate);
 
         SpeechSynthesizer? synth = null;
         try
@@ -162,24 +162,8 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
             if (onWord is not null) _synth.WordBoundary -= OnWord;
         }
 
-        var format = AudioFormat.Pcm16Mono(waveform.SampleRate);
-        if (!sink.Format.Equals(format))
-        {
-            throw new ArgumentException(
-                $"The sink expects {sink.Format.SampleRate} Hz / {sink.Format.Channels}-channel audio, " +
-                $"but this voice produces {format.SampleRate} Hz mono. Match the sink's format to the voice.",
-                nameof(sink));
-        }
-
-        var samples = waveform.Samples;
-        var chunk = Math.Max(1, format.SampleRate / 10); // ~100 ms
-        for (var offset = 0; offset < samples.Length; offset += chunk)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var length = Math.Min(chunk, samples.Length - offset);
-            var buffer = AudioBuffer.FromSamples(samples.AsSpan(offset, length), format);
-            await sink.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
-        }
+        await SinkWriter.WriteAsync(sink, waveform, nameof(sink), cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private async Task<WaveformResult> RunAsync(
@@ -307,16 +291,6 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
         return HdVoiceOverlay.Create(
             voice.InstalledPath, overlayDir, options.HdThreshold, options.PreferSymlink);
     }
-
-    private static SpeechSynthesisOutputFormat ResolveFormat(int sampleRate) => sampleRate switch
-    {
-        24_000 => SpeechSynthesisOutputFormat.Riff24Khz16BitMonoPcm,
-        16_000 => SpeechSynthesisOutputFormat.Riff16Khz16BitMonoPcm,
-        48_000 => SpeechSynthesisOutputFormat.Riff48Khz16BitMonoPcm,
-        _ => throw new ArgumentOutOfRangeException(
-            nameof(sampleRate), sampleRate,
-            "The on-device HD models support 24000 Hz output; 16000 and 48000 are also selectable."),
-    };
 
     /// <summary>
     /// Releases the underlying Embedded Speech synthesizer and its native
