@@ -29,10 +29,25 @@ public interface ISpeechSynthesizer : IDisposable
     VoiceInfo Voice { get; }
 
     /// <summary>
+    /// The format of the audio this engine produces, known before anything is
+    /// synthesized.
+    /// </summary>
+    /// <remarks>
+    /// Without this a caller had to synthesize something and inspect the result
+    /// just to size a sink or a playback device — which on a metered engine means
+    /// paying for a throwaway request. Every implementation is bound to one voice
+    /// and one output configuration for its lifetime, so the answer is known at
+    /// construction; a synthesizer that genuinely could not say would also break
+    /// <see cref="SynthesizeToSinkAsync"/>, which requires the sink to match.
+    /// </remarks>
+    AudioFormat OutputFormat { get; }
+
+    /// <summary>
     /// What this engine can and cannot guarantee. Callers that depend on a
-    /// specific behaviour — word boundaries for caption highlighting, or one
-    /// stable sample rate for timeline mixing — should check here and refuse up
-    /// front rather than discover the gap mid-render.
+    /// specific behaviour — word boundaries for caption highlighting, say —
+    /// should check here and refuse up front rather than discover the gap
+    /// mid-render. The output format is not among these: it is stated exactly
+    /// by <see cref="OutputFormat"/> rather than described by a flag.
     /// </summary>
     /// <remarks>
     /// Defaults to the profile implied by <see cref="Voice"/>'s

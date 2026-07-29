@@ -82,24 +82,14 @@ public sealed class TimedNarrator : IDisposable
         ArgumentNullException.ThrowIfNull(cues);
         options ??= TimedNarrationOptions.Default;
 
-        // Every clip is mixed onto one shared track at a sample-computed offset, so
-        // a synthesizer whose rate can change between calls cannot be rendered at
-        // all. Refuse before synthesizing anything: on a metered engine the
-        // mid-render failure below would already have been paid for.
-        if (!_synthesizer.Capabilities.StableSampleRate)
-        {
-            throw new NotSupportedException(
-                $"Voice '{_synthesizer.Voice.DisplayName}' does not guarantee a stable sample " +
-                "rate across calls, so its clips cannot be mixed onto a single timeline. Use " +
-                "NarrateAsync to speak cues one at a time instead of RenderAsync.");
-        }
-
         var utterances = options.GroupIntoSentences
             ? CueSentenceGrouper.GroupIntoSentences(cues, options.MaxGap)
             : cues;
 
         var placements = new List<NarrationTimeline.Placement>(utterances.Count);
-        var sampleRate = 0;
+        // The timeline is built at the rate the engine declares, so offsets are
+        // known before a single clip is synthesized.
+        var sampleRate = _synthesizer.OutputFormat.SampleRate;
         var lastEnd = TimeSpan.Zero;
 
         foreach (var cue in utterances)
@@ -111,15 +101,15 @@ public sealed class TimedNarrator : IDisposable
             var wave = await _synthesizer.SynthesizeAsync(cue.Text, cancellationToken)
                 .ConfigureAwait(false);
 
-            if (sampleRate == 0) sampleRate = wave.SampleRate;
-            else if (wave.SampleRate != sampleRate)
+            if (wave.SampleRate != sampleRate)
             {
-                // Every clip must share one rate: placement offsets and the final
-                // timeline are computed in samples. A single voice emits a constant
-                // rate, so a mismatch means the engine changed mid-render.
+                // Placement offsets and the final track are computed in samples, so
+                // every clip must share the one rate the engine promised through
+                // OutputFormat. Reaching here means the engine broke that promise.
                 throw new SpeechSynthesisException(
-                    $"Synthesizer returned inconsistent sample rates ({sampleRate} then " +
-                    $"{wave.SampleRate} Hz); cannot mix onto one timeline.");
+                    $"Voice '{_synthesizer.Voice.DisplayName}' declares {sampleRate} Hz output " +
+                    $"but returned {wave.SampleRate} Hz, so its clips cannot be mixed onto one " +
+                    "timeline.");
             }
 
             var samples = (float[])wave.Samples.Clone(); // don't mutate the engine's buffer
@@ -128,8 +118,6 @@ public sealed class TimedNarrator : IDisposable
             var startSample = NarrationTimeline.ToSample(cue.Start, sampleRate);
             placements.Add(new NarrationTimeline.Placement(startSample, samples));
         }
-
-        if (sampleRate == 0) return new WaveformResult([], 0); // nothing was synthesized
 
         var minLength = NarrationTimeline.ToSample(lastEnd, sampleRate);
         var timeline = NarrationTimeline.Mix(placements, minLength);

@@ -22,13 +22,6 @@ public sealed record SynthesizerCapabilities
     public required bool WordBoundaries { get; init; }
 
     /// <summary>
-    /// Whether every call returns audio at the same sample rate. Mixing several
-    /// clips onto one timeline requires this: offsets are computed in samples, so
-    /// a rate that changes between calls cannot be placed on a shared track.
-    /// </summary>
-    public required bool StableSampleRate { get; init; }
-
-    /// <summary>
     /// Whether synthesis completes with no network access. <c>false</c> means the
     /// caller has explicitly opted into a hosted tier and inherits its latency,
     /// availability, and privacy characteristics.
@@ -44,27 +37,24 @@ public sealed record SynthesizerCapabilities
 
     /// <summary>
     /// The profile of an engine running entirely on this machine from installed
-    /// models: word boundaries, one fixed sample rate, no network, and no cost.
-    /// This is what every synthesizer in the library was before a second tier
-    /// existed, and it is the default an implementation inherits if it does not
-    /// declare otherwise.
+    /// models: word boundaries, no network, and no cost. This is what every
+    /// synthesizer in the library was before a second tier existed, and it is the
+    /// default an implementation inherits if it does not declare otherwise.
     /// </summary>
     public static SynthesizerCapabilities OnDevice { get; } = new()
     {
         WordBoundaries = true,
-        StableSampleRate = true,
         Offline = true,
         Metered = false,
     };
 
     /// <summary>
     /// The profile of a hosted engine the caller explicitly opted into: still
-    /// word-boundary and fixed-format capable, but networked and billed.
+    /// word-boundary capable, but networked and billed.
     /// </summary>
     public static SynthesizerCapabilities Hosted { get; } = new()
     {
         WordBoundaries = true,
-        StableSampleRate = true,
         Offline = false,
         Metered = true,
     };

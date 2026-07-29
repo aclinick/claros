@@ -34,12 +34,21 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
     /// <summary>The Natural Voice this speaker is bound to.</summary>
     public VoiceInfo Voice { get; }
 
-    private EmbeddedVoiceSpeaker(VoiceInfo voice, EmbeddedSpeechConfig config, SpeechSynthesizer synth)
+    private EmbeddedVoiceSpeaker(
+        VoiceInfo voice, EmbeddedSpeechConfig config, SpeechSynthesizer synth, AudioFormat outputFormat)
     {
         Voice = voice;
         _config = config;
         _synth = synth;
+        OutputFormat = outputFormat;
     }
+
+    /// <summary>
+    /// The audio this voice produces: mono 16-bit PCM at
+    /// <see cref="EmbeddedVoiceOptions.SampleRate"/>, fixed when the speaker is
+    /// loaded.
+    /// </summary>
+    public AudioFormat OutputFormat { get; }
 
     /// <summary>
     /// Load <paramref name="voice"/> for synthesis through the Embedded Speech
@@ -85,7 +94,8 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
             config.SetSpeechSynthesisOutputFormat(format);
             config.SetSpeechSynthesisVoice(voice.DisplayName, license);
             synth = new SpeechSynthesizer(config, (AudioConfig?)null);
-            return new EmbeddedVoiceSpeaker(voice, config, synth);
+            return new EmbeddedVoiceSpeaker(
+                voice, config, synth, AudioFormat.Pcm16Mono(options.SampleRate));
         }
         catch (Exception ex) when (ex is not NaturalVoiceException)
         {

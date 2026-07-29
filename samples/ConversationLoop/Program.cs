@@ -53,10 +53,11 @@ ConversationTurnHandler echo = (utterance, _) =>
     return Task.FromResult<SpeechSynthesisRequest?>(reply);
 };
 
-// Learn the voice's native sample rate so the speaker sink matches it exactly.
+// The synthesizer knows its output format up front, so the sink can be sized
+// without synthesizing a throwaway phrase first. That matters beyond tidiness:
+// against a hosted voice, a probe request would be billed.
 using var synthesizer = platform.CreateSpeaker(voice);
-var probe = await synthesizer.SynthesizeAsync("Ready.");
-var speaker = new BufferedAudioSink(AudioFormat.Pcm16Mono(probe.SampleRate));
+var speaker = new BufferedAudioSink(synthesizer.OutputFormat);
 
 using var transcriber = platform.CreateTranscriber(model);
 using var recognizer = transcriber.StartRecognizer();

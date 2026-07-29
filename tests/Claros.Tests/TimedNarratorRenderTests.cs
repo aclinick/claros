@@ -17,6 +17,7 @@ public class TimedNarratorRenderTests
 
         public VoiceInfo Voice { get; } = new(
             "id", "Fake", "en-US", "Female", "Adult", "Test", "1", "pfn", "pfull", "path");
+        public AudioFormat OutputFormat => AudioFormat.Pcm16Mono(SampleRate);
 
         public Task<WaveformResult> SynthesizeAsync(
             SpeechSynthesisRequest request, CancellationToken cancellationToken = default)
@@ -65,22 +66,21 @@ public class TimedNarratorRenderTests
         Assert.Equal(synth.Voice, narrator.Voice);
     }
 
-    // An engine that cannot promise one sample rate across calls - the shape a
-    // hosted tier could take.
+    // An engine that declares one rate and returns another - the misbehaviour that
+    // OutputFormat makes detectable.
     private sealed class UnstableRateSynthesizer : ISpeechSynthesizer
     {
         public int Calls { get; private set; }
 
-        public SynthesizerCapabilities Capabilities => SynthesizerCapabilities.Hosted
-            with { StableSampleRate = false };
-
         public VoiceInfo Voice { get; } = VoiceInfo.Cloud("hosted", "Hosted", "en-US");
+        public AudioFormat OutputFormat => AudioFormat.Pcm16Mono(100);
 
         public Task<WaveformResult> SynthesizeAsync(
             SpeechSynthesisRequest request, CancellationToken cancellationToken = default)
         {
             Calls++;
-            return Task.FromResult(new WaveformResult(new float[10], 100));
+            // Declared 100 Hz above; returns 200 Hz.
+            return Task.FromResult(new WaveformResult(new float[10], 200));
         }
 
         public Task SynthesizeToSinkAsync(
@@ -92,31 +92,34 @@ public class TimedNarratorRenderTests
     }
 
     [Fact]
-    public async Task RenderAsync_RefusesAnEngineWithoutAStableSampleRate()
+    public async Task RenderAsync_DetectsAnEngineThatBreaksItsDeclaredOutputFormat()
     {
-        // Mixing onto one track computes offsets in samples, so a varying rate
-        // cannot be placed. The refusal must come BEFORE any synthesis: on a
-        // metered engine, failing mid-render means having already paid for it.
+        // The timeline is laid out at the declared rate, so a clip that comes back
+        // at a different rate cannot be placed. Previously this was guarded by a
+        // StableSampleRate capability flag, which contradicted OutputFormat: an
+        // engine cannot both promise a fixed format and reserve the right to vary.
         var synth = new UnstableRateSynthesizer();
         var narrator = new TimedNarrator(synth);
         var cues = new[] { new TimedCue(0, TimeSpan.Zero, TimeSpan.FromSeconds(1), "hello") };
 
-        var ex = await Assert.ThrowsAsync<NotSupportedException>(
+        var ex = await Assert.ThrowsAsync<SpeechSynthesisException>(
             () => narrator.RenderAsync(cues));
 
-        Assert.Contains("stable sample rate", ex.Message);
-        Assert.Equal(0, synth.Calls);
+        Assert.Contains("declares 100 Hz", ex.Message);
+        Assert.Contains("returned 200 Hz", ex.Message);
     }
 
     [Fact]
-    public async Task RenderAsync_NoCues_ReturnsEmptyWaveform()
+    public async Task RenderAsync_NoCues_ReturnsEmptyWaveformAtTheDeclaredRate()
     {
         var narrator = new TimedNarrator(new FakeSynthesizer());
 
         var result = await narrator.RenderAsync([]);
 
         Assert.Empty(result.Samples);
-        Assert.Equal(0, result.SampleRate);
+        // The rate comes from OutputFormat, not from a clip, so even an empty
+        // render is a valid, writable waveform rather than a 0 Hz one.
+        Assert.Equal(100, result.SampleRate);
     }
 
     [Fact]
@@ -129,8 +132,12 @@ public class TimedNarratorRenderTests
         var result = await narrator.RenderAsync(cues, new TimedNarrationOptions { GroupIntoSentences = false });
 
         Assert.Empty(fake.Requests);        // nothing synthesized
-        Assert.Empty(result.Samples);       // sample rate never learned => empty
-        Assert.Equal(0, result.SampleRate);
+        // Knowing the rate up front means the cue's duration is still reserved:
+        // 1 s of silence at 100 Hz. Previously this returned nothing at all,
+        // because the rate could only be learned from a clip that never came.
+        Assert.Equal(100, result.Samples.Length);
+        Assert.All(result.Samples, s => Assert.Equal(0f, s));
+        Assert.Equal(100, result.SampleRate);
     }
 
     [Fact]
@@ -240,6 +247,10 @@ public class TimedNarratorRenderTests
         private int _calls;
         public VoiceInfo Voice { get; } = new(
             "id", "Fake", "en-US", "Female", "Adult", "Test", "1", "pfn", "pfull", "path");
+
+        // Declares one rate but does not honour it - the misbehaviour this fixture
+        // exists to provoke.
+        public AudioFormat OutputFormat => AudioFormat.Pcm16Mono(100);
 
         public Task<WaveformResult> SynthesizeAsync(
             SpeechSynthesisRequest request, CancellationToken cancellationToken = default)

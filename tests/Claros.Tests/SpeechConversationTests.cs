@@ -100,6 +100,7 @@ public class SpeechConversationTests
 
         public VoiceInfo Voice { get; } = new(
             "id", "Fake", "en-US", "Female", "Adult", "Test", "1", "pfn", "pfull", "path");
+        public AudioFormat OutputFormat => SpeakerFormat;
         public List<string> Spoken { get; } = [];
         public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public TaskCompletionSource Finished { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);

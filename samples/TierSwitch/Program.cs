@@ -67,7 +67,9 @@ using (synthesizer)
     var caps = synthesizer.Capabilities;
     Console.WriteLine(
         $"Caps:  offline={caps.Offline}, metered={caps.Metered}, " +
-        $"wordBoundaries={caps.WordBoundaries}, stableRate={caps.StableSampleRate}");
+        $"wordBoundaries={caps.WordBoundaries}");
+    Console.WriteLine(
+        $"Audio: {synthesizer.OutputFormat.SampleRate} Hz mono 16-bit (known without synthesizing)");
 
     if (caps.Metered)
     {

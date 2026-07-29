@@ -48,13 +48,23 @@ public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
     /// </summary>
     public SynthesizerCapabilities Capabilities => SynthesizerCapabilities.Hosted;
 
-    private CloudVoiceSpeaker(VoiceInfo voice, SpeechConfig config, SpeechSynthesizer synth, string locale)
+    private CloudVoiceSpeaker(
+        VoiceInfo voice, SpeechConfig config, SpeechSynthesizer synth, string locale, AudioFormat outputFormat)
     {
         Voice = voice;
         _config = config;
         _synth = synth;
         _locale = locale;
+        OutputFormat = outputFormat;
     }
+
+    /// <summary>
+    /// The audio this engine returns: mono 16-bit PCM at
+    /// <see cref="CloudVoiceOptions.SampleRate"/>, fixed when the speaker is
+    /// created. Knowing this without a request matters more here than on-device,
+    /// because probing would be billed.
+    /// </summary>
+    public AudioFormat OutputFormat { get; }
 
     /// <summary>
     /// Connects to the hosted voice described by <paramref name="options"/>. This
@@ -83,7 +93,8 @@ public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
                 id: options.VoiceName,
                 displayName: options.VoiceName,
                 locale: options.Locale);
-            return new CloudVoiceSpeaker(voice, config, synth, options.Locale);
+            return new CloudVoiceSpeaker(
+                voice, config, synth, options.Locale, AudioFormat.Pcm16Mono(options.SampleRate));
         }
         catch (Exception ex)
         {

@@ -91,6 +91,33 @@ public class CloudTierTests
     }
 
     [Fact]
+    public void OutputFormat_IsKnownWithoutSynthesizing()
+    {
+        // The point of the member: sizing a sink must not require a request, which
+        // on a metered engine would be billed. A fake stands in for the engines,
+        // which need real installed models, but the contract is the same.
+        ISpeechSynthesizer synth = new LegacySynthesizer();
+
+        Assert.Equal(24_000, synth.OutputFormat.SampleRate);
+        Assert.Equal(1, synth.OutputFormat.Channels);
+        Assert.Equal(16, synth.OutputFormat.BitsPerSample);
+    }
+
+    [Fact]
+    public void OutputFormat_MatchesTheRateACloudVoiceWasConfiguredWith()
+    {
+        // CloudVoiceSpeaker cannot be constructed without a Speech resource, so
+        // pin the option that feeds OutputFormat instead: it is fixed at creation
+        // and never discovered from a response.
+        var options = Valid() with { SampleRate = 48_000 };
+
+        options.Validate();
+
+        Assert.Equal(48_000, options.SampleRate);
+        Assert.Equal(48_000, AudioFormat.Pcm16Mono(options.SampleRate).SampleRate);
+    }
+
+    [Fact]
     public void OnDeviceProfile_IsFreeOfflineAndFullyCapable()
     {
         var caps = SynthesizerCapabilities.OnDevice;
@@ -98,7 +125,6 @@ public class CloudTierTests
         Assert.True(caps.Offline);
         Assert.False(caps.Metered);
         Assert.True(caps.WordBoundaries);
-        Assert.True(caps.StableSampleRate);
     }
 
     [Fact]
@@ -108,9 +134,8 @@ public class CloudTierTests
 
         Assert.False(caps.Offline);
         Assert.True(caps.Metered);
-        // Still capable enough for caption highlighting and timeline mixing.
+        // Still capable enough for caption highlighting.
         Assert.True(caps.WordBoundaries);
-        Assert.True(caps.StableSampleRate);
     }
 
     // An implementation written before capabilities existed, which does not
@@ -119,6 +144,7 @@ public class CloudTierTests
     {
         public VoiceInfo Voice { get; } = new(
             "id", "Legacy", "en-US", "Female", "Adult", "Test", "1", "", "", "");
+        public AudioFormat OutputFormat => AudioFormat.Pcm16Mono(24_000);
 
         public Task<WaveformResult> SynthesizeAsync(
             SpeechSynthesisRequest request, CancellationToken cancellationToken = default) =>
@@ -137,6 +163,7 @@ public class CloudTierTests
     private sealed class ForgetfulHostedSynthesizer : ISpeechSynthesizer
     {
         public VoiceInfo Voice { get; } = VoiceInfo.Cloud("hosted", "Hosted", "en-US");
+        public AudioFormat OutputFormat => AudioFormat.Pcm16Mono(24_000);
 
         public Task<WaveformResult> SynthesizeAsync(
             SpeechSynthesisRequest request, CancellationToken cancellationToken = default) =>

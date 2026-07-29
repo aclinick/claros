@@ -38,12 +38,12 @@ runtime:
 | `Offline` | yes | no |
 | `Metered` | no | yes |
 | `WordBoundaries` | yes | yes |
-| `StableSampleRate` | yes | yes |
 
-Consumers act on these. `TimedNarrator.RenderAsync` mixes every clip onto one
-timeline at sample-computed offsets, so it refuses an engine that cannot promise
-`StableSampleRate` — **before** synthesizing anything, because on a metered
-engine a mid-render failure has already been paid for.
+Consumers act on these. Separately, `ISpeechSynthesizer.OutputFormat` states the
+PCM format an engine will produce for its whole lifetime, so
+`TimedNarrator.RenderAsync` can lay out the timeline in samples before
+synthesizing anything — and can tell you which engine broke its contract if a
+clip ever comes back at another rate.
 
 ## What the hosted tier costs you
 
