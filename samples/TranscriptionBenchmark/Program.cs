@@ -264,7 +264,7 @@ Console.WriteLine($"  Model + engine delta  : {deltaMb,7:0.0} MB (peak over base
 Console.WriteLine("\n===== COMPARISON (Contoso-Finance speech evaluation, normalized to a 2-leg call) =====");
 Console.WriteLine("  Engine                              First emit   Peak RAM (2 legs)   Hardware   Quality (number/ITN rendering)");
 Console.WriteLine("  ----------------------------------  ----------   -----------------   --------   ------------------------------");
-Console.WriteLine($"  Live Captions (this library)        {FmtS(firstCaptionS)}      {peakMb,5:0} MB (measured) CPU        ITN tier (renders $/%/currency)");
+Console.WriteLine($"  Live Captions (this library)        {FmtS(firstCaptionS)}      {peakMb,5:0} MB (measured) CPU        No ITN: spells out \"six hundred ten thousand dollars\"");
 Console.WriteLine("  Apple SpeechAnalyzer (macOS, ANE)     3.93 s      ~440 MB (2x220)   ANE        Reference: $610,000, 6.2%");
 Console.WriteLine("  WinAI Speech Preview (NPU)            3.51 s     ~6400 MB (2x3200)  Hexagon    Best ITN: $610,000, 6.2% (Whisper Turbo)");
 Console.WriteLine("  Nemotron 0.6B (Foundry Local)         1.22 s     ~1750 MB (2x875)   CPU        Good words, but no clean sentence breaks");
@@ -289,8 +289,13 @@ Console.WriteLine("     punctuation, so it can't be segmented into clean chat bu
 Console.WriteLine("   - Whisper small is NOT a quality peer: Contoso found it hallucinates");
 Console.WriteLine("     dollar amounts and percentages and removed it from the default path;");
 Console.WriteLine("     its low RAM is a property of the low-quality tier, not a fair win.");
-Console.WriteLine("   - This library reaches the ITN-capable tier on the CPU at the memory");
-Console.WriteLine("     shown, i.e. NPU-class number rendering without the NPU or its ~6.4 GB.");
+Console.WriteLine("   - This library matches the peers on MEMORY, not on number rendering:");
+Console.WriteLine("     it spells numbers out today. The recognition pack ships an ITN model,");
+Console.WriteLine("     but it sits behind a native finalizer this library suppresses for");
+Console.WriteLine("     ARM64 stability, so the gap is in-box and fixable, not a model limit.");
+Console.WriteLine("   - Finals are re-surfaced when the recognizer revises a sentence it had");
+Console.WriteLine("     already stabilized, so a consumer that appends every event can show the");
+Console.WriteLine("     same line more than once. How often depends on timing.");
 Console.WriteLine();
 Console.WriteLine("  Note: this run holds TWO concurrent recognizers (one call leg per");
 Console.WriteLine("  speaker), matching the Mac listener; the comparison engines transcribe a");
