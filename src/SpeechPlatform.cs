@@ -281,6 +281,23 @@ public sealed class SpeechPlatform : IDisposable
         {
             trans = EmbeddedTranscriber.Load(model, recognitionLicense, recognitionOptions);
             rec = trans.StartRecognizer();
+
+            // The recognizer's rate comes from the transcription options while the
+            // detector's comes from the microphone, so the three can disagree. The
+            // recognizer would otherwise reject the first buffer once the loop is
+            // already running; refuse now, while the caller is still wiring things
+            // up and the error points at the mismatch rather than at playback.
+            if (!rec.Format.Equals(microphone.Format))
+            {
+                throw new ArgumentException(
+                    $"The microphone provides {microphone.Format.SampleRate} Hz / " +
+                    $"{microphone.Format.Channels}-channel / {microphone.Format.BitsPerSample}-bit audio, " +
+                    $"but the recognizer expects {rec.Format.SampleRate} Hz mono 16-bit. Set " +
+                    $"{nameof(EmbeddedTranscriberOptions)}.{nameof(EmbeddedTranscriberOptions.SampleRate)} " +
+                    "to match the microphone (Live Captions expects 16 kHz mono).",
+                    nameof(microphone));
+            }
+
             vad = new EnergyVoiceActivityDetector(microphone.Format, activityOptions);
 
             // Held in CREATION order; the conversation disposes in reverse, which

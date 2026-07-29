@@ -81,7 +81,18 @@ public sealed class SpeechConversation : IDisposable, IAsyncDisposable
 
     private readonly Channel<string> _turns =
         Channel.CreateUnbounded<string>(new UnboundedChannelOptions { SingleReader = true });
-    private readonly StringBuilder _utterance = new();
+
+    // Finalized sentences of the turn being assembled, keyed by the recognizer's
+    // session-stable SentenceIndex. Keyed rather than concatenated because a
+    // Correction revises the sentence already surfaced at that index; appending it
+    // would leave the turn holding both the original and the correction.
+    private readonly SortedDictionary<int, string> _sentences = [];
+
+    // Highest sentence index already dispatched as a turn. A correction that
+    // arrives after its turn has gone to the handler cannot be applied
+    // retroactively, and must not be resurrected as a new turn either - that would
+    // make the assistant answer a stray fragment.
+    private int _dispatchedThrough = -1;
     private readonly object _gate = new();
 
     private volatile bool _speaking;
@@ -287,8 +298,13 @@ public sealed class SpeechConversation : IDisposable, IAsyncDisposable
             if (!evt.IsFinal) continue;
             lock (_gate)
             {
-                if (_utterance.Length > 0) _utterance.Append(' ');
-                _utterance.Append(evt.Text);
+                // Too late: the turn holding this sentence has already been
+                // dispatched, so a revision of it can no longer change anything.
+                if (evt.SentenceIndex <= _dispatchedThrough) continue;
+
+                // Assignment, not append: a Final introduces the sentence at this
+                // index and a Correction replaces it.
+                _sentences[evt.SentenceIndex] = evt.Text;
             }
         }
     }
@@ -330,8 +346,11 @@ public sealed class SpeechConversation : IDisposable, IAsyncDisposable
         string turn;
         lock (_gate)
         {
-            turn = _utterance.ToString();
-            _utterance.Clear();
+            // Sorted by sentence index, so the turn reads in the order it was
+            // spoken regardless of when a correction arrived.
+            turn = string.Join(' ', _sentences.Values);
+            if (_sentences.Count > 0) _dispatchedThrough = _sentences.Keys.Max();
+            _sentences.Clear();
         }
 
         if (!string.IsNullOrWhiteSpace(turn)) _turns.Writer.TryWrite(turn);

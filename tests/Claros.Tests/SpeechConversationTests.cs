@@ -43,6 +43,14 @@ public class SpeechConversationTests
             return tcs.Task;
         }
 
+        // Revises a sentence already surfaced as final, at its original index.
+        public Task EmitCorrectionAsync(string text, int sentenceIndex)
+        {
+            var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            _events.Writer.TryWrite((RecognitionEvent.Correction(text, sentenceIndex), tcs));
+            return tcs.Task;
+        }
+
         public Task CompleteAsync(CancellationToken cancellationToken = default)
         {
             _events.Writer.TryComplete();
@@ -383,6 +391,97 @@ public class SpeechConversationTests
     private static SpeechConversation Hand(ISpeechSynthesizer synth) => new(
         new IdleMic(), new FakeRecognizer(), new FakeVad(), synth,
         new CollectingSink(), (_, _) => Task.FromResult<SpeechSynthesisRequest?>(null));
+
+    [Fact]
+    public async Task Correction_ReplacesTheSentenceItRevises_RatherThanAppending()
+    {
+        // A Correction is IsFinal, so a consumer that only checks IsFinal appends it
+        // and the turn ends up holding both the original and its revision.
+        var recog = new FakeRecognizer();
+        var vad = new FakeVad();
+        using var synth = new FakeSynthesizer();
+        var turns = new List<string>();
+
+        var convo = new SpeechConversation(
+            new IdleMic(), recog, vad, synth, new CollectingSink(),
+            (_, _) => Task.FromResult<SpeechSynthesisRequest?>(null));
+        convo.TurnRecognized += t => turns.Add(t);
+        var run = convo.RunAsync();
+
+        await recog.EmitFinalAsync("i have twenty");     // sentence 0
+        await recog.EmitFinalAsync("dollars left");      // sentence 1
+        await recog.EmitCorrectionAsync("I have $20", 0); // revises sentence 0
+        vad.RaiseEnded();
+
+        await WaitUntilAsync(() => turns.Count == 1, TimeSpan.FromSeconds(5));
+
+        Assert.Equal("I have $20 dollars left", turns[0]);
+        Assert.DoesNotContain("i have twenty", turns[0], StringComparison.Ordinal);
+
+        await convo.DisposeAsync();
+        await run;
+    }
+
+    [Fact]
+    public async Task Correction_KeepsSpokenOrderRegardlessOfArrivalOrder()
+    {
+        var recog = new FakeRecognizer();
+        var vad = new FakeVad();
+        using var synth = new FakeSynthesizer();
+        var turns = new List<string>();
+
+        var convo = new SpeechConversation(
+            new IdleMic(), recog, vad, synth, new CollectingSink(),
+            (_, _) => Task.FromResult<SpeechSynthesisRequest?>(null));
+        convo.TurnRecognized += t => turns.Add(t);
+        var run = convo.RunAsync();
+
+        await recog.EmitFinalAsync("one");
+        await recog.EmitFinalAsync("two");
+        await recog.EmitFinalAsync("three");
+        // A late revision of the FIRST sentence must not move it to the end.
+        await recog.EmitCorrectionAsync("ONE", 0);
+        vad.RaiseEnded();
+
+        await WaitUntilAsync(() => turns.Count == 1, TimeSpan.FromSeconds(5));
+
+        Assert.Equal("ONE two three", turns[0]);
+
+        await convo.DisposeAsync();
+        await run;
+    }
+
+    [Fact]
+    public async Task Correction_ArrivingAfterItsTurnWasDispatched_IsDropped()
+    {
+        // The turn already went to the handler, so the revision cannot be applied.
+        // It must not resurface as a new turn either - the assistant would then be
+        // answering a stray fragment of a sentence it already handled.
+        var recog = new FakeRecognizer();
+        var vad = new FakeVad();
+        using var synth = new FakeSynthesizer();
+        var turns = new List<string>();
+
+        var convo = new SpeechConversation(
+            new IdleMic(), recog, vad, synth, new CollectingSink(),
+            (_, _) => Task.FromResult<SpeechSynthesisRequest?>(null));
+        convo.TurnRecognized += t => turns.Add(t);
+        var run = convo.RunAsync();
+
+        await recog.EmitFinalAsync("book a table");
+        vad.RaiseEnded();
+        await WaitUntilAsync(() => turns.Count == 1, TimeSpan.FromSeconds(5));
+
+        await recog.EmitCorrectionAsync("book a cable", 0); // too late
+        vad.RaiseEnded();
+        await Task.Delay(150);
+
+        Assert.Single(turns);
+        Assert.Equal("book a table", turns[0]);
+
+        await convo.DisposeAsync();
+        await run;
+    }
 
     [Fact]
     public async Task DisposeAsync_StopsARunningLoopBeforeReleasingComponents()

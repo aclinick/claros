@@ -28,6 +28,7 @@ public sealed class AudioGraphSpeakerSink : IAudioSink, IAsyncDisposable
     private readonly AudioFrameInputNode _input;
     private readonly System.Diagnostics.Stopwatch _clock = new();
     private double _submittedSeconds;
+    private bool _completed;
 
     // Keep at most this much audio queued ahead of the playhead. Bounding the
     // queue is what makes barge-in effective: when the caller cancels a response,
@@ -89,6 +90,12 @@ public sealed class AudioGraphSpeakerSink : IAudioSink, IAsyncDisposable
     public async ValueTask WriteAsync(AudioBuffer buffer, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(buffer);
+        if (_completed)
+        {
+            throw new InvalidOperationException(
+                "The speaker has been completed and accepts no further audio. Create a new " +
+                "sink for the next response.");
+        }
         if (!buffer.Format.Equals(Format))
         {
             throw new ArgumentException(
@@ -109,12 +116,20 @@ public sealed class AudioGraphSpeakerSink : IAudioSink, IAsyncDisposable
         var frame = new AudioFrame((uint)bytes.Length);
         WriteFrame(frame, bytes);
 
-        // Pace submission to real time so no more than MaxLookahead of audio is
-        // ever queued. If cancelled while waiting (barge-in), discard whatever is
-        // still queued so the assistant stops promptly instead of draining the
-        // whole buffered response.
         if (!_clock.IsRunning) _clock.Start();
         _submittedSeconds += buffer.Duration.TotalSeconds;
+
+        // Queue the frame BEFORE pacing. If the wait came first, time spent waiting
+        // would be counted as playback while the graph was still empty, so for any
+        // buffer longer than MaxLookahead the "audio still ahead of the playhead"
+        // figure would understate what is actually queued - and CompleteAsync,
+        // which relies on that figure, would return early and clip the tail.
+        _input.AddFrame(frame);
+
+        // Then pace to real time, so no more than MaxLookahead of audio stays
+        // queued ahead of the playhead. If cancelled while waiting (barge-in),
+        // discard whatever is still queued so the assistant stops promptly instead
+        // of draining the whole buffered response.
         var ahead = TimeSpan.FromSeconds(_submittedSeconds) - _clock.Elapsed;
         if (ahead > MaxLookahead)
         {
@@ -129,13 +144,35 @@ public sealed class AudioGraphSpeakerSink : IAudioSink, IAsyncDisposable
                 throw;
             }
         }
-
-        _input.AddFrame(frame);
     }
 
     /// <inheritdoc />
-    public ValueTask CompleteAsync(CancellationToken cancellationToken = default) =>
-        ValueTask.CompletedTask;
+    /// <remarks>
+    /// Waits for audio already handed to the graph to finish playing before
+    /// returning, so completing (or disposing straight afterwards) does not cut off
+    /// the tail of the last response. Cancelling this wait abandons the remaining
+    /// audio deliberately, which is what barge-in wants.
+    /// </remarks>
+    public async ValueTask CompleteAsync(CancellationToken cancellationToken = default)
+    {
+        if (_completed) return;
+        _completed = true;
+
+        // Everything submitted has been paced against this clock, so whatever is
+        // still ahead of the playhead is exactly what has yet to be heard.
+        var remaining = TimeSpan.FromSeconds(_submittedSeconds) - _clock.Elapsed;
+        if (remaining <= TimeSpan.Zero) return;
+
+        try
+        {
+            await Task.Delay(remaining, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            try { _input.DiscardQueuedFrames(); } catch { /* best effort */ }
+            throw;
+        }
+    }
 
     private static unsafe void WriteFrame(AudioFrame frame, byte[] bytes)
     {
