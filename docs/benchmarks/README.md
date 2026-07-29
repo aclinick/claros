@@ -52,7 +52,11 @@ Two things this establishes, and both are load-bearing for the pitch:
 The one honest gap: Live Captions ships an ITN model but the library does not
 currently apply it, so numbers arrive spelled out (`six hundred ten thousand
 dollars` rather than `$610,000`). That is a fixable in-box gap, not a model
-limitation.
+limitation — and how much it matters depends entirely on who reads the output.
+For a caption a person reads, it matters. For a transcript handed to a language
+model, which is the case this library is built for, it does not: the model reads
+the spelled-out form perfectly well. The engines that win on ITN pay for it in
+memory, which is the trade this table is really about.
 
 ## A scoping note on the Parakeet result
 

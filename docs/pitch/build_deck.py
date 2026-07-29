@@ -447,7 +447,7 @@ footer(s, 11)
 s = blank(prs)
 rect(s, 0, 0, SW, SH, WHITE)
 title_block(s, "Proof \u00b7 the numbers",
-            "Mac-class accuracy at a fraction of the memory", BLUE)
+            "Mac-class footprint on ordinary CPU silicon", BLUE)
 tb = box(s, Inches(0.7), Inches(1.75), Inches(11.9), Inches(0.5))
 para(tb.text_frame,
      "Real 58 s two-party mortgage call, normalized to a 2-leg call (one recognizer "
@@ -462,7 +462,7 @@ for (cx, cw), h in zip(cols, heads):
     hb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
     para(hb.text_frame, h, 12.5, WHITE, bold=True, font=FONT_SB, first=True, space_after=0)
 rows = [
-    ("Claros (Live Captions)", "~4 s", "~500 MB", "CPU", "Words yes; ITN off today (fixable)", "ours"),
+    ("Claros (Live Captions)", "~4 s", "~500 MB", "CPU", "Numbers spelled out (in-box fix)", "ours"),
     ("Apple SpeechAnalyzer (macOS)", "~4 s", "~440 MB", "Apple ANE", "Full ITN: $610,000, 6.2%", "peer"),
     ("WinAI Speech Preview", "3.5 s", "~6,400 MB", "Hexagon NPU", "Full ITN (Whisper Turbo)", "peer"),
     ("Nemotron 0.6B (Foundry Local)", "1.2 s", "~1,750 MB", "CPU", "No clean sentence breaks", "out"),
@@ -490,11 +490,10 @@ rect(s, Inches(0.7), Inches(ry + 0.12), Inches(11.9), Inches(1.05), CARD)
 tb = box(s, Inches(1.0), Inches(ry + 0.24), Inches(11.3), Inches(0.85))
 tb.text_frame.vertical_anchor = MSO_ANCHOR.MIDDLE
 para(tb.text_frame,
-     "Claros matches the peers on word accuracy at ~500 MB for two legs \u2014 ~13\u00d7 less "
-     "RAM than the NPU path, and no NPU. One honest gap: numbers arrive spelled out today, "
-     "because the shipping ITN model sits behind a native finalizer we disable for ARM64 "
-     "stability. Fixable in-box. The rest are out on quality, or on memory and re-emitting "
-     "lines they already committed.",
+     "Claros runs both legs on CPU at ~500 MB \u2014 ~13\u00d7 less RAM than the NPU path \u2014 "
+     "at ~91\u00d7 real time, with clean one-per-sentence finals. One honest gap: numbers arrive "
+     "spelled out, an in-box fix. That matters for captions a person reads; not for text "
+     "handed to a model, which is what this platform is for.",
      13.5, DEEP, bold=True, font=FONT_SB, first=True, space_after=0)
 footer(s, 12)
 

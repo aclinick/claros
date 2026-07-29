@@ -540,3 +540,55 @@ suppressed exact repeats would cut it further. What such a layer cannot fix is a
 an immutable contract the revision can never be applied. Establishing how much of
 the residue is revision rather than repetition is the next measurement, and it
 should be done before this table is used to argue against Parakeet anywhere.
+
+---
+
+## 13. Live Captions re-measured (2026-07-29), and a real bug it exposed
+
+The Parakeet retest in §12 was only half a comparison, so `samples/TranscriptionBenchmark`
+was re-run on the same call, same machine, the same morning.
+
+| | Live Captions | Parakeet TDT 0.6b (best config) |
+| --- | --- | --- |
+| Throughput | **81-91x real time** (un-paced, 1 leg) | 9.7x real time |
+| Peak RAM, 2 legs | **~500 MB** | ~3.1 GB (1,550 MB per leg) |
+| First final | 4.26 s | ~1.4 s |
+| Duplicate finals | **0 exact** (21 emitted / 21 distinct) | 2-7, never zero |
+| Number formatting | spells out | `$610,000`, `6.2%` |
+
+Live Captions wins throughput by roughly 9x and memory by roughly 6x. Parakeet
+keeps first-token latency and ITN. Note the two throughput figures are not
+strictly commensurable: 81-91x is un-paced single-leg decode, while Parakeet's
+9.7x is compute under the strict-live harness. The direction is unambiguous; the
+ratio should not be quoted to two significant figures.
+
+### The bug this exposed
+
+The first re-run emitted **44 finals for 21 distinct sentences**, repeating single
+lines up to five times - worse than the Parakeet behaviour this document
+criticises. The archived 2026-07-20 run of the same audio emitted 16, so severity
+was timing-dependent rather than deterministic.
+
+The cause was subtle. The recognizer's segmentation oscillates at the head of the
+transcript - `"Hi, Mark." + "Good to see you."` merges into
+`"Hi, Mark, good to see you."` and splits back again. `SentenceCommitter`
+reconciled by longest common prefix, so every flip changed position 0,
+invalidated the whole prefix, and made every later sentence look new. One
+unstable sentence re-surfaced the entire tail on each flip.
+
+Fixed in `5e11d7d` by keeping the prefix diff - it is what recovers an in-place
+revision, and is why the `$610,000` sentence is captured at all - and adding
+exact-text tracking so a position that merely looks new does not re-emit.
+Re-measured twice: 21 emitted, 21 distinct, transcript still complete.
+
+Two residual lines are genuine revisions differing only in punctuation or in
+swallowing the following sentence, so 21 emissions reduce to 19 semantically
+distinct. That remainder needs positional replace rather than text dedup, and is
+tracked in issue #20.
+
+### Why this is recorded here
+
+Both engines were measured under the same contract, and both turned out to
+re-emit committed lines. Parakeet's residue is architectural; ours was a
+reconciliation bug in this library and is now largely fixed. A comparison that
+had only ever measured the competitor would have missed it.
