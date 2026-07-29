@@ -96,6 +96,7 @@ public class SpeechConversationTests
         public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public TaskCompletionSource Finished { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public bool WasCancelled { get; private set; }
+        public bool WasDisposed { get; private set; }
 
         public Task<WaveformResult> SynthesizeAsync(
             SpeechSynthesisRequest request, CancellationToken cancellationToken = default) =>
@@ -123,7 +124,7 @@ public class SpeechConversationTests
             }
         }
 
-        public void Dispose() { }
+        public void Dispose() { WasDisposed = true; }
     }
 
     private sealed class CollectingSink : IAudioSink
@@ -352,5 +353,219 @@ public class SpeechConversationTests
             }
             await _recognizer.EmitFinalAsync("closing words");
         }
+    }
+
+    private sealed class TrackingDisposable : IDisposable
+    {
+        private readonly List<string>? _order;
+        private readonly string _name;
+
+        public TrackingDisposable(string name = "d", List<string>? order = null)
+        {
+            _name = name;
+            _order = order;
+        }
+
+        public int DisposeCount { get; private set; }
+
+        public void Dispose()
+        {
+            DisposeCount++;
+            _order?.Add(_name);
+        }
+    }
+
+    private sealed class ThrowingDisposable : IDisposable
+    {
+        public void Dispose() => throw new InvalidOperationException("boom");
+    }
+
+    private static SpeechConversation Hand(ISpeechSynthesizer synth) => new(
+        new IdleMic(), new FakeRecognizer(), new FakeVad(), synth,
+        new CollectingSink(), (_, _) => Task.FromResult<SpeechSynthesisRequest?>(null));
+
+    [Fact]
+    public async Task DisposeAsync_StopsARunningLoopBeforeReleasingComponents()
+    {
+        // The components must not be torn out from under a live loop, so teardown
+        // has to cancel and drain RunAsync first.
+        var order = new List<string>();
+        var component = new TrackingDisposable("component", order);
+        using var synth = new FakeSynthesizer();
+        var recog = new FakeRecognizer();
+
+        var convo = new SpeechConversation(
+            new IdleMic(), recog, new FakeVad(), synth,
+            new CollectingSink(), (_, _) => Task.FromResult<SpeechSynthesisRequest?>(null),
+            owned: [component]);
+
+        var run = convo.RunAsync();
+        await Task.Delay(50);
+        Assert.Equal(0, component.DisposeCount);
+
+        await convo.DisposeAsync();
+
+        // The loop is finished by the time the component was released.
+        Assert.True(run.IsCompleted);
+        Assert.Equal(1, component.DisposeCount);
+        await run;
+    }
+
+    [Fact]
+    public async Task RunAsync_AfterDisposal_Throws()
+    {
+        using var synth = new FakeSynthesizer();
+        var convo = Hand(synth);
+
+        await convo.DisposeAsync();
+
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => convo.RunAsync());
+    }
+
+    [Fact]
+    public async Task RunAsync_WhileAlreadyRunning_IsRejected()
+    {
+        // A second run would overwrite the first one's lifecycle tracking, letting
+        // disposal release components while the first is still active.
+        using var synth = new FakeSynthesizer();
+        var convo = Hand(synth);
+
+        var run = convo.RunAsync();
+        await Task.Delay(50);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => convo.RunAsync());
+
+        await convo.DisposeAsync();
+        await run;
+    }
+
+    [Fact]
+    public async Task DisposeAsync_FromInsideTheTurnHandler_IsRejected()
+    {
+        // The loop cannot finish until the handler returns, so disposing here would
+        // stall and then release components out from under the running loop.
+        using var synth = new FakeSynthesizer();
+        var recog = new FakeRecognizer();
+        var vad = new FakeVad();
+        SpeechConversation? convo = null;
+        var caught = new TaskCompletionSource<Exception?>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        ConversationTurnHandler handler = async (_, _) =>
+        {
+            try
+            {
+                await convo!.DisposeAsync();
+                caught.TrySetResult(null);
+            }
+            catch (Exception ex)
+            {
+                caught.TrySetResult(ex);
+            }
+            return null;
+        };
+
+        convo = new SpeechConversation(
+            new IdleMic(), recog, vad, synth, new CollectingSink(), handler);
+        var run = convo.RunAsync();
+
+        await recog.EmitFinalAsync("hello");
+        vad.RaiseEnded();
+
+        var ex = await caught.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.IsType<InvalidOperationException>(ex);
+
+        await convo.DisposeAsync();
+        await run;
+    }
+
+    [Fact]
+    public async Task DisposeAsync_FromAnotherConversationsHandler_IsAllowed()
+    {
+        // The reentrancy guard must identify WHICH conversation owns the loop, so
+        // a handler in one conversation can still dispose an unrelated one.
+        using var synthA = new FakeSynthesizer();
+        using var synthB = new FakeSynthesizer();
+        var recogA = new FakeRecognizer();
+        var vadA = new FakeVad();
+
+        var componentB = new TrackingDisposable();
+        var convoB = new SpeechConversation(
+            new IdleMic(), new FakeRecognizer(), new FakeVad(), synthB,
+            new CollectingSink(), (_, _) => Task.FromResult<SpeechSynthesisRequest?>(null),
+            owned: [componentB]);
+
+        var done = new TaskCompletionSource<Exception?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        ConversationTurnHandler handler = async (_, _) =>
+        {
+            try { await convoB.DisposeAsync(); done.TrySetResult(null); }
+            catch (Exception ex) { done.TrySetResult(ex); }
+            return null;
+        };
+
+        var convoA = new SpeechConversation(
+            new IdleMic(), recogA, vadA, synthA, new CollectingSink(), handler);
+        var run = convoA.RunAsync();
+
+        await recogA.EmitFinalAsync("hello");
+        vadA.RaiseEnded();
+
+        Assert.Null(await done.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.Equal(1, componentB.DisposeCount);
+
+        await convoA.DisposeAsync();
+        await run;
+    }
+
+    [Fact]
+    public void Dispose_OnAHandWiredConversation_DisposesNothing()
+    {
+        // The public constructor borrows: a warm synthesizer must survive so it can
+        // be reused across conversations.
+        using var synth = new FakeSynthesizer();
+        var convo = Hand(synth);
+
+        convo.Dispose();
+        convo.Dispose();
+
+        Assert.False(synth.WasDisposed);
+    }
+
+    [Fact]
+    public void Dispose_ReleasesOwnedComponentsOnceInReverseOrder()
+    {
+        var order = new List<string>();
+        var first = new TrackingDisposable("first", order);
+        var second = new TrackingDisposable("second", order);
+        using var synth = new FakeSynthesizer();
+
+        var convo = new SpeechConversation(
+            new IdleMic(), new FakeRecognizer(), new FakeVad(), synth,
+            new CollectingSink(), (_, _) => Task.FromResult<SpeechSynthesisRequest?>(null),
+            owned: [first, second]);
+
+        convo.Dispose();
+        convo.Dispose();
+
+        Assert.Equal(1, first.DisposeCount);
+        Assert.Equal(1, second.DisposeCount);
+        Assert.Equal(["second", "first"], order);
+    }
+
+    [Fact]
+    public void Dispose_KeepsReleasingAfterAComponentThrows()
+    {
+        // One bad component must not strand the native resources behind the others.
+        var survivor = new TrackingDisposable();
+        using var synth = new FakeSynthesizer();
+
+        var convo = new SpeechConversation(
+            new IdleMic(), new FakeRecognizer(), new FakeVad(), synth,
+            new CollectingSink(), (_, _) => Task.FromResult<SpeechSynthesisRequest?>(null),
+            owned: [survivor, new ThrowingDisposable()]);
+
+        var ex = Assert.Throws<AggregateException>(convo.Dispose);
+
+        Assert.Single(ex.InnerExceptions);
+        Assert.Equal(1, survivor.DisposeCount);
     }
 }

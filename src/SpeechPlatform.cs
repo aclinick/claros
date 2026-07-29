@@ -152,19 +152,26 @@ public sealed class SpeechPlatform : IDisposable
     /// <summary>
     /// Creates a warm <see cref="EmbeddedVoiceSpeaker"/> bound to
     /// <paramref name="voice"/> and wraps it in a <see cref="TimedNarrator"/> for
-    /// subtitle- and cue-timed narration. The narrator borrows the speaker, so the
-    /// returned <paramref name="speaker"/> is owned by the caller and must be
-    /// disposed (which the narrator does not do).
+    /// subtitle- and cue-timed narration. The narrator <em>owns</em> the speaker
+    /// it creates, so disposing the narrator releases it; there is nothing else
+    /// for the caller to track.
     /// </summary>
     public TimedNarrator CreateNarrator(
         VoiceInfo voice,
-        out EmbeddedVoiceSpeaker speaker,
         string? license = null,
         EmbeddedVoiceOptions? options = null)
     {
         ThrowIfDisposed();
-        speaker = EmbeddedVoiceSpeaker.Load(voice, license, options);
-        return new TimedNarrator(speaker);
+        var speaker = EmbeddedVoiceSpeaker.Load(voice, license, options);
+        try
+        {
+            return new TimedNarrator(speaker, owned: speaker);
+        }
+        catch
+        {
+            speaker.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -175,12 +182,15 @@ public sealed class SpeechPlatform : IDisposable
     /// <paramref name="speaker"/> and the caller's <paramref name="turnHandler"/>.
     /// </summary>
     /// <remarks>
-    /// The conversation borrows the components; the caller owns their lifetimes and
-    /// must dispose the returned <paramref name="synthesizer"/>,
-    /// <paramref name="transcriber"/>, <paramref name="recognizer"/>, and
-    /// <paramref name="activityDetector"/> once the loop has finished. The
-    /// recognizer and detector are bound to <paramref name="microphone"/>'s sample
-    /// rate, so all three must agree (Live Captions expects 16 kHz mono).
+    /// The returned conversation <em>owns</em> every component it created here, so
+    /// disposing it releases the synthesizer, transcriber, recognizer, and detector
+    /// together — a single <c>using</c> is the whole lifetime. The
+    /// <paramref name="microphone"/> and <paramref name="speaker"/> are supplied by
+    /// the caller and are never disposed. The recognizer and detector are bound to
+    /// <paramref name="microphone"/>'s sample rate, so all three must agree (Live
+    /// Captions expects 16 kHz mono). Build the components yourself and use the
+    /// <see cref="SpeechConversation"/> constructor when you need to keep a warm
+    /// engine alive across several conversations.
     /// </remarks>
     public SpeechConversation CreateConversation(
         VoiceInfo voice,
@@ -188,10 +198,6 @@ public sealed class SpeechPlatform : IDisposable
         IAudioSource microphone,
         IAudioSink speaker,
         ConversationTurnHandler turnHandler,
-        out EmbeddedVoiceSpeaker synthesizer,
-        out EmbeddedTranscriber transcriber,
-        out StreamingRecognizer recognizer,
-        out EnergyVoiceActivityDetector activityDetector,
         VoiceActivityOptions? activityOptions = null,
         string? synthesisLicense = null,
         string? recognitionLicense = null,
@@ -204,12 +210,10 @@ public sealed class SpeechPlatform : IDisposable
         var synth = EmbeddedVoiceSpeaker.Load(voice, synthesisLicense, synthesisOptions);
         try
         {
-            var conversation = CreateConversation(
+            return CreateConversationCore(
                 synth, model, microphone, speaker, turnHandler,
-                out transcriber, out recognizer, out activityDetector,
-                activityOptions, recognitionLicense, recognitionOptions);
-            synthesizer = synth;
-            return conversation;
+                activityOptions, recognitionLicense, recognitionOptions,
+                ownsSynthesizer: true);
         }
         catch
         {
@@ -229,13 +233,12 @@ public sealed class SpeechPlatform : IDisposable
     /// and barge-in wiring instead of reimplementing it.
     /// </summary>
     /// <remarks>
-    /// The conversation borrows every component. <paramref name="synthesizer"/>
-    /// stays owned by the caller and is never disposed here, including when this
-    /// method fails. The caller still owns and must dispose the returned
-    /// <paramref name="transcriber"/>, <paramref name="recognizer"/>, and
-    /// <paramref name="activityDetector"/>. The recognizer and detector are bound
-    /// to <paramref name="microphone"/>'s sample rate, so all three must agree
-    /// (Live Captions expects 16 kHz mono).
+    /// The returned conversation owns the transcriber, recognizer, and detector it
+    /// creates, and releases them when disposed. <paramref name="synthesizer"/>
+    /// stays owned by the caller and is never disposed — not on success, and not
+    /// when this method fails partway. The recognizer and detector are bound to
+    /// <paramref name="microphone"/>'s sample rate, so all three must agree (Live
+    /// Captions expects 16 kHz mono).
     /// </remarks>
     public SpeechConversation CreateConversation(
         ISpeechSynthesizer synthesizer,
@@ -243,14 +246,28 @@ public sealed class SpeechPlatform : IDisposable
         IAudioSource microphone,
         IAudioSink speaker,
         ConversationTurnHandler turnHandler,
-        out EmbeddedTranscriber transcriber,
-        out StreamingRecognizer recognizer,
-        out EnergyVoiceActivityDetector activityDetector,
         VoiceActivityOptions? activityOptions = null,
         string? recognitionLicense = null,
         EmbeddedTranscriberOptions? recognitionOptions = null)
     {
         ThrowIfDisposed();
+        return CreateConversationCore(
+            synthesizer, model, microphone, speaker, turnHandler,
+            activityOptions, recognitionLicense, recognitionOptions,
+            ownsSynthesizer: false);
+    }
+
+    private SpeechConversation CreateConversationCore(
+        ISpeechSynthesizer synthesizer,
+        TranscriptionModelInfo model,
+        IAudioSource microphone,
+        IAudioSink speaker,
+        ConversationTurnHandler turnHandler,
+        VoiceActivityOptions? activityOptions,
+        string? recognitionLicense,
+        EmbeddedTranscriberOptions? recognitionOptions,
+        bool ownsSynthesizer)
+    {
         ArgumentNullException.ThrowIfNull(synthesizer);
         ArgumentNullException.ThrowIfNull(model);
         ArgumentNullException.ThrowIfNull(microphone);
@@ -266,13 +283,15 @@ public sealed class SpeechPlatform : IDisposable
             rec = trans.StartRecognizer();
             vad = new EnergyVoiceActivityDetector(microphone.Format, activityOptions);
 
-            var conversation = new SpeechConversation(
-                microphone, rec, vad, synthesizer, speaker, turnHandler);
+            // Held in CREATION order; the conversation disposes in reverse, which
+            // is what the parent/child relationship requires: the detector first,
+            // then the recognizer, then the transcriber that owns the recognizer's
+            // underlying session, and the synthesizer last when we created it.
+            var owned = new List<IDisposable> { trans, rec, vad };
+            if (ownsSynthesizer) owned.Insert(0, synthesizer);
 
-            transcriber = trans;
-            recognizer = rec;
-            activityDetector = vad;
-            return conversation;
+            return new SpeechConversation(
+                microphone, rec, vad, synthesizer, speaker, turnHandler, owned);
         }
         catch
         {

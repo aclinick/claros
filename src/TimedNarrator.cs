@@ -20,22 +20,49 @@ namespace Claros;
 /// content position (captions or a stock-ticker feed synced to content).
 /// </description></item>
 /// </list>
-/// The narrator <em>borrows</em> the synthesizer — it neither owns nor disposes
-/// it, so one warm synthesizer can be reused across renders. Like the synthesizer,
-/// it is thread-hostile: serialize calls.
+/// The narrator <em>borrows</em> a synthesizer passed to its constructor — it
+/// neither owns nor disposes it, so one warm synthesizer can be reused across
+/// renders. A narrator obtained from <see cref="SpeechPlatform.CreateNarrator"/>
+/// instead owns the speaker created for it and releases it on
+/// <see cref="Dispose"/>. Like the synthesizer, it is thread-hostile: serialize
+/// calls.
 /// </summary>
 [SupportedOSPlatform("windows")]
-public sealed class TimedNarrator
+public sealed class TimedNarrator : IDisposable
 {
     private const int PollMilliseconds = 50;
 
     private readonly ISpeechSynthesizer _synthesizer;
+    // Non-null only when this narrator created the synthesizer and must release
+    // it; a borrowed synthesizer leaves this null and is never disposed here.
+    private readonly IDisposable? _owned;
+    private bool _disposed;
 
-    /// <summary>Creates a narrator that speaks through <paramref name="synthesizer"/>.</summary>
+    /// <summary>
+    /// Creates a narrator that speaks through <paramref name="synthesizer"/>,
+    /// which the caller continues to own and dispose.
+    /// </summary>
     public TimedNarrator(ISpeechSynthesizer synthesizer)
+        : this(synthesizer, owned: null)
+    {
+    }
+
+    internal TimedNarrator(ISpeechSynthesizer synthesizer, IDisposable? owned)
     {
         ArgumentNullException.ThrowIfNull(synthesizer);
         _synthesizer = synthesizer;
+        _owned = owned;
+    }
+
+    /// <summary>
+    /// Releases the synthesizer this narrator created, if any. A narrator built
+    /// over a borrowed synthesizer does nothing here. Safe to call more than once.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        _owned?.Dispose();
     }
 
     /// <summary>The voice the narrator speaks with (the borrowed synthesizer's voice).</summary>

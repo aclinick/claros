@@ -40,14 +40,44 @@ public delegate Task<SpeechSynthesisRequest?> ConversationTurnHandler(
 /// issues a cross-thread native stop.
 /// </remarks>
 [SupportedOSPlatform("windows")]
-public sealed class SpeechConversation
+public sealed class SpeechConversation : IDisposable, IAsyncDisposable
 {
+    // How long teardown waits for a running loop to unwind before releasing the
+    // components anyway, so a wedged loop cannot hang disposal forever.
+    private static readonly TimeSpan StopTimeout = TimeSpan.FromSeconds(5);
+
+    // Identifies the conversation whose loop owns the current async flow, so a
+    // disposal attempted from inside a turn handler or event callback is rejected
+    // instead of dead-locking on itself. It holds the instance rather than a flag
+    // so that code running inside one conversation's handler can still dispose a
+    // different, unrelated conversation.
+    private static readonly AsyncLocal<SpeechConversation?> ActiveLoop = new();
+
     private readonly IAudioSource _microphone;
     private readonly ISpeechRecognizer _recognizer;
     private readonly ISpeechActivityDetector _activityDetector;
     private readonly ISpeechSynthesizer _synthesizer;
     private readonly IAudioSink _speaker;
     private readonly ConversationTurnHandler _turnHandler;
+
+    // Components this conversation created and must therefore dispose. Empty when
+    // the caller built the components themselves, so the public constructor keeps
+    // its borrow-only contract and never disposes something it did not create.
+    private readonly IReadOnlyList<IDisposable> _owned;
+
+    // Tracks the in-flight RunAsync so disposal can stop it before tearing down
+    // the components it is still using.
+    private readonly object _runGate = new();
+    private CancellationTokenSource? _runCts;
+    private TaskCompletionSource? _runExited;
+    private bool _disposed;
+
+    // Serializes teardown so concurrent disposers observe the real outcome rather
+    // than one returning success while another is still trying (and may time out).
+    // Never disposed itself: its wait handle is unused, and keeping it alive lets
+    // a timed-out disposal be retried safely.
+    private readonly SemaphoreSlim _disposeGate = new(1, 1);
+    private bool _released;
 
     private readonly Channel<string> _turns =
         Channel.CreateUnbounded<string>(new UnboundedChannelOptions { SingleReader = true });
@@ -57,7 +87,13 @@ public sealed class SpeechConversation
     private volatile bool _speaking;
     private volatile CancellationTokenSource? _speakCts;
 
-    /// <summary>Creates a conversation over the supplied streaming components.</summary>
+    /// <summary>
+    /// Creates a conversation over streaming components the <em>caller</em> owns.
+    /// Nothing passed here is disposed by the conversation, so a warm synthesizer
+    /// or recognizer can be reused across several conversations. Use
+    /// <see cref="SpeechPlatform.CreateConversation(VoiceInfo, TranscriptionModelInfo, IAudioSource, IAudioSink, ConversationTurnHandler, VoiceActivityOptions?, string?, string?, EmbeddedVoiceOptions?, EmbeddedTranscriberOptions?)"/>
+    /// instead when you want the components created and disposed for you.
+    /// </summary>
     public SpeechConversation(
         IAudioSource microphone,
         ISpeechRecognizer recognizer,
@@ -65,6 +101,21 @@ public sealed class SpeechConversation
         ISpeechSynthesizer synthesizer,
         IAudioSink speaker,
         ConversationTurnHandler turnHandler)
+        : this(microphone, recognizer, activityDetector, synthesizer, speaker, turnHandler, owned: [])
+    {
+    }
+
+    // Ownership-taking constructor used by the SpeechPlatform factories. Anything
+    // in `owned` was created on the caller's behalf and is disposed with the
+    // conversation; anything absent from it is borrowed and left alone.
+    internal SpeechConversation(
+        IAudioSource microphone,
+        ISpeechRecognizer recognizer,
+        ISpeechActivityDetector activityDetector,
+        ISpeechSynthesizer synthesizer,
+        IAudioSink speaker,
+        ConversationTurnHandler turnHandler,
+        IReadOnlyList<IDisposable> owned)
     {
         ArgumentNullException.ThrowIfNull(microphone);
         ArgumentNullException.ThrowIfNull(recognizer);
@@ -72,6 +123,7 @@ public sealed class SpeechConversation
         ArgumentNullException.ThrowIfNull(synthesizer);
         ArgumentNullException.ThrowIfNull(speaker);
         ArgumentNullException.ThrowIfNull(turnHandler);
+        ArgumentNullException.ThrowIfNull(owned);
 
         _microphone = microphone;
         _recognizer = recognizer;
@@ -79,6 +131,7 @@ public sealed class SpeechConversation
         _synthesizer = synthesizer;
         _speaker = speaker;
         _turnHandler = turnHandler;
+        _owned = owned;
     }
 
     /// <summary>Raised with the recognized text each time a user turn completes.</summary>
@@ -97,9 +150,50 @@ public sealed class SpeechConversation
     /// </summary>
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         using var runCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var token = runCts.Token;
 
+        var exited = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        lock (_runGate)
+        {
+            // Re-checked under the lock so a Dispose racing with this call cannot
+            // miss the run and tear the components down beneath it.
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_runCts is not null)
+            {
+                throw new InvalidOperationException(
+                    "The conversation is already running. A second concurrent run would " +
+                    "overwrite the first one's lifecycle tracking and let disposal release " +
+                    "components while it is still active.");
+            }
+            _runCts = runCts;
+            _runExited = exited;
+        }
+
+        ActiveLoop.Value = this;
+        try
+        {
+            await RunCoreAsync(runCts, token, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            ActiveLoop.Value = null;
+            lock (_runGate)
+            {
+                _runCts = null;
+                _runExited = null;
+            }
+            exited.TrySetResult();
+        }
+    }
+
+    private async Task RunCoreAsync(
+        CancellationTokenSource runCts,
+        CancellationToken token,
+        CancellationToken cancellationToken)
+    {
         _activityDetector.SpeechStarted += OnSpeechStarted;
         _activityDetector.SpeechEnded += OnSpeechEnded;
 
@@ -268,5 +362,175 @@ public sealed class SpeechConversation
     {
         try { await task.ConfigureAwait(false); }
         catch { /* faults surfaced by shutdown are ignored */ }
+    }
+
+    /// <summary>
+    /// Stops a running loop and disposes the components this conversation created
+    /// on the caller's behalf, in reverse creation order. Components supplied
+    /// through the public constructor are borrowed and are never disposed here, so
+    /// disposing a hand-wired conversation only stops the loop. Safe to call more
+    /// than once.
+    /// </summary>
+    /// <remarks>
+    /// Prefer <see cref="DisposeAsync"/>. This synchronous path has to block while
+    /// the loop unwinds. If the loop does not stop within a few seconds, nothing is
+    /// released and a <see cref="TimeoutException"/> is thrown, because tearing the
+    /// native sessions out from under a live loop is worse than leaving them; stop
+    /// the loop and dispose again.
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">Called from inside the conversation's own loop.</exception>
+    /// <exception cref="TimeoutException">The loop did not stop; nothing was released.</exception>
+    public void Dispose()
+    {
+        ThrowIfInsideOwnLoop();
+
+        // Serialized so a second caller cannot return "disposed" while the first
+        // attempt is still running - and may yet time out and release nothing.
+        _disposeGate.Wait();
+        try
+        {
+            if (_released) return;
+            var (exited, cancelFailure) = BeginStop();
+            var stopped = exited is null || exited.Task.Wait(StopTimeout);
+            FinishDispose(stopped, cancelFailure);
+        }
+        finally
+        {
+            _disposeGate.Release();
+        }
+    }
+
+    /// <summary>
+    /// Asynchronous teardown: cancels a running loop, waits for it to unwind, then
+    /// disposes the components this conversation owns. Preferred over
+    /// <see cref="Dispose"/> because draining the loop is inherently asynchronous.
+    /// Safe to call more than once.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Called from inside this conversation's own loop.</exception>
+    /// <exception cref="TimeoutException">The loop did not stop; nothing was released.</exception>
+    public async ValueTask DisposeAsync()
+    {
+        ThrowIfInsideOwnLoop();
+
+        await _disposeGate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (_released) return;
+
+            var (exited, cancelFailure) = BeginStop();
+            var stopped = true;
+            if (exited is not null)
+            {
+                try { await exited.Task.WaitAsync(StopTimeout).ConfigureAwait(false); }
+                catch (TimeoutException) { stopped = false; }
+                catch { /* the loop's own fault surfaces through RunAsync */ }
+            }
+
+            FinishDispose(stopped, cancelFailure);
+        }
+        finally
+        {
+            _disposeGate.Release();
+        }
+    }
+
+    private void ThrowIfInsideOwnLoop()
+    {
+        if (ReferenceEquals(ActiveLoop.Value, this))
+        {
+            throw new InvalidOperationException(
+                "Cannot dispose a SpeechConversation from inside its own loop (for example " +
+                "from a turn handler). The loop cannot finish until the callback returns, so " +
+                "disposal would stall and then release components while it is still running. " +
+                "Cancel the token passed to RunAsync instead, and dispose once it has completed.");
+        }
+    }
+
+    // Marks the conversation stopping and cancels any in-flight run, reporting a
+    // cancellation failure rather than throwing, so teardown always continues.
+    private (TaskCompletionSource? Exited, Exception? CancelFailure) BeginStop()
+    {
+        CancellationTokenSource? cts;
+        TaskCompletionSource? exited;
+        lock (_runGate)
+        {
+            _disposed = true;
+            cts = _runCts;
+            exited = _runExited;
+        }
+
+        Exception? cancelFailure = null;
+        try
+        {
+            cts?.Cancel();
+        }
+        catch (ObjectDisposedException)
+        {
+            // The run completed and disposed its own source between the lock and
+            // here, which is benign.
+        }
+        catch (Exception ex)
+        {
+            // A registered cancellation callback threw. Keep tearing down rather
+            // than abandoning the components, and surface it at the end.
+            cancelFailure = ex;
+        }
+
+        return (exited, cancelFailure);
+    }
+
+    private void FinishDispose(bool stopped, Exception? cancelFailure)
+    {
+        if (!stopped)
+        {
+            // The loop is still live. Releasing now would pull native sessions out
+            // from under it, so leave everything intact and let the caller retry
+            // once the loop has actually stopped.
+            lock (_runGate) _disposed = false;
+            throw new TimeoutException(
+                $"The conversation loop did not stop within {StopTimeout.TotalSeconds:0} seconds, " +
+                "so its components were left intact. Cancel the token passed to RunAsync, await " +
+                "it, then dispose again.");
+        }
+
+        try
+        {
+            ReleaseOwned();
+        }
+        catch (AggregateException ex) when (cancelFailure is not null)
+        {
+            throw new AggregateException(
+                "The conversation failed to cancel and to dispose cleanly.",
+                [cancelFailure, .. ex.InnerExceptions]);
+        }
+
+        if (cancelFailure is not null)
+        {
+            throw new AggregateException(
+                "The conversation's components were released, but cancelling the running loop failed.",
+                cancelFailure);
+        }
+    }
+
+    private void ReleaseOwned()
+    {
+        List<Exception>? failures = null;
+        for (var i = _owned.Count - 1; i >= 0; i--)
+        {
+            // Keep releasing the rest even if one component throws, so a single
+            // bad disposal cannot leak the native resources behind the others.
+            try { _owned[i].Dispose(); }
+            catch (Exception ex) { (failures ??= []).Add(ex); }
+        }
+
+        // Recorded before any failure is surfaced, so a partially failed release is
+        // never retried and cannot double-dispose the components that did succeed.
+        _released = true;
+
+        if (failures is not null)
+        {
+            throw new AggregateException(
+                "One or more conversation components failed to dispose.", failures);
+        }
     }
 }

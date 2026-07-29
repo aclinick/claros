@@ -33,7 +33,36 @@ public class TimedNarratorRenderTests
             Action<SpokenWord>? onWord = null, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
-        public void Dispose() { }
+        public bool WasDisposed { get; private set; }
+
+        public void Dispose() { WasDisposed = true; }
+    }
+
+    [Fact]
+    public void Dispose_BorrowedSynthesizer_IsLeftAlone()
+    {
+        // The public constructor borrows, so one warm synthesizer can drive
+        // several narrators.
+        var synth = new FakeSynthesizer();
+        var narrator = new TimedNarrator(synth);
+
+        narrator.Dispose();
+        narrator.Dispose();
+
+        Assert.False(synth.WasDisposed);
+    }
+
+    [Fact]
+    public void Dispose_OwnedSynthesizer_IsReleasedExactlyOnce()
+    {
+        var synth = new FakeSynthesizer();
+        var narrator = new TimedNarrator(synth, owned: synth);
+
+        narrator.Dispose();
+        narrator.Dispose();
+
+        Assert.True(synth.WasDisposed);
+        Assert.Equal(synth.Voice, narrator.Voice);
     }
 
     [Fact]
