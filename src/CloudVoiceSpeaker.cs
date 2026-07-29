@@ -36,6 +36,7 @@ public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
     private readonly SpeechConfig _config;
     private readonly SpeechSynthesizer _synth;
     private readonly string _locale;
+    private readonly SingleFlightGate _gate = new();
     private bool _disposed;
 
     /// <summary>The hosted voice this speaker is bound to.</summary>
@@ -154,6 +155,19 @@ public sealed class CloudVoiceSpeaker : ISpeechSynthesizer
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        _gate.Enter(nameof(CloudVoiceSpeaker), "a synthesis request");
+        try
+        {
+            return await SpeakAndReadAsync(ssml, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Exit();
+        }
+    }
+
+    private async Task<WaveformResult> SpeakAndReadAsync(string ssml, CancellationToken cancellationToken)
+    {
         var speakTask = _synth.SpeakSsmlAsync(ssml);
 
         // Unlike the embedded runtime — which crashes if stopped cross-thread and

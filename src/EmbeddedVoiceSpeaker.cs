@@ -27,6 +27,7 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
 {
     private readonly EmbeddedSpeechConfig _config;
     private readonly SpeechSynthesizer _synth;
+    private readonly SingleFlightGate _gate = new();
     private Task<SpeechSynthesisResult>? _pending;
     private bool _disposed;
 
@@ -173,6 +174,24 @@ public sealed class EmbeddedVoiceSpeaker : ISpeechSynthesizer
         ObjectDisposedException.ThrowIf(_disposed, this);
         cancellationToken.ThrowIfCancellationRequested();
 
+        // The _pending drain below sequences one call after another, but only if
+        // the calls are actually sequential. This catches genuine concurrency,
+        // which would otherwise race the native engine.
+        _gate.Enter(nameof(EmbeddedVoiceSpeaker), "a synthesis request");
+        try
+        {
+            return await SpeakAndReadAsync(speak, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _gate.Exit();
+        }
+    }
+
+    private async Task<WaveformResult> SpeakAndReadAsync(
+        Func<SpeechSynthesizer, Task<SpeechSynthesisResult>> speak,
+        CancellationToken cancellationToken)
+    {
         // A previously cancelled call may have abandoned an in-flight synthesis
         // that is still draining on the runtime's own thread. Never touch the
         // native engine concurrently: wait for it to go idle before starting the
